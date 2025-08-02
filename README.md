@@ -535,7 +535,6 @@ await ctx.block("1234@s.whatsapp.net");
 await ctx.unblock("1234@s.whatsapp.net");
 
 // Utility methods
-ctx.isPrivate();
 ctx.isGroup();
 ctx.getDevice("1234@s.whatsapp.net");
 ctx.getPushname("1234@s.whatsapp.net");
