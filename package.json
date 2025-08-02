@@ -1,0 +1,45 @@
+{
+  "name": "@itsreimau/gktw",
+  "version": "1.0.0",
+  "description": "Useless Baileys Wrapper",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "keywords": [
+    "whatsapp",
+    "whatsapp-bot",
+    "bot",
+    "baileys",
+    "baileys-md",
+    "whatsapp-web",
+    "whatsapp-api",
+    "md"
+  ],
+  "author": "Muhamad Ikbal Maulana | ItsReimau",
+  "license": "MIT",
+  "dependencies": {
+    "@cacheable/node-cache": "^1.6.1",
+    "@discordjs/collection": "^2.1.1",
+    "@mengkodingan/consolefy": "^1.0.1",
+    "baileys": "npm:@yupra/baileys",
+    "pino": "^9.7.0",
+    "vcard-parser": "^1.0.0"
+  },
+  "peerDependencies": {
+    "jimp": "^0.22.12",
+    "link-preview-js": "^3.0.0",
+    "sharp": "^0.34.1"
+  },
+  "peerDependenciesMeta": {
+    "jimp": {
+      "optional": true
+    },
+    "link-preview-js": {
+      "optional": true
+    },
+    "sharp": {
+      "optional": true
+    }
+  }
+}
