@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.0.10-alpha.3",
+  "version": "1.0.10-phoenix.1",
   "description": "Useless Baileys Wrapper",
   "main": "lib/index.js",
   "directories": {
@@ -41,5 +41,8 @@
     "sharp": {
       "optional": true
     }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
