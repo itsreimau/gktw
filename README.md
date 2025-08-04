@@ -41,12 +41,20 @@
 
 ## ⚠️ Important Note
 
-This package is a fork of [@mengkodingan/ckptw](https://www.npmjs.com/package/@mengkodingan/ckptw) with enhanced WhatsApp features. **All original ckptw functions remain intact**—refer to the [original docs](https://www.npmjs.com/package/@mengkodingan/ckptw) for complete documentation.
+This is a custom fork of [@mengkodingan/ckptw](https://npmjs.com/package/@mengkodingan/ckptw) **only for [gaxtawu](https://github.com/itsreimau/gaxtawu)**.
+
+🚫 **Not recommended for other projects** – consider these alternatives instead:
+- [@aidulcandra/simple-wa-bot](https://www.npmjs.com/package/@aidulcandra/simple-wa-bot)
+- [@neoxr/wb](https://www.npmjs.com/package/@neoxr/wb)
+- [wachan](https://www.npmjs.com/package/wachan)
+- [zaileys](https://www.npmjs.com/package/zaileys)
+
+🔧 Original functions remain (see [original docs](https://npmjs.com/package/@mengkodingan/ckptw)).
 
 ## 📥 Installation
 
 ```bash
-npm install @itsreimau/gktw
+npm install github:itsreimau/gktw
 ```
 
 ## ✨ Key Features

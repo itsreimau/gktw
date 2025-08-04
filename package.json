@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.0.10-phoenix.3",
+  "version": "1.0.10-phoenix.4",
   "description": "Useless Baileys Wrapper",
   "main": "lib/index.js",
   "directories": {
@@ -25,24 +25,5 @@
     "baileys": "npm:@yupra/baileys",
     "pino": "^9.7.0",
     "vcard-parser": "^1.0.0"
-  },
-  "peerDependencies": {
-    "jimp": "^0.22.12",
-    "link-preview-js": "^3.0.0",
-    "sharp": "^0.34.1"
-  },
-  "peerDependenciesMeta": {
-    "jimp": {
-      "optional": true
-    },
-    "link-preview-js": {
-      "optional": true
-    },
-    "sharp": {
-      "optional": true
-    }
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
