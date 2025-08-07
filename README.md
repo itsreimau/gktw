@@ -60,6 +60,7 @@ npm install github:itsreimau/gktw
 ## ✨ Key Features
 
 - **✨ Effortless** - Simple and intuitive API
+- **🔧 Fixed @lid & @jid** - Resolved WhatsApp group @lid and @jid issues
 - **🧱 Builder** - Build complex messages easily
 - **🛒 Built-in Collector, Cooldown, Command Handle** - Essential utilities included
 - **🚀 Middleware System** - Intercept and process messages
