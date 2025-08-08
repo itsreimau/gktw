@@ -79,7 +79,7 @@ const { Client, Events, MessageType } = require("@itsreimau/gktw");
 const bot = new Client({
     prefix: "!",
     printQRInTerminal: true,
-    readIncommingMsg: true
+    readIncomingMsg: true
 });
 
 bot.ev.once(Events.ClientReady, (m) => {
@@ -105,7 +105,7 @@ const { Client, Events } = require("@itsreimau/gktw");
 const bot = new Client({
     prefix: "!",
     printQRInTerminal: true,
-    readIncommingMsg: true
+    readIncomingMsg: true
 });
 
 bot.ev.once(Events.ClientReady, (m) => {
@@ -127,7 +127,7 @@ bot.launch();
 ```js
 ClientOptions {
     prefix: Array<string> | string | RegExp; // Bot prefix(es)
-    readIncommingMsg?: boolean; // Mark incoming messages as read (default: false)
+    readIncomingMsg?: boolean; // Mark incoming messages as read (default: false)
     authDir?: string; // Path to auth directory (default: "./state")
     printQRInTerminal?: boolean; // Display QR in terminal (default: false)
     qrTimeout?: number; // QR regeneration timeout in ms (default: 60000)
@@ -521,6 +521,8 @@ await group.unlock();
 ## 🔧 Miscellaneous Utilities
 
 ```js
+const { Browsers, fetchLatestWaWebVersion, getContentType, generateWAMessageFromContent, proto } = require("@itsreimau/gktw"); // Maybe if you need some Baileys functionality
+
 // Message reactions & pin
 await ctx.react(ctx.id, "👍");
 await ctx.pin(ctx.id, "86400");
@@ -549,7 +551,6 @@ ctx.getDevice("1234@s.whatsapp.net");
 ctx.getPushname("1234@s.whatsapp.net");
 
 // Accessing baileys objects
-ctx.proto; // Maybe if you need a proto
 bot.core;
 ctx.core;
 ```
@@ -559,6 +560,6 @@ ctx.core;
 Special thanks to:
 
 - [Jastin Linggar Tama](https://github.com/JastinXyz) for original ckptw
-- [YuPra Network](https://www.npmjs.com/~yupra) for Baileys modification
+- [NaufalYP1](https://github.com/NaufalYuPra) for Baileys modification
 - [WhiskeySockets](https://github.com/WhiskeySockets) for Baileys maintenance
 - All contributors and users
