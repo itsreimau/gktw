@@ -313,7 +313,7 @@ await ctx.reply({ video: fs.readFileSync("./video.mp4"), caption: "Watch this!",
 await ctx.reply({ sticker: { url: "./sticker.webp" } });
 ```
 
-For buttons and interactive messages, refer to [baileys documentation](https://www.npmjs.com/package/@yupra/baileys).
+For buttons and interactive messages, refer to [Baileys documentation](https://www.npmjs.com/package/@yupra/baileys).
 
 ## 🎨 Text Formatting
 
@@ -552,7 +552,7 @@ ctx.isGroup();
 ctx.getDevice("1234@s.whatsapp.net");
 ctx.getPushname("1234@s.whatsapp.net");
 
-// Accessing baileys objects
+// Accessing Baileys objects
 bot.core;
 ctx.core;
 ```
