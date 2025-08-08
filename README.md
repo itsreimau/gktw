@@ -492,12 +492,14 @@ await group.joinApproval("on"); // Available: on, off
 await group.leave();
 await group.membersCanAddMemberMode("on"); // Available: on, off
 await group.metadata();
-await group.getMetadata("subject");
+await group.getMetadata("subject"); // Available: subject, desc, owner, etc.
 await group.name();
 await group.description();
 await group.owner();
 await group.isAdmin("1234@s.whatsapp.net");
+await group.isOwner("1234@s.whatsapp.net");
 await group.isSenderAdmin();
+await group.isOwnerAdmin();
 await group.isBotAdmin();
 await group.toggleEphemeral(69);
 await group.updateDescription("Does this impact the lore?");
