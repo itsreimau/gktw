@@ -303,14 +303,14 @@ await ctx.reply("Hello world!");
 await ctx.reply({ image: { url: "https://example.com/image.jpg" }, caption: "Check this out!" });
 
 // Audio message
-await ctx.reply({ audio: { url: "./sound.mp3" }, mimetype: "audio/mp4", ptt: true /* Send as voice note */ });
+await ctx.reply({ audio: { url: "https://example.com/sound.mp3" }, mimetype: "audio/mp4", ptt: true /* Send as voice note */ });
 
 // Video message
 const fs = require("fs");
 await ctx.reply({ video: fs.readFileSync("./video.mp4"), caption: "Watch this!", gifPlayback: false });
 
 // Sticker
-await ctx.reply({ sticker: { url: "./sticker.webp" } });
+await ctx.reply({ sticker: { url: "https://example.com/sticker.webp" } });
 ```
 
 For buttons and interactive messages, refer to [Baileys documentation](https://www.npmjs.com/package/@yupra/baileys).
@@ -539,8 +539,8 @@ ctx.me;
 ctx.simulateTyping();
 ctx.simulateRecording();
 
-// Profile management
-bot.bio("GOD'S IN HIS HEAVEN, ALL'S RIGHT WITH THE WORLD");
+// Profile management (Can use ctx)
+await bot.bio("GOD'S IN HIS HEAVEN, ALL'S RIGHT WITH THE WORLD");
 await bot.fetchBio("1234@s.whatsapp.net");
 
 // Block management
