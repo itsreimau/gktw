@@ -2,8 +2,10 @@
 
 const Baileys = require("baileys");
 const Functions = require("../Helper/Functions.js");
-const GroupData = require("./Group/GroupData.js");
 const Group = require("./Group/Group.js");
+const GroupData = require("./Group/GroupData.js");
+const Newsletter = require("./Newsletter/Newsletter.js");
+const NewsletterData = require("./Newsletter/NewsletterData.js");
 const MessageCollector = require("./Collector/MessageCollector.js");
 
 class Ctx {
@@ -89,6 +91,14 @@ class Ctx {
 
     group(jid) {
         return new GroupData(this, jid || this.id);
+    }
+
+    get newsletters() {
+        return new Newsletter(this);
+    }
+
+    newsletter(jid) {
+        return new NewsletterData(this, jid || this.id);
     }
 
     isGroup() {

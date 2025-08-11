@@ -1,10 +1,10 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.0.11-phoenix.5",
+  "version": "1.0.12-phoenix.1",
   "description": "Useless Baileys Wrapper",
-  "main": "lib/index.js",
+  "main": "src/index.js",
   "directories": {
-    "lib": "lib"
+    "src": "src"
   },
   "keywords": [
     "whatsapp",
@@ -22,7 +22,7 @@
     "@cacheable/node-cache": "^1.6.1",
     "@discordjs/collection": "^2.1.1",
     "@mengkodingan/consolefy": "^1.0.1",
-    "baileys": "npm:@yupra/baileys",
+    "baileys": "npm:@rexxhayanasi/elaina-bail",
     "libphonenumber-js": "^1.12.10",
     "pino": "^9.8.0",
     "vcard-parser": "^1.0.0"

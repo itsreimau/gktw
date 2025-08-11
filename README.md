@@ -36,6 +36,7 @@
   - [Auto Mentions](#-auto-mentions)
   - [Get Mentions](#-get-mentions)
 - [Group Management](#-group-management)
+- [Newsletter Management](#-newsletter-management)
 - [Miscellaneous Utilities](#-miscellaneous-utilities)
 - [Acknowledgements](#-acknowledgements)
 
@@ -44,6 +45,7 @@
 This is a custom fork of [@mengkodingan/ckptw](https://npmjs.com/package/@mengkodingan/ckptw) **only for [gaxtawu](https://github.com/itsreimau/gaxtawu)**.
 
 🚫 **Not recommended for other projects** – consider these alternatives instead:
+
 - [@aidulcandra/simple-wa-bot](https://www.npmjs.com/package/@aidulcandra/simple-wa-bot)
 - [@neoxr/wb](https://www.npmjs.com/package/@neoxr/wb)
 - [wachan](https://www.npmjs.com/package/wachan)
@@ -313,7 +315,7 @@ await ctx.reply({ video: fs.readFileSync("./video.mp4"), caption: "Watch this!",
 await ctx.reply({ sticker: { url: "https://example.com/sticker.webp" } });
 ```
 
-For buttons and interactive messages, refer to [Baileys documentation](https://www.npmjs.com/package/@yupra/baileys).
+For buttons and interactive messages, refer to [Baileys documentation](https://www.npmjs.com/package/@rexxhayanasi/elaina-bail).
 
 ## 🎨 Text Formatting
 
@@ -477,8 +479,11 @@ await ctx.getMentioned(); /* Returns array of JIDs like ["1234@s.whatsapp.net"]
 Comprehensive group control:
 
 ```js
-// Create group
+// Control group
 await ctx.groups.create("NERV", ["1234@s.whatsapp.net"]);
+await ctx.groups.inviteCodeInfo("UMBR4L15");
+await ctx.groups.acceptInvite("UMBR4L15");
+await ctx.groups.acceptInviteV4("UMBR4L15");
 
 // Group utilities
 const group = await ctx.group(); // Current group
@@ -518,6 +523,23 @@ await group.open();
 await group.close();
 await group.lock();
 await group.unlock();
+```
+
+## 👥 Newsletter Management
+
+Comprehensive newsletter control, but still under development:
+
+```js
+// Control newsletter
+await ctx.newsletters.create("NERV");
+
+// Newsletter utilities
+const newsletter = await ctx.newsletter(); // Current newsletter
+const newsletter = await ctx.newsletter("1234@newsletter"); // Specify JID
+
+// Common operations
+await newsletter.updateDescription("Does this impact the lore?");
+await newsletter.react("123", "👍");
 ```
 
 ## 🔧 Miscellaneous Utilities
@@ -562,6 +584,6 @@ ctx.core;
 Special thanks to:
 
 - [Jastin Linggar Tama](https://github.com/JastinXyz) for original ckptw
-- [NaufalYP1](https://github.com/NaufalYuPra) for Baileys modification
+- [RexxHayanasi](https://github.com/RexxHayanasi) for Baileys modification
 - [WhiskeySockets](https://github.com/WhiskeySockets) for Baileys maintenance
 - All contributors and users
