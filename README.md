@@ -35,6 +35,9 @@
   - [Manual Mentions](#-manual-mentions)
   - [Auto Mentions](#-auto-mentions)
   - [Get Mentions](#-get-mentions)
+- [AI Label](#-ai-label)
+  - [Manual AI Label](#-manual-ai-label)
+  - [Auto AI Label](#-auto-ai-label)
 - [Group Management](#-group-management)
 - [Newsletter Management](#-newsletter-management)
 - [Miscellaneous Utilities](#-miscellaneous-utilities)
@@ -127,22 +130,23 @@ bot.launch();
 ## ⚙️ Client Configuration
 
 ```js
-ClientOptions {
-    prefix: Array<string> | string | RegExp; // Bot prefix(es)
-    readIncomingMsg?: boolean; // Mark incoming messages as read (default: false)
-    authDir?: string; // Path to auth directory (default: "./state")
-    printQRInTerminal?: boolean; // Display QR in terminal (default: false)
-    qrTimeout?: number; // QR regeneration timeout in ms (default: 60000)
-    markOnlineOnConnect?: boolean; // Mark online on connect (default: true)
-    phoneNumber?: string; // Bot phone number with country code (e.g. '62xxx')
-    usePairingCode?: boolean; // Use pairing code instead of QR (default: false)
-    customPairingCode?: string; // Custom pairing code
-    selfReply?: boolean; // Allow bot to respond to itself (default: false)
-    WAVersion?: [number, number, number]; // Custom WhatsApp version
-    autoMention?: boolean; // Auto-convert @mentions (default: false)
-    authAdapter?: Promise<any>; // Custom auth adapter
-    browser?: WABrowserDescription; // Browser configuration
-}
+new Client({
+    prefix: Array | String | RegExp, // Bot prefix(es)
+    readIncomingMsg: Boolean, // Mark incoming messages as read (default: false)
+    authDir: String, // Path to auth directory (default: "./state")
+    printQRInTerminal: Boolean, // Display QR in terminal (default: false)
+    qrTimeout: Number, // QR regeneration timeout in ms (default: 60000)
+    markOnlineOnConnect: Boolean, // Mark online on connect (default: true)
+    phoneNumber: String, // Bot phone number with country code (e.g. '62xxx')
+    usePairingCode: Boolean, // Use pairing code instead of QR (default: false)
+    customPairingCode: String, // Custom pairing code
+    selfReply: Boolean, // Allow bot to respond to itself (default: false)
+    WAVersion: [Number, Number, Number], // Custom WhatsApp version
+    autoMention: Boolean, // Auto-convert @mentions (default: false)
+    autoAiLabel: Boolean, // Auto-convert AI label (default: false)
+    authAdapter: Function, // Custom auth adapter
+    browser: Function // Browser configuration
+});
 ```
 
 ## 🔐 Custom Authentication
@@ -474,6 +478,27 @@ Extract mentioned users from message:
 await ctx.getMentioned(); /* Returns array of JIDs like ["1234@s.whatsapp.net"]
 ```
 
+## 📍 AI Label
+
+### ▸ Manual AI Label
+
+```js
+await ctx.reply({ text: "Get in the EVA, @1234!", ai: true });
+```
+
+### ▸ Auto AI Label
+
+Enable in client config:
+
+```js
+const bot = new Client({
+    autoAiLabel: true // Enable automatic AI label
+});
+
+// Now AI label will work automatically
+await ctx.reply("Get in the EVA, @1234!"); // No need for AI boolean
+```
+
 ## 👥 Group Management
 
 Comprehensive group control:
@@ -527,18 +552,27 @@ await group.unlock();
 
 ## 👥 Newsletter Management
 
-Comprehensive newsletter control, but still under development:
+Comprehensive newsletter control:
 
 ```js
 // Control newsletter
+await ctx.newsletters.metadata("https://example.com");
+await ctx.newsletters.mute("1234@newsletter");
+await ctx.newsletters.unmute("1234@newsletter");
 await ctx.newsletters.create("NERV");
+await ctx.newsletters.delete("1234@newsletter");
+await ctx.newsletters.follow("1234@newsletter");
+await ctx.newsletters.unfollow("1234@newsletter");
 
 // Newsletter utilities
 const newsletter = await ctx.newsletter(); // Current newsletter
 const newsletter = await ctx.newsletter("1234@newsletter"); // Specify JID
 
 // Common operations
+await newsletter.updateNmae("NERV");
 await newsletter.updateDescription("Does this impact the lore?");
+await newsletter.updatePicture(Buffer);
+await newsletter.removePicture();
 await newsletter.react("123", "👍");
 ```
 

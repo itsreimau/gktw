@@ -39,6 +39,7 @@ class Client {
         this.selfReply = opts.selfReply ?? false;
         this.WAVersion = opts.WAVersion;
         this.autoMention = opts.autoMention ?? false;
+        this.autoAiLabel = opts.autoAiLabel ?? false;
         this.fallbackWAVersion = [2, 3000, 1021387508];
         this.authAdapter = opts.authAdapter ?? Baileys.useMultiFileAuthState(this.authDir);
         this.browser = opts.browser ?? Baileys.Browsers.ubuntu("CHROME");
@@ -53,6 +54,10 @@ class Client {
         this.storePath = `${this.authDir}/gktw_store.json`;
         this.groupCache = new NodeCache({
             stdTTL: 5 * 60,
+            useClones: false
+        });
+        this.messageIdCache = new NodeCache({
+            stdTTL: 30,
             useClones: false
         });
         this.pushnamesPath = `${this.authDir}/pushnames.json`;
@@ -130,6 +135,9 @@ class Client {
         this.core.ev.on("messages.upsert", async (m) => {
             const [message] = m.messages;
             if (!message?.message) return;
+
+            if (this.messageIdCache.get(message.key.id)) return;
+            this.messageIdCache.set(message.key.id, true);
 
             const messageType = Baileys.getContentType(message.message);
             const text = Functions.getContentFromMsg(message) ?? "";

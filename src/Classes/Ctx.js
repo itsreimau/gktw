@@ -229,6 +229,8 @@ class Ctx {
         if ((content.header || content.footer) && !content.buttons && !content.interactiveButtons) content.interactiveButtons = [];
         if (content.image || content.video || content.product && (content.interactiveButtons && content.interactiveButtons.length > 0 || content.buttons && content.buttons.length > 0)) content.media = true;
 
+        if (this._self.autoAiLabel && jid.endsWith("@s.whatsapp.net")) content.ai = true;
+
         return this._client.sendMessage(jid, content, options);
     }
 
