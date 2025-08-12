@@ -478,7 +478,7 @@ Extract mentioned users from message:
 await ctx.getMentioned(); /* Returns array of JIDs like ["1234@s.whatsapp.net"]
 ```
 
-## 📍 AI Label
+## 🤖 AI Label
 
 ### ▸ Manual AI Label
 
@@ -550,7 +550,7 @@ await group.lock();
 await group.unlock();
 ```
 
-## 👥 Newsletter Management
+## 📰 Newsletter Management
 
 Comprehensive newsletter control:
 
