@@ -3,8 +3,8 @@
 const {
     jidDecode
 } = require("baileys");
-const fs = require("fs");
-const path = require("path");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const arrayMove = (array, oldIndex, newIndex) => {
     if (oldIndex < 0 || oldIndex >= array.length) return array;

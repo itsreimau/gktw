@@ -2,7 +2,7 @@
 
 const Baileys = require("baileys");
 const pino = require("pino");
-const EventEmitter = require("events");
+const EventEmitter = require("node:events");
 const {
     Collection
 } = require("@discordjs/collection");
@@ -24,26 +24,26 @@ const {
 
 class Client {
     constructor(opts) {
-        this.prefix = opts.prefix;
-        this.readIncomingMsg = opts.readIncomingMsg ?? false;
         this.authDir = opts.authDir ?? "./state";
+        this.authAdapter = opts.authAdapter ?? Baileys.useMultiFileAuthState(this.authDir);
+        this.WAVersion = opts.WAVersion;
+        this.browser = opts.browser ?? Baileys.Browsers.ubuntu("CHROME");
         this.printQRInTerminal = opts.printQRInTerminal ?? true;
         this.phoneNumber = opts.phoneNumber;
         this.usePairingCode = opts.usePairingCode ?? false;
         this.customPairingCode = opts.customPairingCode ?? false;
         this.qrTimeout = opts.qrTimeout ?? 60000;
-        this.markOnlineOnConnect = opts.markOnlineOnConnect ?? true;
         this.logger = opts.logger ?? pino({
             level: "fatal"
         });
-        this.selfReply = opts.selfReply ?? false;
-        this.WAVersion = opts.WAVersion;
         this.useStore = opts.useStore ?? false;
+        this.readIncomingMsg = opts.readIncomingMsg ?? false;
+        this.markOnlineOnConnect = opts.markOnlineOnConnect ?? true;
+        this.prefix = opts.prefix;
+        this.selfReply = opts.selfReply ?? false;
         this.autoMention = opts.autoMention ?? false;
         this.autoAiLabel = opts.autoAiLabel ?? false;
         this.fallbackWAVersion = [2, 3000, 1021387508];
-        this.authAdapter = opts.authAdapter ?? Baileys.useMultiFileAuthState(this.authDir);
-        this.browser = opts.browser ?? Baileys.Browsers.ubuntu("CHROME");
 
         this.ev = new EventEmitter();
         this.cmd = new Collection();

@@ -87,7 +87,7 @@ const MessageType = {
     limitSharingMessage: "limitSharingMessage",
     botTaskMessage: "botTaskMessage",
     questionMessage: "questionMessage",
-    messageHistoryNotice: "messageHistoryNotice",
+    messageHistoryNotice: "messageHistoryNotice"
 };
 
 module.exports = MessageType;

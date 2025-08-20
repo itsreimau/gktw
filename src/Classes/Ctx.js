@@ -59,6 +59,10 @@ class Ctx {
     }
 
     get used() {
+        return this._self.store;
+    }
+
+    get used() {
         return this._used;
     }
 

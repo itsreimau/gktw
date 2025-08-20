@@ -82,9 +82,9 @@ npm install github:itsreimau/gktw
 const { Client, Events, MessageType } = require("@itsreimau/gktw");
 
 const bot = new Client({
-    prefix: "!",
     printQRInTerminal: true,
-    readIncomingMsg: true
+    readIncomingMsg: true,
+    prefix: "!"
 });
 
 bot.ev.once(Events.ClientReady, (m) => {
@@ -108,9 +108,9 @@ bot.launch();
 const { Client, Events } = require("@itsreimau/gktw");
 
 const bot = new Client({
-    prefix: "!",
     printQRInTerminal: true,
-    readIncomingMsg: true
+    readIncomingMsg: true,
+    prefix: "!"
 });
 
 bot.ev.once(Events.ClientReady, (m) => {
@@ -129,22 +129,22 @@ bot.launch();
 
 ```js
 new Client({
-    prefix: Array | String | RegExp, // Bot prefix(es)
-    readIncomingMsg: Boolean, // Mark incoming messages as read (default: false)
     authDir: String, // Path to auth directory (default: "./state")
+    authAdapter: Function, // Custom auth adapter
+    WAVersion: [Number, Number, Number], // Custom WhatsApp version
+    browser: Function, // Browser configuration
     printQRInTerminal: Boolean, // Display QR in terminal (default: false)
-    qrTimeout: Number, // QR regeneration timeout in ms (default: 60000)
-    markOnlineOnConnect: Boolean, // Mark online on connect (default: true)
     phoneNumber: String, // Bot phone number with country code (e.g. '62xxx')
     usePairingCode: Boolean, // Use pairing code instead of QR (default: false)
     customPairingCode: String, // Custom pairing code
-    selfReply: Boolean, // Allow bot to respond to itself (default: false)
-    WAVersion: [Number, Number, Number], // Custom WhatsApp version
+    qrTimeout: Number, // QR regeneration timeout in ms (default: 60000)
     useStore: Boolean, // Use store for upsert messages (default: false)
+    readIncomingMsg: Boolean, // Mark incoming messages as read (default: false)
+    markOnlineOnConnect: Boolean, // Mark online on connect (default: true)
+    prefix: Array | String | RegExp, // Bot prefix(es)
+    selfReply: Boolean, // Allow bot to respond to itself (default: false)
     autoMention: Boolean, // Auto-convert @mentions (default: false)
-    autoAiLabel: Boolean, // Auto-convert AI label (default: false)
-    authAdapter: Function, // Custom auth adapter
-    browser: Function // Browser configuration
+    autoAiLabel: Boolean // Auto-convert AI label (default: false)
 });
 ```
 
@@ -589,6 +589,7 @@ ctx.args;
 ctx.sender;
 ctx.quoted;
 ctx.me;
+ctx.store;
 
 // Presence updates
 ctx.simulateTyping();
