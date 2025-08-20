@@ -38,6 +38,7 @@ class Client {
         });
         this.selfReply = opts.selfReply ?? false;
         this.WAVersion = opts.WAVersion;
+        this.useStore = opts.useStore ?? false;
         this.autoMention = opts.autoMention ?? false;
         this.autoAiLabel = opts.autoAiLabel ?? false;
         this.fallbackWAVersion = [2, 3000, 1021387508];
@@ -67,14 +68,14 @@ class Client {
     }
 
     onConnectionUpdate() {
-        this.core.ev.on("connection.update", (update) => {
-            this.ev.emit(Events.ConnectionUpdate, update);
+        this.core.ev.on("connection.update", (m) => {
+            this.ev.emit(Events.ConnectionUpdate, m);
             const {
                 connection,
                 lastDisconnect
-            } = update;
+            } = m;
 
-            if (update.qr) this.ev.emit(Events.QR, update.qr);
+            if (m.qr) this.ev.emit(Events.QR, m.qr);
 
             if (connection === "close") {
                 const shouldReconnect = lastDisconnect.error.output.statusCode !== Baileys.DisconnectReason.loggedOut;
@@ -269,10 +270,12 @@ class Client {
         this.state = state;
         this.saveCreds = saveCreds;
 
-        this.store.readFromFile(this.storePath);
-        setInterval(() => {
-            this.store.writeToFile(this.storePath);
-        }, 10_000)
+        if (this.useStore) {
+            this.store.readFromFile(this.storePath);
+            setInterval(() => {
+                this.store.writeToFile(this.storePath);
+            }, 10_000)
+        }
 
         const version = this.WAVersion ? this.WAVersion : this.fallbackWAVersion;
         this.core = Baileys.default({
@@ -286,7 +289,7 @@ class Client {
             cachedGroupMetadata: async (jid) => this.groupCache.get(jid)
         });
 
-        this.store.bind(this.core.ev);
+        if (this.useStore) this.store.bind(this.core.ev);
 
         if (this.usePairingCode && !this.core.authState.creds.registered) {
             this.consolefy.setTag("pairing-code");

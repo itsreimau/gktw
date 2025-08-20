@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.0.12-phoenix.4",
+  "version": "1.0.12-phoenix.5",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -19,11 +19,11 @@
   "author": "Muhamad Ikbal Maulana | ItsReimau",
   "license": "MIT",
   "dependencies": {
-    "@cacheable/node-cache": "^1.6.1",
+    "@cacheable/node-cache": "^1.7.0",
     "@discordjs/collection": "^2.1.1",
     "@mengkodingan/consolefy": "^1.0.1",
     "baileys": "npm:@rexxhayanasi/elaina-bail",
-    "libphonenumber-js": "^1.12.11",
+    "libphonenumber-js": "^1.12.12",
     "pino": "^9.9.0",
     "vcard-parser": "^1.0.0"
   }

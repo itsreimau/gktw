@@ -119,9 +119,7 @@ bot.ev.once(Events.ClientReady, (m) => {
 
 bot.ev.on(Events.MessagesUpsert, async (m, ctx) => {
     if (m.key.fromMe) return;
-    if (m.content === "Does this impact the lore?") {
-        await ctx.reply("Yes Rei, it does.");
-    }
+    if (m.content === "Does this impact the lore?") await ctx.reply("Yes Rei, it does.");
 });
 
 bot.launch();
@@ -142,6 +140,7 @@ new Client({
     customPairingCode: String, // Custom pairing code
     selfReply: Boolean, // Allow bot to respond to itself (default: false)
     WAVersion: [Number, Number, Number], // Custom WhatsApp version
+    useStore: Boolean, // Use store for upsert messages (default: false)
     autoMention: Boolean, // Auto-convert @mentions (default: false)
     autoAiLabel: Boolean, // Auto-convert AI label (default: false)
     authAdapter: Function, // Custom auth adapter

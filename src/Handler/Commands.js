@@ -68,7 +68,7 @@ async function Commands(self, runMiddlewares) {
         runMiddlewares(ctx).then(shouldContinue => {
             if (!shouldContinue) return resolve();
 
-            matchedCommands.forEach(cmd => cmd.code(ctx));
+            matchedCommands.forEach(command => command.code(ctx));
             resolve();
         }).catch(reject);
     });

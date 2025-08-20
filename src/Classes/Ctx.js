@@ -114,7 +114,9 @@ class Ctx {
     }
 
     getMentioned() {
-        return this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
+        const mentionedLid = this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
+        const mentionedJid = mentionedLid.map(lid => this._client.decodeJid(lid));
+        return mentionedJid;
     }
 
     getDevice(id) {
