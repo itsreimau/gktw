@@ -58,7 +58,7 @@ class Ctx {
         return user;
     }
 
-    get used() {
+    get store() {
         return this._self.store;
     }
 
