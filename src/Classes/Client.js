@@ -138,22 +138,22 @@ class Client {
                 if (this.messageIdCache.get(message.key.id)) return;
                 this.messageIdCache.set(message.key.id, true);
 
-                if (message.key.remoteJid.endsWith("@g.us")) await this.setGroupCache(msg.key.remoteJid);
+                if (message.key.remoteJid.endsWith("@g.us")) await this.setGroupCache(message.key.remoteJid);
 
                 const messageType = Baileys.getContentType(message.message);
                 const text = Functions.getContentFromMsg(message) ?? "";
+
+                const senderJid = await Functions.getSender(message, this.core);
+                if (message.pushName && this.pushNames[senderJid] !== message.pushName) {
+                    this.pushNames[senderJid] = message.pushName;
+                    this.savePushnames();
+                }
 
                 const msg = {
                     content: text,
                     ...message,
                     messageType
                 };
-
-                const senderJid = await Functions.getSender(msg, this.core);
-                if (msg.pushName && this.pushNames[senderJid] !== msg.pushName) {
-                    this.pushNames[senderJid] = msg.pushName;
-                    this.savePushnames();
-                }
 
                 const self = {
                     ...this,
@@ -199,7 +199,7 @@ class Client {
         this.core.ev.on("group-participants.update", async (event) => {
             await this.setGroupCache(event.id);
 
-            if (m.action === "add") {
+            if (event.action === "add") {
                 return this.ev.emit(Events.UserJoin, event);
             } else if (m.action === "remove") {
                 return this.ev.emit(Events.UserLeave, event);
