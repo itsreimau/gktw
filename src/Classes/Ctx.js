@@ -118,9 +118,7 @@ class Ctx {
     }
 
     getMentioned() {
-        const mentionedLid = this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
-        const mentionedJid = mentionedLid.map(lid => this._client.decodeJid(lid));
-        return mentionedJid;
+        return this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
     }
 
     getDevice(id) {
@@ -152,7 +150,7 @@ class Ctx {
 
     get msg() {
         const rawMsg = this._msg;
-        const msg = Baileys.extractMessageContent(rawMsg?.message);
+        const msg = Baileys.extractMessageContent(rawMsg.message);
 
         return {
             ...rawMsg,
@@ -169,7 +167,7 @@ class Ctx {
     }
 
     get quoted() {
-        const msgContext = this._msg?.message?.[this.getMessageType()]?.contextInfo ?? {};
+        const msgContext = this._msg.message?.[this.getMessageType()]?.contextInfo ?? {};
         if (!msgContext?.quotedMessage) return null;
         const message = Baileys.extractMessageContent(msgContext.quotedMessage) ?? {};
         const senderJid = msgContext?.participant || msgContext?.remoteJid || this.id;

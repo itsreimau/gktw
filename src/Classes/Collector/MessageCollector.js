@@ -30,7 +30,7 @@ class MessageCollector extends Collector {
 
     async _collect(m) {
         const content = Functions.getContentFromMsg(m);
-        if (!((this.jid === m.key.remoteJid || this.hears.includes(m.key.remoteJid)) && content?.length && (this.clientReq.self.selfReply ? true : !m.key.fromMe))) return null;
+        if (!content.length || (!this.jid === m.key.remoteJid && !this.hears.includes(m.key.remoteJid)) || (!this.clientReq.self.selfReply && m.key.fromMe)) return null;
 
         try {
             this.received++;

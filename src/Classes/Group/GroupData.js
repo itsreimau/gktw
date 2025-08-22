@@ -91,7 +91,8 @@ class GroupData {
     }
 
     async membersUpdate(members, action) {
-        return await this.ctx._client.groupParticipantsUpdate(this.jid, members, action);
+        const _members = Array.isArray(members) ? members : [members];
+        return await this.ctx._client.groupParticipantsUpdate(this.jid, _members, action);
     }
 
     async kick(members) {

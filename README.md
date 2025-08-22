@@ -222,7 +222,7 @@ For better organization, commands can be split into separate files:
 
 ```js
 const { CommandHandler } = require("@itsreimau/gktw");
-const path = require("path");
+const path = require("node:path");
 
 const cmd = new CommandHandler(bot, path.resolve(__dirname, "commands"));
 cmd.load(true); // Set to false to suppress loading logs
@@ -311,7 +311,7 @@ await ctx.reply({ image: { url: "https://example.com/image.jpg" }, caption: "Che
 await ctx.reply({ audio: { url: "https://example.com/sound.mp3" }, mimetype: "audio/mp4", ptt: true /* Send as voice note */ });
 
 // Video message
-const fs = require("fs");
+const fs = require("node:fs");
 await ctx.reply({ video: fs.readFileSync("./video.mp4"), caption: "Watch this!", gifPlayback: false });
 
 // Sticker
@@ -346,7 +346,7 @@ Download and process media attachments:
 
 ```js
 const { MessageType } = require("@itsreimau/gktw");
-const fs = require("fs");
+const fs = require("node:fs");
 
 bot.ev.on(Events.MessagesUpsert, async (m, ctx) => {
     if (ctx.getMessageType() === MessageType.imageMessage) {

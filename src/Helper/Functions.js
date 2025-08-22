@@ -56,10 +56,10 @@ const getContentFromMsg = (msg) => {
         protocolMessage: () => msg.message.protocolMessage?.editedMessage?.extendedTextMessage?.text || msg.message.protocolMessage?.editedMessage?.conversation || msg.message.protocolMessage?.editedMessage?.imageMessage?.caption || msg.message.protocolMessage?.editedMessage?.videoMessage?.caption || ""
     };
 
-    return contentHandlers[type]?.() || "";
+    return contentHandlers[type]() || "";
 };
 
-const getSender = (msg, client) => msg.key.fromMe ? client.user?.id : msg.key.participant || msg.key.remoteJid;
+const getSender = (msg, client) => msg.key.fromMe ? client.user.id : msg.key.participant || msg.key.remoteJid;
 
 const walk = (dir, callback) => {
     if (!fs.existsSync(dir)) return;

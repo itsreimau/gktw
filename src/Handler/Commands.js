@@ -11,7 +11,7 @@ async function Commands(self, runMiddlewares) {
             m
         } = self;
 
-        if (!m?.message || m.key?.remoteJid === "status@broadcast" || m.key?.remoteJid.endsWith("@newsletter") || m.key?.participant?.endsWith("@lid")) return resolve();
+        if (!m.message || m.key.remoteJid === "status@broadcast" || m.key.remoteJid.endsWith("@newsletter") || m.key.participant.endsWith("@lid")) return resolve();
         if (!self.selfReply && m.key.fromMe) return resolve();
 
         const hasHears = Array.from(self.hearsMap.values()).filter(hear => hear.name === m.content || hear.name === m.messageType || new RegExp(hear.name).test(m.content) || (Array.isArray(hear.name) && hear.name.includes(m.content)));
@@ -38,20 +38,20 @@ async function Commands(self, runMiddlewares) {
                 const emptyIndex = prefix.findIndex(_prefix => _prefix.includes(""));
                 prefix = Functions.arrayMove(prefix, emptyIndex - 1, prefix.length - 1);
             } else {
-                selectedPrefix = prefix.find(_prefix => m.content?.startsWith(_prefix));
+                selectedPrefix = prefix.find(_prefix => m.content.startsWith(_prefix));
             }
         } else if (prefix instanceof RegExp) {
-            const match = m.content?.match(prefix);
+            const match = m.content.match(prefix);
             if (match) selectedPrefix = match[0];
         }
 
         if (!selectedPrefix) return resolve();
 
-        const args = m.content?.slice(selectedPrefix.length).trim().split(/\s+/) || [];
-        const commandName = args?.shift()?.toLowerCase();
+        const args = m.content.slice(selectedPrefix.length).trim().split(/\s+/) || [];
+        const commandName = args?.shift().toLowerCase();
         if (!commandName) return resolve();
 
-        const matchedCommands = commandsList.filter(command => command.name.toLowerCase() === commandName || (Array.isArray(command.aliases) ? command.aliases.includes(commandName) : command.aliases === commandName));
+        const matchedCommands = commandsList.filter(command => command.name?.toLowerCase() === commandName || (Array.isArray(command.aliases) ? command.aliases.includes(commandName) : command.aliases === commandName));
 
         if (!matchedCommands.length) return resolve();
 

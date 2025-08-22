@@ -13,7 +13,7 @@ const {
     NodeCache
 } = require("@cacheable/node-cache");
 const Events = require("../Constant/Events.js");
-const fs = require("fs");
+const fs = require("node:fs");
 const Functions = require("../Helper/Functions.js");
 const ExtractEventsContent = require("../Handler/ExtractEventsContent.js");
 const Ctx = require("./Ctx.js");
@@ -68,14 +68,14 @@ class Client {
     }
 
     onConnectionUpdate() {
-        this.core.ev.on("connection.update", (m) => {
-            this.ev.emit(Events.ConnectionUpdate, m);
+        this.core.ev.on("connection.update", (update) => {
+            this.ev.emit(Events.ConnectionUpdate, update);
             const {
                 connection,
                 lastDisconnect
-            } = m;
+            } = update;
 
-            if (m.qr) this.ev.emit(Events.QR, m.qr);
+            if (update.qr) this.ev.emit(Events.QR, update.qr);
 
             if (connection === "close") {
                 const shouldReconnect = lastDisconnect.error.output.statusCode !== Baileys.DisconnectReason.loggedOut;
@@ -133,53 +133,52 @@ class Client {
             fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
         }
 
-        this.core.ev.on("messages.upsert", async (m) => {
-            const [message] = m.messages;
-            if (!message?.message) return;
+        this.core.ev.on("messages.upsert", async (event) => {
+            for (const message of event.messages) {
+                if (this.messageIdCache.get(message.key.id)) return;
+                this.messageIdCache.set(message.key.id, true);
 
-            if (this.messageIdCache.get(message.key.id)) return;
-            this.messageIdCache.set(message.key.id, true);
+                if (message.key.remoteJid.endsWith("@g.us")) await this.setGroupCache(msg.key.remoteJid);
 
-            const messageType = Baileys.getContentType(message.message);
-            const text = Functions.getContentFromMsg(message) ?? "";
+                const messageType = Baileys.getContentType(message.message);
+                const text = Functions.getContentFromMsg(message) ?? "";
 
-            const msg = {
-                content: text,
-                ...message,
-                messageType
-            };
+                const msg = {
+                    content: text,
+                    ...message,
+                    messageType
+                };
 
-            if (msg.key.remoteJid?.endsWith("@g.us")) await this.setGroupCache(msg.key.remoteJid);
+                const senderJid = await Functions.getSender(msg, this.core);
+                if (msg.pushName && this.pushNames[senderJid] !== msg.pushName) {
+                    this.pushNames[senderJid] = msg.pushName;
+                    this.savePushnames();
+                }
 
-            const senderJid = await Functions.getSender(msg, this.core);
-            if (msg.pushName && this.pushNames[senderJid] !== msg.pushName) {
-                this.pushNames[senderJid] = msg.pushName;
-                this.savePushnames();
+                const self = {
+                    ...this,
+                    m: msg
+                };
+
+                const used = ExtractEventsContent(msg, messageType);
+                const ctx = new Ctx({
+                    used,
+                    args: [],
+                    self,
+                    client: this.core
+                });
+
+                if (MessageEventList[messageType]) await MessageEventList[messageType](msg, this.ev, self, this.core);
+                this.ev.emit(Events.MessagesUpsert, msg, ctx);
+                if (this.readIncomingMsg) await this.read(msg);
+                await require("../Handler/Commands.js")(self, this.runMiddlewares.bind(this));
             }
-
-            const self = {
-                ...this,
-                m: msg
-            };
-
-            const used = ExtractEventsContent(msg, messageType);
-            const ctx = new Ctx({
-                used,
-                args: [],
-                self,
-                client: this.core
-            });
-
-            if (MessageEventList[messageType]) await MessageEventList[messageType](msg, this.ev, self, this.core);
-            this.ev.emit(Events.MessagesUpsert, msg, ctx);
-            if (this.readIncomingMsg) await this.read(msg);
-            await require("../Handler/Commands.js")(self, this.runMiddlewares.bind(this));
         });
     }
 
     onGroupsJoin() {
-        this.core.ev.on("groups.upsert", (m) => {
-            this.ev.emit(Events.GroupsJoin, m);
+        this.core.ev.on("groups.upsert", (event) => {
+            this.ev.emit(Events.GroupsJoin, event);
         });
     }
 
@@ -191,26 +190,26 @@ class Client {
     }
 
     onGroupsUpdate() {
-        this.core.ev.on("groups.update", async ([m]) => {
-            await this.setGroupCache(m.id);
+        this.core.ev.on("groups.update", async ([event]) => {
+            await this.setGroupCache(event.id);
         });
     }
 
     onGroupParticipantsUpdate() {
-        this.core.ev.on("group-participants.update", async (m) => {
-            await this.setGroupCache(m.id);
+        this.core.ev.on("group-participants.update", async (event) => {
+            await this.setGroupCache(event.id);
 
             if (m.action === "add") {
-                return this.ev.emit(Events.UserJoin, m);
+                return this.ev.emit(Events.UserJoin, event);
             } else if (m.action === "remove") {
-                return this.ev.emit(Events.UserLeave, m);
+                return this.ev.emit(Events.UserLeave, event);
             }
         });
     }
 
     onCall() {
-        this.core.ev.on("call", (m) => {
-            const withDecodedId = m.map(call => ({
+        this.core.ev.on("call", (event) => {
+            const withDecodedId = event.map(call => ({
                 ...call,
                 decodedFrom: Functions.decodeJid(call.from),
                 decodedChatId: Functions.decodeJid(call.chatId)
