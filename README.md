@@ -25,6 +25,7 @@
 - [Media Handling](#-media-handling)
 - [Message Editing](#-message-editing)
 - [Message Deletion](#-message-deletion)
+- [Message Forwarding](#-message-forwading)
 - [Poll Messages](#-poll-messages)
 - [Builders](#-builders)
   - [Contact Builder](#-contact-builder)
@@ -338,7 +339,6 @@ Supported formatting functions:
 - `Formatter.quote(text)`
 - `Formatter.inlineCode(text)`
 - `Formatter.monospace(text)`
-- `Formatter.smallCaps(text)`
 
 ## 🖼️ Media Handling
 
@@ -387,12 +387,22 @@ const sentMsg = await ctx.reply("Third Impact!");
 await ctx.deleteMessage(sentMsg.key);
 ```
 
+## ⏩ Message Forwarding
+
+Forward messages:
+
+```js
+const sentMsg = await ctx.reply("Does this impact the lore?");
+await ctx.forwardMessage("4321@g.us", sentMsg);
+```
+
 ## 📊 Poll Messages
 
 Create polls:
 
 ```js
 await ctx.sendPoll(ctx.id, { name: "Does this impact the lore?", values: ["Yes Rei, it does.", "No!"], singleSelect: true /* Allow only one selection */ });
+await ctx.replyPoll({ name: "Does this impact the lore?", values: ["Yes Rei, it does.", "No!"], singleSelect: true /* Allow only one selection */ });
 ```
 
 ## 🧱 Builders

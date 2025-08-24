@@ -209,16 +209,29 @@ class Ctx {
     }
 
     async sendMessage(jid, content, options = {}) {
-        if (this._self.autoMention && content.text) {
-            const mentions = [];
-            content.text = content.text.replace(/@(\d+)/g, (_, number) => {
-                if (/^\d+$/.test(number)) {
-                    mentions.push(`${number}@s.whatsapp.net`);
-                    return `@${number}`;
+        if (this._self.autoMention) {
+            const extractMentions = (text) => {
+                if (!text) return [];
+                const mentions = [];
+                const matches = text.match(/@(\d+)/g);
+                if (matches) {
+                    matches.forEach(match => {
+                        const number = match.substring(1);
+                        if (/^\d+$/.test(number)) mentions.push(`${number}@s.whatsapp.net`);
+                    });
                 }
-                return `@${number}`;
-            });
-            if (mentions.length) content.mentions = mentions;
+                return mentions;
+            };
+            const allMentions = [];
+            if (content.text) allMentions.push(...extractMentions(content.text));
+            if (content.caption) allMentions.push(...extractMentions(content.caption));
+            if (content.header) allMentions.push(...extractMentions(content.header));
+            if (content.footer) allMentions.push(...extractMentions(content.footer));
+            if (allMentions.length > 0) {
+                const existingMentions = content.mentions || [];
+                const newMentions = allMentions.filter(mention => !existingMentions.includes(mention));
+                if (newMentions.length > 0) content.mentions = [...existingMentions, ...newMentions];
+            }
         }
 
         if (content.buttons) {
@@ -232,7 +245,6 @@ class Ctx {
 
         if ((content.header || content.footer) && !content.buttons && !content.interactiveButtons) content.interactiveButtons = [];
         if (content.image || content.video || content.product && (content.interactiveButtons && content.interactiveButtons.length > 0 || content.buttons && content.buttons.length > 0)) content.media = true;
-
         if (this._self.autoAiLabel && jid.endsWith("@s.whatsapp.net")) content.ai = true;
 
         return this._client.sendMessage(jid, content, options);
@@ -259,7 +271,7 @@ class Ctx {
     }
 
     async react(jid, emoji, key) {
-        return this._client.sendMessage(jid, {
+        return this.sendMessage(jid, {
             react: {
                 text: emoji,
                 key: key || this._msg.key
@@ -267,8 +279,8 @@ class Ctx {
         });
     }
 
-    async pin(jid, time, type = 1) {
-        return this._client.sendMessage(jid, {
+    async pin(jid, time, type = 1, key) {
+        return this.sendMessage(jid, {
             pin: {
                 type,
                 time,
@@ -286,7 +298,7 @@ class Ctx {
     }
 
     async deleteMessage(key) {
-        return this._client.sendMessage(this.id, {
+        return this.sendMessage(this.id, {
             delete: key
         });
     }
@@ -298,11 +310,21 @@ class Ctx {
         });
     }
 
+    async forwardMessage(jid, msg) {
+        return this.sendMessage(jid, {
+            forward: msg
+        });
+    }
+
     async sendPoll(jid, args) {
         args.selectableCount = !!args.singleSelect;
-        return this._client.sendMessage(jid, {
+        return this.sendMessage(jid, {
             poll: args
         });
+    }
+
+    async replyPoll(args) {
+        return this.sendPoll(this.id, args);
     }
 
     MessageCollector(args = {
