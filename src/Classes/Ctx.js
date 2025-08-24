@@ -286,7 +286,7 @@ class Ctx {
     async sendPin(jid, time, type, key) {
         return this.sendMessage(jid, {
             pin: {
-                type || 1,
+                type: type || 1,
                 time,
                 key: key || this._msg.key
             }
