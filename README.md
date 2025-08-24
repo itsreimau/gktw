@@ -580,7 +580,7 @@ await newsletter.react("123", "👍");
 ```js
 const { Browsers, fetchLatestWaWebVersion, getContentType, generateWAMessageFromContent, proto } = require("@itsreimau/gktw"); // Maybe if you need some Baileys functionality
 
-// Message reactions, pin, & poll
+// Message reaction, pin, & poll
 await ctx.sendReact(ctx.id, "👍");
 await ctx.replyReact("👍");
 await ctx.sendPin(ctx.id, "86400");
