@@ -201,7 +201,7 @@ class Client {
 
             if (event.action === "add") {
                 return this.ev.emit(Events.UserJoin, event);
-            } else if (m.action === "remove") {
+            } else if (event.action === "remove") {
                 return this.ev.emit(Events.UserLeave, event);
             }
         });

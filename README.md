@@ -26,7 +26,6 @@
 - [Message Editing](#-message-editing)
 - [Message Deletion](#-message-deletion)
 - [Message Forwarding](#-message-forwading)
-- [Poll Messages](#-poll-messages)
 - [Builders](#-builders)
   - [Contact Builder](#-contact-builder)
 - [Collectors](#-collectors)
@@ -396,15 +395,6 @@ const sentMsg = await ctx.reply("Does this impact the lore?");
 await ctx.forwardMessage("4321@g.us", sentMsg);
 ```
 
-## 📊 Poll Messages
-
-Create polls:
-
-```js
-await ctx.sendPoll(ctx.id, { name: "Does this impact the lore?", values: ["Yes Rei, it does.", "No!"], singleSelect: true /* Allow only one selection */ });
-await ctx.replyPoll({ name: "Does this impact the lore?", values: ["Yes Rei, it does.", "No!"], singleSelect: true /* Allow only one selection */ });
-```
-
 ## 🧱 Builders
 
 ### ▸ Contact Builder
@@ -590,9 +580,13 @@ await newsletter.react("123", "👍");
 ```js
 const { Browsers, fetchLatestWaWebVersion, getContentType, generateWAMessageFromContent, proto } = require("@itsreimau/gktw"); // Maybe if you need some Baileys functionality
 
-// Message reactions & pin
-await ctx.react(ctx.id, "👍");
-await ctx.pin(ctx.id, "86400");
+// Message reactions, pin, & poll
+await ctx.sendReact(ctx.id, "👍");
+await ctx.replyReact("👍");
+await ctx.sendPin(ctx.id, "86400");
+await ctx.replyPin("86400");
+await ctx.sendPoll(ctx.id, { name: "Does this impact the lore?", values: ["Yes Rei, it does.", "No!"], singleSelect: true /* Allow only one selection */ });
+await ctx.replyPoll({ name: "Does this impact the lore?", values: ["Yes Rei, it does.", "No!"], singleSelect: true /* Allow only one selection */ });
 
 // Get message details
 ctx.args;

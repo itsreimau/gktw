@@ -270,7 +270,7 @@ class Ctx {
         });
     }
 
-    async react(jid, emoji, key) {
+    async sendReact(jid, emoji, key) {
         return this.sendMessage(jid, {
             react: {
                 text: emoji,
@@ -279,14 +279,33 @@ class Ctx {
         });
     }
 
-    async pin(jid, time, type = 1, key) {
+    async replyReact(emoji, key) {
+        return this.sendReact(this.id, emoji, key);
+    }
+
+    async sendPin(jid, time, type, key) {
         return this.sendMessage(jid, {
             pin: {
-                type,
+                type || 1,
                 time,
                 key: key || this._msg.key
             }
         });
+    }
+
+    async replyPin(time, type, key) {
+        return this.sendPin(this.id, time, type, key);
+    }
+
+    async sendPoll(jid, args) {
+        args.selectableCount = !!args.singleSelect;
+        return this.sendMessage(jid, {
+            poll: args
+        });
+    }
+
+    async replyPoll(args) {
+        return this.sendPoll(this.id, args);
     }
 
     simulateTyping() {
@@ -314,17 +333,6 @@ class Ctx {
         return this.sendMessage(jid, {
             forward: msg
         });
-    }
-
-    async sendPoll(jid, args) {
-        args.selectableCount = !!args.singleSelect;
-        return this.sendMessage(jid, {
-            poll: args
-        });
-    }
-
-    async replyPoll(args) {
-        return this.sendPoll(this.id, args);
     }
 
     MessageCollector(args = {
