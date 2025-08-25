@@ -138,7 +138,7 @@ class Client {
                 if (this.messageIdCache.get(message.key.id)) return;
                 this.messageIdCache.set(message.key.id, true);
 
-                if (message.key.remoteJid.endsWith("@g.us")) await this.setGroupCache(message.key.remoteJid);
+                if (Baileys.isJidGroup(message.key.remoteJid)) await this.setGroupCache(message.key.remoteJid);
 
                 const messageType = Baileys.getContentType(message.message);
                 const text = Functions.getContentFromMsg(message) ?? "";

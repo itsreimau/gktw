@@ -1,5 +1,6 @@
 "use strict";
 
+const Baileys = require("baileys");
 const Ctx = require("../Classes/Ctx.js");
 const Functions = require("../Helper/Functions.js");
 
@@ -11,7 +12,7 @@ async function Commands(self, runMiddlewares) {
             m
         } = self;
 
-        if (!m.message || m.key.remoteJid === "status@broadcast" || m.key.remoteJid.endsWith("@newsletter") || m.key.participant?.endsWith("@lid")) return resolve();
+        if (!m.message || Baileys.isJidStatusBroadcast(m.key.remoteJid) || Baileys.isJidNewsletter(m.key.remoteJid) || Baileys.isLidUser(m.key.participant)) return resolve();
         if (!self.selfReply && m.key.fromMe) return resolve();
 
         const hasHears = Array.from(self.hearsMap.values()).filter(hear => hear.name === m.content || hear.name === m.messageType || new RegExp(hear.name).test(m.content) || (Array.isArray(hear.name) && hear.name.includes(m.content)));

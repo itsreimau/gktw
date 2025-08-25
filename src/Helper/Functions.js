@@ -1,10 +1,9 @@
 "use strict";
 
-const {
-    jidDecode
-} = require("baileys");
+const MessageType = require("../Constant/MessageType.js");
 const fs = require("node:fs");
 const path = require("node:path");
+const Baileys = require("baileys");
 
 const arrayMove = (array, oldIndex, newIndex) => {
     if (oldIndex < 0 || oldIndex >= array.length) return array;
@@ -20,7 +19,7 @@ const arrayMove = (array, oldIndex, newIndex) => {
 
 const getContentType = (content) => {
     const keys = Object.keys(content)
-    const type = keys.find(key => (key === "conversation" || key.endsWith("Message") || key.endsWith("V2") || key.endsWith("V3")) && key !== "senderKeyDistributionMessage")
+    const type = keys.find(key => (key === MessageType.conversation || key.endsWith("Message") || key.endsWith("V2") || key.endsWith("V3")) && key !== MessageType.senderKeyDistributionMessage)
     return type;
 };
 
@@ -82,8 +81,8 @@ const decodeJid = (jid) => {
     if (!jid) return null;
 
     if (/:\d+@/gi.test(jid)) {
-        const decoded = jidDecode(jid);
-        return decoded?.user && decoded?.server ? `${decoded.user}@${decoded.server}` : jid;
+        const decoded = Baileys.jidDecode(jid);
+        return decoded?.user && decoded?.server ? Baileys.jidEncode(decoded.user, decoded.server) : jid;
     }
     return jid;
 };
@@ -94,7 +93,7 @@ const getPushname = (jid, pushNames = {}) => {
 };
 
 const getId = (jid) => {
-    const decoded = jidDecode(jid);
+    const decoded = Baileys.jidDecode(jid);
     return decoded?.user || jid;
 };
 

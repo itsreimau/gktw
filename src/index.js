@@ -1,14 +1,10 @@
 "use strict";
 
-const Baileys = require("baileys");
-
 module.exports = {
-    Browsers: Baileys.Browsers,
-    fetchLatestWaWebVersion: Baileys.fetchLatestWaWebVersion,
-    getContentType: Baileys.getContentType,
-    generateWAMessageFromContent: Baileys.generateWAMessageFromContent,
-    lidToJid: Baileys.lidToJid,
-    proto: Baileys.proto,
+    Baileys: {
+        ...require("baileys"),
+        G_US: "@g.us"
+    },
     Client: require("./Classes/Client.js"),
     CommandHandler: require("./Classes/CommandHandler.js"),
     Cooldown: require("./Classes/Cooldown.js"),

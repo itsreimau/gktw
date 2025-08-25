@@ -106,7 +106,7 @@ class Ctx {
     }
 
     isGroup() {
-        return this.id.endsWith("@g.us");
+        return Baileys.isJidGroup(this.id);
     }
 
     getMessageType() {
@@ -121,12 +121,8 @@ class Ctx {
         const mentionedLid = this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
         const mentionedJid = [];
         for (const lid of mentionedLid) {
-            try {
-                const jid = await Baileys.lidToJid(lid);
-                if (jid) mentionedJid.push(jid);
-            } catch (error) {
-                mentionedJid.push(lid);
-            }
+            const jid = await Baileys.lidToJid(this._client, lid);
+            if (jid) mentionedJid.push(jid);
         }
 
         return mentionedJid;
@@ -191,8 +187,8 @@ class Ctx {
             messageType: Functions.getContentType(msgContext.quotedMessage) || Object.keys(msgContext.quotedMessage)[0],
             contentType: Functions.getContentType(message),
             key: {
-                remoteJid: this.id,
-                participant: this.id.endsWith("@g.us") ? senderJid : null,
+                remoteJid: msgContext?.remoteJid || this.id,
+                participant: Baileys.isJidGroup(msgContext?.remoteJid) ? senderJid : null,
                 fromMe: senderJid && this._client.user.id ? Baileys.areJidsSameUser(Functions.decodeJid(senderJid), Functions.decodeJid(this._client.user.id)) : false,
                 id: msgContext.stanzaId
             },
@@ -228,7 +224,7 @@ class Ctx {
                 if (matches) {
                     matches.forEach(match => {
                         const number = match.substring(1);
-                        if (/^\d+$/.test(number)) mentions.push(`${number}@s.whatsapp.net`);
+                        if (/^\d+$/.test(number)) mentions.push(number + Baileys.S_WHATSAPP_NET);
                     });
                 }
                 return mentions;
@@ -256,7 +252,7 @@ class Ctx {
 
         if ((content.header || content.footer) && !content.buttons && !content.interactiveButtons) content.interactiveButtons = [];
         if (content.image || content.video || content.product && (content.interactiveButtons && content.interactiveButtons.length > 0 || content.buttons && content.buttons.length > 0)) content.media = true;
-        if (this._self.autoAiLabel && jid.endsWith("@s.whatsapp.net")) content.ai = true;
+        if (this._self.autoAiLabel && Baileys.isJidUser(jid)) content.ai = true;
 
         return this._client.sendMessage(jid, content, options);
     }

@@ -578,7 +578,7 @@ await newsletter.react("123", "👍");
 ## 🔧 Miscellaneous Utilities
 
 ```js
-const { Browsers, fetchLatestWaWebVersion, getContentType, generateWAMessageFromContent, lidToJid, proto } = require("@itsreimau/gktw"); // Maybe if you need some Baileys functionality
+const { Baileys } = require("@itsreimau/gktw"); // Maybe if you need some Baileys functionality
 
 // Message reaction, pin, & poll
 await ctx.sendReact(ctx.id, "👍");
