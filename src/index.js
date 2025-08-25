@@ -7,7 +7,7 @@ module.exports = {
     fetchLatestWaWebVersion: Baileys.fetchLatestWaWebVersion,
     getContentType: Baileys.getContentType,
     generateWAMessageFromContent: Baileys.generateWAMessageFromContent,
-    lidToJid: Baileys.lidToJidAsync,
+    lidToJid: Baileys.lidToJid,
     proto: Baileys.proto,
     Client: require("./Classes/Client.js"),
     CommandHandler: require("./Classes/CommandHandler.js"),

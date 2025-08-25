@@ -117,8 +117,19 @@ class Ctx {
         return Functions.getContentType(content);
     }
 
-    getMentioned() {
-        return this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
+    async getMentioned() {
+        const mentionedLid = this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
+        const mentionedJid = [];
+        for (const lid of mentionedLid) {
+            try {
+                const jid = await Baileys.lidToJid(lid);
+                if (jid) mentionedJid.push(jid);
+            } catch (error) {
+                mentionedJid.push(lid);
+            }
+        }
+
+        return mentionedJid;
     }
 
     getDevice(id) {
