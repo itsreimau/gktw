@@ -145,7 +145,7 @@ class Client {
                 let senderJid = await Functions.getSender(message, this.core);
 
                 if (Baileys.isLidUser(senderJid)) {
-                    senderJid = await Baileys.lidToJid(this._client, senderJid);
+                    senderJid = await Functions.lidToJid(this.core, senderJid, Baileys.isJidGroup(message.key.remoteJid) ? message.key.remoteJid : null);
                 }
 
                 if (message.pushName && this.pushNames[senderJid] !== message.pushName) {

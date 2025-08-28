@@ -77,6 +77,16 @@ const walk = (dir, callback) => {
     fs.readdirSync(dir).forEach(processEntry);
 };
 
+const lidToJid = (client, senderLid, groupJid, force = false) => {
+    const jid = await Baileys.lidToJid(client, senderLid, groupJid ? {
+        groupId: groupJid,
+        force
+    } : {
+        force
+    });
+    return jid;
+};
+
 const decodeJid = (jid) => {
     if (!jid) return null;
 
@@ -103,6 +113,7 @@ module.exports = {
     getContentFromMsg,
     getSender,
     walk,
+    lidToJid
     decodeJid,
     getPushname,
     getId
