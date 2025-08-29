@@ -113,7 +113,7 @@ module.exports = {
     getContentFromMsg,
     getSender,
     walk,
-    lidToJid
+    lidToJid,
     decodeJid,
     getPushname,
     getId
