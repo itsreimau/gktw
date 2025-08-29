@@ -77,11 +77,11 @@ const walk = (dir, callback) => {
     fs.readdirSync(dir).forEach(processEntry);
 };
 
-const lidToJid = (client, senderLid, groupJid, force = false) => {
-    const jid = await Baileys.lidToJid(client, senderLid, groupJid ? {
-        groupId: groupJid,
-        force
-    } : {
+const lidToJid = async (client, senderLid, groupJid, force = false) => {
+    const jid = await Baileys.lidToJid(client, senderLid, {
+        ...(groupJid && {
+            groupId: groupJid
+        }),
         force
     });
     return jid;
