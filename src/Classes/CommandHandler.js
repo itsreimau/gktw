@@ -4,8 +4,8 @@ const {
     Consolefy
 } = require("@mengkodingan/consolefy");
 const {
-    walk
-} = require("../Helper/Functions.js");
+    globSync
+} = require("glob");
 
 class CommandHandler {
     constructor(bot, path) {
@@ -19,8 +19,14 @@ class CommandHandler {
     load(isShowLog = true) {
         if (isShowLog) this.consolefy.group("Command Handler Load");
 
-        walk(this._path, (_walk) => {
-            const cmdObj = require(_walk);
+        const files = globSync("**/*.{js}", {
+            cwd: this._path,
+            nodir: true,
+            absolute: true
+        });
+
+        files.forEach(file => {
+            const cmdObj = require(file);
 
             if (!cmdObj.type || cmdObj.type === "command") {
                 this._bot.cmd.set(cmdObj.name, cmdObj);

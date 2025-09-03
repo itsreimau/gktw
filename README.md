@@ -568,7 +568,7 @@ const newsletter = await ctx.newsletter(); // Current newsletter
 const newsletter = await ctx.newsletter("1234@newsletter"); // Specify JID
 
 // Common operations
-await newsletter.updateNmae("NERV");
+await newsletter.updateName("NERV");
 await newsletter.updateDescription("Does this impact the lore?");
 await newsletter.updatePicture(Buffer);
 await newsletter.removePicture();

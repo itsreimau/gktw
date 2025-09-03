@@ -1,25 +1,11 @@
 "use strict";
 
 const MessageType = require("../Constant/MessageType.js");
-const fs = require("node:fs");
-const path = require("node:path");
 const Baileys = require("baileys");
 
-const arrayMove = (array, oldIndex, newIndex) => {
-    if (oldIndex < 0 || oldIndex >= array.length) return array;
-
-    const item = array[oldIndex];
-    const movedArray = [...array];
-
-    movedArray.splice(oldIndex, 1);
-    movedArray.splice(newIndex, 0, item);
-
-    return movedArray;
-};
-
 const getContentType = (content) => {
-    const keys = Object.keys(content)
-    const type = keys.find(key => (key === MessageType.conversation || key.endsWith("Message") || key.endsWith("V2") || key.endsWith("V3")) && key !== MessageType.senderKeyDistributionMessage)
+    const keys = Object.keys(content);
+    const type = keys.find(key => (key === MessageType.conversation || key.endsWith("Message") || key.endsWith("V2") || key.endsWith("V3")) && key !== MessageType.senderKeyDistributionMessage);
     return type;
 };
 
@@ -60,23 +46,6 @@ const getContentFromMsg = (msg) => {
 
 const getSender = (msg, client) => msg.key.fromMe ? client.user.id : msg.key.participant || msg.key.remoteJid;
 
-const walk = (dir, callback) => {
-    if (!fs.existsSync(dir)) return;
-
-    const processEntry = (entry) => {
-        const filepath = path.join(dir, entry);
-        const stats = fs.statSync(filepath);
-
-        if (stats.isDirectory()) {
-            walk(filepath, callback);
-        } else if (stats.isFile()) {
-            callback(filepath, stats);
-        }
-    };
-
-    fs.readdirSync(dir).forEach(processEntry);
-};
-
 const lidToJid = async (client, senderLid, groupJid, force = false) => {
     const jid = await Baileys.lidToJid(client, senderLid, {
         ...(groupJid && {
@@ -108,11 +77,9 @@ const getId = (jid) => {
 };
 
 module.exports = {
-    arrayMove,
     getContentType,
     getContentFromMsg,
     getSender,
-    walk,
     lidToJid,
     decodeJid,
     getPushname,

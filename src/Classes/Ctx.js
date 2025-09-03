@@ -241,6 +241,11 @@ class Ctx {
             }
         }
 
+        if (content.mentions && Array.isArray(content.mentions) && content.mentions.length > 0 && content.contextInfo && !content.contextInfo.mentionedJid) {
+            content.contextInfo.mentionedJid = content.mentions;
+            delete content.mentions;
+        }
+
         if (content.buttons) {
             content.buttons = content.buttons.map(button => {
                 if (!button.type) button.type = 1;

@@ -2,7 +2,7 @@
 
 const Baileys = require("baileys");
 const Ctx = require("../Classes/Ctx.js");
-const Functions = require("../Helper/Functions.js");
+const arrayMove = require("array-move");
 
 async function Commands(self, runMiddlewares) {
     return new Promise((resolve, reject) => {
@@ -37,7 +37,7 @@ async function Commands(self, runMiddlewares) {
         if (Array.isArray(prefix)) {
             if (prefix[0] == "") {
                 const emptyIndex = prefix.findIndex(_prefix => _prefix.includes(""));
-                prefix = Functions.arrayMove(prefix, emptyIndex - 1, prefix.length - 1);
+                prefix = arrayMove(prefix, emptyIndex - 1, prefix.length - 1);
             } else {
                 selectedPrefix = prefix.find(_prefix => m.content.startsWith(_prefix));
             }
