@@ -19,7 +19,7 @@ class CommandHandler {
     load(isShowLog = true) {
         if (isShowLog) this.consolefy.group("Command Handler Load");
 
-        const files = globSync("**/*.{js}", {
+        const files = globSync("**/*.js", {
             cwd: this._path,
             nodir: true,
             absolute: true
