@@ -117,15 +117,18 @@ class Ctx {
         return Functions.getContentType(content);
     }
 
-    async getMentioned() {
-        const mentionedLid = this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
-        const mentionedJid = [];
-        for (const lid of mentionedLid) {
-            const jid = await Functions.lidToJid(this._client, senderJid, Baileys.isJidGroup(this.id) ? this.id : null);
-            if (jid) mentionedJid.push(jid);
-        }
-
-        return mentionedJid;
+    async getMentioned(convertLid = true) {
+        if (convertLid) {
+            const mentionedLid = this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
+            const mentionedJid = [];
+            for (const lid of mentionedLid) {
+                const jid = await Functions.lidToJid(this._client, mentionedLid, Baileys.isJidGroup(this.id) ? this.id : null);
+                if (jid) mentionedJid.push(jid);
+            }
+            return mentionedJid
+        } else {
+            return this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || []
+        };
     }
 
     getDevice(id) {
@@ -219,25 +222,16 @@ class Ctx {
         if (this._self.autoMention) {
             const extractMentions = (text) => {
                 if (!text) return [];
-                const mentions = [];
-                const matches = text.match(/@(\d+)/g);
-                if (matches) {
-                    matches.forEach(match => {
-                        const number = match.substring(1);
-                        if (/^\d+$/.test(number)) mentions.push(number + Baileys.S_WHATSAPP_NET);
-                    });
-                }
-                return mentions;
+                return (text.match(/@(\d+)/g) || []).map(match => match.substring(1)).filter(number => /^\d+$/.test(number)).map(number => number + Baileys.S_WHATSAPP_NET);
             };
-            const allMentions = [];
-            if (content.text) allMentions.push(...extractMentions(content.text));
-            if (content.caption) allMentions.push(...extractMentions(content.caption));
-            if (content.header) allMentions.push(...extractMentions(content.header));
-            if (content.footer) allMentions.push(...extractMentions(content.footer));
+
+            const allMentions = [...extractMentions(content.text), ...extractMentions(content.caption), ...extractMentions(content.header), ...extractMentions(content.footer)].filter(Boolean);
             if (allMentions.length > 0) {
-                const existingMentions = content.mentions || [];
-                const newMentions = allMentions.filter(mention => !existingMentions.includes(mention));
-                if (newMentions.length > 0) content.mentions = [...existingMentions, ...newMentions];
+                if (content.contextInfo) {
+                    content.contextInfo.mentionedJid = [...(content.contextInfo.mentionedJid || []), ...allMentions.filter(mention => !(content.contextInfo.mentionedJid || []).includes(mention))];
+                } else {
+                    content.mentions = [...(content.mentions || []), ...allMentions.filter(mention => !(content.mentions || []).includes(mention))];
+                }
             }
         }
 

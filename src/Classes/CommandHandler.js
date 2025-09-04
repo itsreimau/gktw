@@ -1,11 +1,7 @@
 "use strict";
 
-const {
-    Consolefy
-} = require("@mengkodingan/consolefy");
-const {
-    globSync
-} = require("glob");
+const { Consolefy } = require("@mengkodingan/consolefy");
+const { globSync } = require("glob");
 
 class CommandHandler {
     constructor(bot, path) {

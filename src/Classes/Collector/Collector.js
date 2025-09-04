@@ -1,9 +1,7 @@
 "use strict";
 
 const EventEmitter = require("node:events");
-const {
-    Collection
-} = require("@discordjs/collection");
+const { Collection } = require("@discordjs/collection");
 
 class Collector extends EventEmitter {
     constructor(options = {

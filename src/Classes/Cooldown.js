@@ -1,9 +1,7 @@
 "use strict";
 
 const EventEmitter = require("node:events");
-const {
-    decodeJid
-} = require("../Helper/Functions.js");
+const { decodeJid } = require("../Helper/Functions.js");
 
 class Cooldown extends EventEmitter {
     constructor(ctx, ms) {

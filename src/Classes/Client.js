@@ -3,36 +3,28 @@
 const Baileys = require("baileys");
 const pino = require("pino");
 const EventEmitter = require("node:events");
-const {
-    Collection
-} = require("@discordjs/collection");
-const {
-    Consolefy
-} = require("@mengkodingan/consolefy");
-const {
-    NodeCache
-} = require("@cacheable/node-cache");
+const { Collection } = require("@discordjs/collection");
+const { Consolefy } = require("@mengkodingan/consolefy");
+const { NodeCache } = require("@cacheable/node-cache");
 const Events = require("../Constant/Events.js");
 const fs = require("node:fs");
 const Functions = require("../Helper/Functions.js");
 const ExtractEventsContent = require("../Handler/ExtractEventsContent.js");
 const Ctx = require("./Ctx.js");
 const MessageEventList = require("../Handler/MessageEvents.js");
-const {
-    parsePhoneNumberFromString
-} = require("libphonenumber-js");
+const { parsePhoneNumberFromString } = require("libphonenumber-js");
 
 class Client {
     constructor(opts) {
-        this.authDir = opts.authDir ?? "./state";
         this.authAdapter = opts.authAdapter ?? Baileys.useMultiFileAuthState(this.authDir);
-        this.WAVersion = opts.WAVersion;
+        this.authDir = opts.authDir ?? "./state";
         this.browser = opts.browser ?? Baileys.Browsers.ubuntu("CHROME");
+        this.WAVersion = opts.WAVersion;
         this.printQRInTerminal = opts.printQRInTerminal ?? true;
+        this.qrTimeout = opts.qrTimeout ?? 60000;
         this.phoneNumber = opts.phoneNumber;
         this.usePairingCode = opts.usePairingCode ?? false;
         this.customPairingCode = opts.customPairingCode ?? false;
-        this.qrTimeout = opts.qrTimeout ?? 60000;
         this.logger = opts.logger ?? pino({
             level: "fatal"
         });

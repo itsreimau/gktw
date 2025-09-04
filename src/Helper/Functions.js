@@ -47,12 +47,13 @@ const getContentFromMsg = (msg) => {
 const getSender = (msg, client) => msg.key.fromMe ? client.user.id : msg.key.participant || msg.key.remoteJid;
 
 const lidToJid = async (client, senderLid, groupJid, force = false) => {
-    const jid = await Baileys.lidToJid(client, senderLid, {
-        ...(groupJid && {
-            groupId: groupJid
-        }),
+    const opts = groupJid ? {
+        groupId: groupJid,
         force
-    });
+    } : {
+        force
+    };
+    const jid = await Baileys.lidToJid(client, senderLid, opts);
     return jid;
 };
 

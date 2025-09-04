@@ -40,7 +40,7 @@ class MessageCollector extends Collector {
                 content,
                 message,
                 ...m,
-                contentType: Baileys.getContentType(message),
+                contentType: Functions.getContentType(message),
                 id: m.key.remoteJid,
                 decodedId: m.key.remoteJid ? Functions.decodeJid(m.key.remoteJid) : null,
                 senderJid: senderJid,
