@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.2.2-phoenix",
+  "version": "1.2.3-phoenix",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -26,7 +26,7 @@
     "baileys": "npm:@rexxhayanasi/elaina-bail",
     "glob": "^11.0.3",
     "libphonenumber-js": "^1.12.15",
-    "pino": "^9.9.1",
+    "pino": "^9.9.2",
     "vcard-parser": "^1.0.0"
   }
 }

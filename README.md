@@ -129,15 +129,15 @@ bot.launch();
 
 ```js
 new Client({
-    authDir: String, // Path to auth directory (default: "./state")
     authAdapter: Function, // Custom auth adapter
-    WAVersion: [Number, Number, Number], // Custom WhatsApp version
+    authDir: String, // Path to auth directory (default: "./state")
     browser: Function, // Browser configuration
+    WAVersion: [Number, Number, Number], // Custom WhatsApp version
     printQRInTerminal: Boolean, // Display QR in terminal (default: false)
+    qrTimeout: Number, // QR regeneration timeout in ms (default: 60000)
     phoneNumber: String, // Bot phone number with country code (e.g. '62xxx')
     usePairingCode: Boolean, // Use pairing code instead of QR (default: false)
     customPairingCode: String, // Custom pairing code
-    qrTimeout: Number, // QR regeneration timeout in ms (default: 60000)
     useStore: Boolean, // Use store for upsert messages (default: false)
     readIncomingMsg: Boolean, // Mark incoming messages as read (default: false)
     markOnlineOnConnect: Boolean, // Mark online on connect (default: true)
@@ -474,7 +474,7 @@ await ctx.reply("Get in the EVA, @1234!"); // No need for mentions array
 Extract mentioned users from message:
 
 ```js
-await ctx.getMentioned(); /* Returns array of JIDs like ["1234@s.whatsapp.net"]
+await ctx.getMentioned(false); // Returns array of LIDs (maybe) like ["1234@lid"], set to true to convert LID like ["1234@s.whatsapp.net"]
 ```
 
 ## 🤖 AI Label
