@@ -129,8 +129,8 @@ bot.launch();
 
 ```js
 new Client({
-    authAdapter: Function, // Custom auth adapter
     authDir: String, // Path to auth directory (default: "./state")
+    authAdapter: Function, // Custom auth adapter
     browser: Function, // Browser configuration
     WAVersion: [Number, Number, Number], // Custom WhatsApp version
     printQRInTerminal: Boolean, // Display QR in terminal (default: false)
@@ -474,7 +474,7 @@ await ctx.reply("Get in the EVA, @1234!"); // No need for mentions array
 Extract mentioned users from message:
 
 ```js
-await ctx.getMentioned(false); // Returns array of LIDs (maybe) like ["1234@lid"], set to true to convert LID like ["1234@s.whatsapp.net"]
+await ctx.getMentioned(); // Returns array of JIDs like ["1234@s.whatsapp.net"]
 ```
 
 ## 🤖 AI Label

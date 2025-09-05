@@ -125,9 +125,9 @@ class Ctx {
                 const jid = await Functions.lidToJid(this._client, mentionedLid, Baileys.isJidGroup(this.id) ? this.id : null);
                 if (jid) mentionedJid.push(jid);
             }
-            return mentionedJid
+            return mentionedJid;
         } else {
-            return this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || []
+            return this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
         };
     }
 

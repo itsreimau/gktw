@@ -21,6 +21,8 @@ class CommandHandler {
             absolute: true
         });
 
+        files.sort((a, b) => a.localeCompare(b));
+
         files.forEach(file => {
             const cmdObj = require(file);
 

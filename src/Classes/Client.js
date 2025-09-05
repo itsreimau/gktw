@@ -16,8 +16,8 @@ const { parsePhoneNumberFromString } = require("libphonenumber-js");
 
 class Client {
     constructor(opts) {
-        this.authAdapter = opts.authAdapter ?? Baileys.useMultiFileAuthState(this.authDir);
         this.authDir = opts.authDir ?? "./state";
+        this.authAdapter = opts.authAdapter ?? Baileys.useMultiFileAuthState(this.authDir);
         this.browser = opts.browser ?? Baileys.Browsers.ubuntu("CHROME");
         this.WAVersion = opts.WAVersion;
         this.printQRInTerminal = opts.printQRInTerminal ?? true;
@@ -35,8 +35,8 @@ class Client {
         this.selfReply = opts.selfReply ?? false;
         this.autoMention = opts.autoMention ?? false;
         this.autoAiLabel = opts.autoAiLabel ?? false;
-        this.fallbackWAVersion = [2, 3000, 1021387508];
 
+        this.fallbackWAVersion = [2, 3000, 1021387508];
         this.ev = new EventEmitter();
         this.cmd = new Collection();
         this.cooldown = new Collection();
@@ -274,14 +274,14 @@ class Client {
 
         const version = this.WAVersion ? this.WAVersion : this.fallbackWAVersion;
         this.core = Baileys.default({
+            version,
+            browser: this.browser,
             logger: this.logger,
             printQRInTerminal: this.printQRInTerminal,
             auth: this.state,
-            browser: this.browser,
-            version,
-            qrTimeout: this.qrTimeout,
             markOnlineOnConnect: this.markOnlineOnConnect,
-            cachedGroupMetadata: async (jid) => this.groupCache.get(jid)
+            cachedGroupMetadata: async (jid) => this.groupCache.get(jid),
+            qrTimeout: this.qrTimeout
         });
 
         if (this.useStore) this.store.bind(this.core.ev);
