@@ -122,7 +122,7 @@ class Ctx {
             const mentionedLid = this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
             const mentionedJid = [];
             for (const lid of mentionedLid) {
-                const jid = await Functions.lidToJid(this._client, mentionedLid, Baileys.isJidGroup(this.id) ? this.id : null);
+                const jid = await Functions.lidToJid(this._client, lid, Baileys.isJidGroup(this.id) ? this.id : null);
                 if (jid) mentionedJid.push(jid);
             }
             return mentionedJid;
