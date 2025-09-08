@@ -46,7 +46,7 @@ class MessageCollector extends Collector {
                 senderJid: senderJid,
                 decodedSenderJid: senderJid ? Functions.decodeJid(senderJid) : null
             };
-        } catch (e) {
+        } catch {
             return null;
         }
     }

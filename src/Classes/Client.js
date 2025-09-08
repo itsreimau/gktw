@@ -46,7 +46,7 @@ class Client {
         this.store = Baileys.makeInMemoryStore({});
         this.storePath = `${this.authDir}/gktw_store.json`;
         this.groupCache = new NodeCache({
-            stdTTL: 5 * 60,
+            stdTTL: 30 * 60,
             useClones: false
         });
         this.messageIdCache = new NodeCache({
@@ -134,11 +134,9 @@ class Client {
 
                 const messageType = Baileys.getContentType(message.message);
                 const text = Functions.getContentFromMsg(message) ?? "";
-                let senderJid = await Functions.getSender(message, this.core);
 
-                if (Baileys.isLidUser(senderJid)) {
-                    senderJid = await Functions.lidToJid(this.core, senderJid, Baileys.isJidGroup(message.key.remoteJid) ? message.key.remoteJid : null);
-                }
+                let senderJid = await Functions.getSender(message, this.core);
+                if (Baileys.isLidUser(senderJid)) senderJid = await Functions.lidToJid(this.core, senderJid, Baileys.isJidGroup(message.key.remoteJid) ? message.key.remoteJid : null);
 
                 if (message.pushName && this.pushNames[senderJid] !== message.pushName) {
                     this.pushNames[senderJid] = message.pushName;

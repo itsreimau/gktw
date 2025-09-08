@@ -49,7 +49,6 @@ This is a custom fork of [@mengkodingan/ckptw](https://npmjs.com/package/@mengko
 
 🚫 **Not recommended for other projects** – consider these alternatives instead:
 
-- [@aidulcandra/simple-wa-bot](https://www.npmjs.com/package/@aidulcandra/simple-wa-bot)
 - [@neoxr/wb](https://www.npmjs.com/package/@neoxr/wb)
 - [wachan](https://www.npmjs.com/package/wachan)
 - [zaileys](https://www.npmjs.com/package/zaileys)
@@ -65,13 +64,13 @@ npm install github:itsreimau/gktw
 ## ✨ Key Features
 
 - **✨ Effortless** - Simple and intuitive API
-- **🔧 Fixed @lid & @jid** - Resolved WhatsApp group @lid and @jid issues
-- **🧱 Builder** - Build complex messages easily
 - **🛒 Built-in Collector, Cooldown, Command Handle** - Essential utilities included
+- **🧱 Builder** - Build complex messages easily
 - **🚀 Middleware System** - Intercept and process messages
 - **💽 Custom Auth Adapter** - Flexible session storage options
-- **📦 Group Metadata Caching** - Prevents API overlimit with efficient caching
 - **🔌 CommonJS Only** - Optimized for CJS environments
+- **📦 Group Metadata Caching** - Prevents API overlimit with efficient caching
+- **🔧 Fixed @lid (Unstable)** - Resolved @lid issues
 - **🎉 And more!** - Extensive WhatsApp feature support
 
 ## 🚀 Quick Start

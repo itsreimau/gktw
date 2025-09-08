@@ -180,7 +180,8 @@ class Ctx {
         const msgContext = this._msg.message?.[this.getMessageType()]?.contextInfo ?? {};
         if (!msgContext?.quotedMessage) return null;
         const message = Baileys.extractMessageContent(msgContext.quotedMessage) ?? {};
-        const senderJid = msgContext?.participant || msgContext?.remoteJid || this.id;
+        const chatId = msgContext?.remoteJid || this.id;
+        const senderJid = msgContext?.participant || chatId;
 
         return {
             content: Functions.getContentFromMsg({
@@ -190,8 +191,8 @@ class Ctx {
             messageType: Functions.getContentType(msgContext.quotedMessage) || Object.keys(msgContext.quotedMessage)[0],
             contentType: Functions.getContentType(message),
             key: {
-                remoteJid: msgContext?.remoteJid || this.id,
-                participant: Baileys.isJidGroup(msgContext?.remoteJid) ? senderJid : null,
+                remoteJid: chatId,
+                participant: Baileys.isJidGroup(chatId) ? senderJid : null,
                 fromMe: senderJid && this._client.user.id ? Baileys.areJidsSameUser(Functions.decodeJid(senderJid), Functions.decodeJid(this._client.user.id)) : false,
                 id: msgContext.stanzaId
             },
@@ -226,18 +227,7 @@ class Ctx {
             };
 
             const allMentions = [...extractMentions(content.text), ...extractMentions(content.caption), ...extractMentions(content.header), ...extractMentions(content.footer)].filter(Boolean);
-            if (allMentions.length > 0) {
-                if (content.contextInfo) {
-                    content.contextInfo.mentionedJid = [...(content.contextInfo.mentionedJid || []), ...allMentions.filter(mention => !(content.contextInfo.mentionedJid || []).includes(mention))];
-                } else {
-                    content.mentions = [...(content.mentions || []), ...allMentions.filter(mention => !(content.mentions || []).includes(mention))];
-                }
-            }
-        }
-
-        if (content.mentions && Array.isArray(content.mentions) && content.mentions.length > 0 && content.contextInfo && !content.contextInfo.mentionedJid) {
-            content.contextInfo.mentionedJid = content.mentions;
-            delete content.mentions;
+            if (allMentions.length > 0) content.mentions = [...(content.mentions || []), ...allMentions.filter(mention => !(content.mentions || []).includes(mention))];
         }
 
         if (content.buttons) {
