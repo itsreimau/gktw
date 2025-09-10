@@ -46,17 +46,6 @@ const getContentFromMsg = (msg) => {
 
 const getSender = (msg, client) => msg.key.fromMe ? client.user.id : msg.key.participant || msg.key.remoteJid;
 
-const lidToJid = async (client, senderLid, groupJid, force = false) => {
-    const opts = groupJid ? {
-        groupId: groupJid,
-        force
-    } : {
-        force
-    };
-    const jid = await Baileys.lidToJid(client, senderLid, opts);
-    return jid;
-};
-
 const decodeJid = (jid) => {
     if (!jid) return null;
 
@@ -77,12 +66,22 @@ const getId = (jid) => {
     return decoded?.user || jid;
 };
 
+const lidToJid = async (client, lid, groupId = null) => {
+    if (Baileys.isJidUser(lid) || Baileys.isJidGroup(lid) || Baileys.isJidBroadcast(lid) || Baileys.isJidNewsletter(lid)) return lid;
+
+    const jid = await Baileys.lidToJid(client, lid, {
+        groupId: groupId
+    });
+    if (getId(jid) === getId(lid)) return lid;
+    return jid.includes("@") ? jid : lid;
+};
+
 module.exports = {
     getContentType,
     getContentFromMsg,
     getSender,
-    lidToJid,
     decodeJid,
     getPushname,
-    getId
+    getId,
+    lidToJid
 };

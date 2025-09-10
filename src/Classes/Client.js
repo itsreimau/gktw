@@ -12,7 +12,6 @@ const Functions = require("../Helper/Functions.js");
 const ExtractEventsContent = require("../Handler/ExtractEventsContent.js");
 const Ctx = require("./Ctx.js");
 const MessageEventList = require("../Handler/MessageEvents.js");
-const { parsePhoneNumberFromString } = require("libphonenumber-js");
 
 class Client {
     constructor(opts) {
@@ -307,9 +306,8 @@ class Client {
                 return;
             }
 
-            const phoneNumber = parsePhoneNumberFromString(`+${this.phoneNumber}`);
-            if (!phoneNumber || !phoneNumber.isValid()) {
-                this.consolefy.error("phoneNumber format must be valid (e.g. '62xxx' starting with country code).");
+            if (!Object.keys(Baileys.PhoneNumberMCF).some(mcf => this.phoneNumber.startsWith(mcf))) {
+                this.consolefy.error("phoneNumber format must be like: 62xxx (starts with the country code).");
                 this.consolefy.resetTag();
                 return;
             }

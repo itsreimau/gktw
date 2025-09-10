@@ -1,8 +1,4 @@
-# <div align="center">@itsreimau/gktw - Useless Baileys Wrapper</div>
-
-<div align="center">
-  <img src="https://www.ultraimagehub.com/wallpapers/tr:flp-false,gx-0.6,gy-0.5,q-75,rh-3264,rw-5824,th-1080,tw-1920/1237967402915074098.jpeg" alt="Banner" />
-</div>
+# @itsreimau/gktw - Useless Baileys Wrapper
 
 ## 📖 Table of Contents
 
@@ -209,7 +205,9 @@ bot.command("ping", async (ctx) => await ctx.reply("Pong!"));
 bot.command({
     name: "ping",
     aliases: ["p"], // Optional aliases
-    code: async (ctx) => await ctx.reply("Pong!")
+    code: async (ctx) => {
+        await ctx.reply("Pong!");
+    }
 });
 ```
 

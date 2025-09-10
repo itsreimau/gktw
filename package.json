@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.2.6-phoenix",
+  "version": "1.2.7-phoenix",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -23,9 +23,8 @@
     "@discordjs/collection": "^2.1.1",
     "@mengkodingan/consolefy": "^1.0.1",
     "array-move": "^3.0.1",
-    "baileys": "npm:@rexxhayanasi/elaina-bail",
+    "baileys": "npm:@rexxhayanasi/elaina-bail@^1.2.9",
     "glob": "^11.0.3",
-    "libphonenumber-js": "^1.12.15",
     "pino": "^9.9.4",
     "vcard-parser": "^1.0.0"
   }
