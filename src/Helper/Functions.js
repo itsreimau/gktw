@@ -12,8 +12,8 @@ const getContentType = (content) => {
 const getContentFromMsg = (msg) => {
     if (!msg?.message) return "";
 
-    const type = getContentType(msg.message);
-    if (!type) return "";
+    const contentType = getContentType(msg.message);
+    if (!contentType) return "";
 
     const contentHandlers = {
         interactiveResponseMessage: () => {
@@ -41,7 +41,7 @@ const getContentFromMsg = (msg) => {
         protocolMessage: () => msg.message.protocolMessage?.editedMessage?.extendedTextMessage?.text || msg.message.protocolMessage?.editedMessage?.conversation || msg.message.protocolMessage?.editedMessage?.imageMessage?.caption || msg.message.protocolMessage?.editedMessage?.videoMessage?.caption || ""
     };
 
-    return contentHandlers[type]?.() || "";
+    return contentHandlers[contentType]?.() || "";
 };
 
 const getSender = (msg, client) => msg.key.fromMe ? client.user.id : msg.key.participant || msg.key.remoteJid;
