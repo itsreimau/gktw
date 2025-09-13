@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.2.8-phoenix",
+  "version": "1.2.9-phoenix",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -16,16 +16,16 @@
     "whatsapp-api",
     "md"
   ],
-  "author": "Muhamad Ikbal Maulana | ItsReimau",
+  "author": "Ikbal Maulana (ItsReimau)",
   "license": "MIT",
   "dependencies": {
     "@cacheable/node-cache": "^1.7.0",
     "@discordjs/collection": "^2.1.1",
     "@mengkodingan/consolefy": "^1.0.1",
     "array-move": "^3.0.1",
-    "baileys": "npm:@rexxhayanasi/elaina-bail@1.2.9",
+    "baileys": "npm:@yupra/baileys@2.0.1",
     "glob": "^11.0.3",
-    "pino": "^9.9.4",
+    "pino": "^9.9.5",
     "vcard-parser": "^1.0.0"
   }
 }

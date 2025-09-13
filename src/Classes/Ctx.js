@@ -4,8 +4,6 @@ const Baileys = require("baileys");
 const Functions = require("../Helper/Functions.js");
 const Group = require("./Group/Group.js");
 const GroupData = require("./Group/GroupData.js");
-const Newsletter = require("./Newsletter/Newsletter.js");
-const NewsletterData = require("./Newsletter/NewsletterData.js");
 const MessageCollector = require("./Collector/MessageCollector.js");
 
 class Ctx {
@@ -97,14 +95,6 @@ class Ctx {
         return new GroupData(this, jid || this.id);
     }
 
-    get newsletters() {
-        return new Newsletter(this);
-    }
-
-    newsletter(jid) {
-        return new NewsletterData(this, jid || this.id);
-    }
-
     isGroup() {
         return Baileys.isJidGroup(this.id);
     }
@@ -113,22 +103,13 @@ class Ctx {
         return this._msg.messageType;
     }
 
-    getContentType(content) {
-        return Functions.getContentType(content);
+    getContentType() {
+        const msg = Baileys.extractMessageContent(this._msg);
+        return Functions.getContentType(msg);
     }
 
-    async getMentioned(convertLid = true) {
-        if (convertLid) {
-            const mentionedLid = this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
-            const mentionedJid = [];
-            for (const lid of mentionedLid) {
-                const jid = await Functions.lidToJid(this._client, lid, Baileys.isJidGroup(this.id) ? this.id : null);
-                if (jid) mentionedJid.push(jid);
-            }
-            return mentionedJid;
-        } else {
-            return this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
-        };
+    getMentioned() {
+        return this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
     }
 
     getDevice(id) {
@@ -223,7 +204,8 @@ class Ctx {
         if (this._self.autoMention) {
             const extractMentions = (text) => {
                 if (!text) return [];
-                return (text.match(/@(\d+)/g) || []).map(match => match.substring(1)).filter(number => /^\d+$/.test(number)).map(number => number + Baileys.S_WHATSAPP_NET);
+                const mentions = (text.match(/@(\d+)/g) || []);
+                return mentions.map(mention => mention.replace("@", "") + Baileys.S_WHATSAPP_NET);
             };
 
             const allMentions = [...extractMentions(content.text), ...extractMentions(content.caption), ...extractMentions(content.header), ...extractMentions(content.footer)].filter(Boolean);
@@ -236,11 +218,10 @@ class Ctx {
                 return button;
             });
             if (!content.headerType) content.headerType = 1;
-            if (!content.viewOnce) content.viewOnce = true;
         }
 
         if ((content.header || content.footer) && !content.buttons && !content.interactiveButtons) content.interactiveButtons = [];
-        if (content.image || content.video || content.product && (content.interactiveButtons && content.interactiveButtons.length > 0 || content.buttons && content.buttons.length > 0)) content.media = true;
+        if (content.image || content.video || (content.product && ((content.interactiveButtons && content.interactiveButtons.length > 0) || (content.buttons && content.buttons.length > 0)))) content.media = true;
         if (this._self.autoAiLabel && Baileys.isJidUser(jid)) content.ai = true;
 
         return this._client.sendMessage(jid, content, options);
@@ -279,39 +260,6 @@ class Ctx {
         return this.sendReact(this.id, emoji, key);
     }
 
-    async sendPin(jid, time, type, key) {
-        return this.sendMessage(jid, {
-            pin: {
-                type: type || 1,
-                time,
-                key: key || this._msg.key
-            }
-        });
-    }
-
-    async replyPin(time, type, key) {
-        return this.sendPin(this.id, time, type, key);
-    }
-
-    async sendPoll(jid, args) {
-        args.selectableCount = !!args.singleSelect;
-        return this.sendMessage(jid, {
-            poll: args
-        });
-    }
-
-    async replyPoll(args) {
-        return this.sendPoll(this.id, args);
-    }
-
-    simulateTyping() {
-        this._client.sendPresenceUpdate("composing", this.id);
-    }
-
-    simulateRecording() {
-        this._client.sendPresenceUpdate("recording", this.id);
-    }
-
     async deleteMessage(key) {
         return this.sendMessage(this.id, {
             delete: key
@@ -329,6 +277,14 @@ class Ctx {
         return this.sendMessage(jid, {
             forward: msg
         });
+    }
+
+    simulateTyping() {
+        this._client.sendPresenceUpdate("composing", this.id);
+    }
+
+    simulateRecording() {
+        this._client.sendPresenceUpdate("recording", this.id);
     }
 
     MessageCollector(args = {

@@ -95,10 +95,6 @@ class Client {
         }]);
     }
 
-    use(fn) {
-        this.middlewares.set(this.middlewares.size, fn);
-    }
-
     async runMiddlewares(ctx, index = 0) {
         const middlewareFn = this.middlewares.get(index);
         if (!middlewareFn) return true;
@@ -117,6 +113,10 @@ class Client {
         return middlewareCompleted;
     }
 
+    use(fn) {
+        this.middlewares.set(this.middlewares.size, fn);
+    }
+
     onMessage() {
         try {
             Object.assign(this.pushNames, JSON.parse(fs.readFileSync(this.pushnamesPath).toString()));
@@ -133,9 +133,7 @@ class Client {
 
                 const messageType = Baileys.getContentType(message.message);
                 const text = Functions.getContentFromMsg(message) ?? "";
-
-                let senderJid = await Functions.getSender(message, this.core);
-                if (Baileys.isLidUser(senderJid)) senderJid = await Functions.lidToJid(this.core, senderJid, Baileys.isJidGroup(message.key.remoteJid) ? message.key.remoteJid : null);
+                const senderJid = await Functions.getSender(message, this.core);
 
                 if (message.pushName && this.pushNames[senderJid] !== message.pushName) {
                     this.pushNames[senderJid] = message.pushName;
@@ -275,13 +273,29 @@ class Client {
             browser: this.browser,
             logger: this.logger,
             printQRInTerminal: this.printQRInTerminal,
+            emitOwnEvents: this.selfReply,
             auth: this.state,
             markOnlineOnConnect: this.markOnlineOnConnect,
+            shouldSyncHistoryMessage: (msg) => {
+                const twoDaysAgo = Date.now() - (2 * 24 * 60 * 60 * 1000);
+                return msg.messageTimestamp * 1000 > twoDaysAgo;
+            },
             cachedGroupMetadata: async (jid) => this.groupCache.get(jid),
-            qrTimeout: this.qrTimeout
+            qrTimeout: this.qrTimeout,
+            msgRetryCounterCache: new NodeCache({
+                stdTTL: 300,
+                checkperiod: 60
+            })
         });
 
-        if (this.useStore) this.store.bind(this.core.ev);
+        if (this.useStore) {
+            this.store.bind(this.core.ev);
+
+            setInterval(() => {
+                const cutoff = Date.now() - (7 * 24 * 60 * 60 * 1000);
+                this.store.cleanupMessages(cutoff);
+            }, 24 * 60 * 60 * 1000)
+        }
 
         if (this.usePairingCode && !this.core.authState.creds.registered) {
             this.consolefy.setTag("pairing-code");
@@ -293,7 +307,7 @@ class Client {
             }
 
             if (!this.phoneNumber) {
-                this.consolefy.error("The phoneNumber options are required if you are using usePairingCode.");
+                this.consolefy.error("phoneNumber options are required if you are using usePairingCode.");
                 this.consolefy.resetTag();
                 return;
             }
@@ -306,7 +320,8 @@ class Client {
                 return;
             }
 
-            if (!Object.keys(Baileys.PhoneNumberMCF).some(mcf => this.phoneNumber.startsWith(mcf))) {
+            const PHONENUMBER_MCC = (await fetch("https://gist.githubusercontent.com/itsreimau/3da60a4937a66e4b1ac34970500e926b/raw/5f4a57faf6d0133c37db60192915d4686e865329/PHONENUMBER_MCC.json")).json();
+            if (!PHONENUMBER_MCC.some(mcc => this.phoneNumber.startsWith(mcc))) {
                 this.consolefy.error("phoneNumber format must be like: 62xxx (starts with the country code).");
                 this.consolefy.resetTag();
                 return;

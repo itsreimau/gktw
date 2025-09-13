@@ -13,10 +13,8 @@ async function Commands(self, runMiddlewares) {
         } = self;
 
         if (!m.message || Baileys.isJidStatusBroadcast(m.key.remoteJid) || Baileys.isJidNewsletter(m.key.remoteJid) || Baileys.isLidUser(m.key.participant || m.key.remoteJid)) return resolve();
-        if (!self.selfReply && m.key.fromMe) return resolve();
 
         const hasHears = Array.from(self.hearsMap.values()).filter(hear => hear.name === m.content || hear.name === m.messageType || new RegExp(hear.name).test(m.content) || (Array.isArray(hear.name) && hear.name.includes(m.content)));
-
         if (hasHears.length) {
             hasHears.forEach(hear => {
                 hear.code(new Ctx({
@@ -31,9 +29,7 @@ async function Commands(self, runMiddlewares) {
             return resolve();
         }
 
-        const commandsList = Array.from(cmd?.values() ?? []);
         let selectedPrefix;
-
         if (Array.isArray(prefix)) {
             if (prefix[0] == "") {
                 const emptyIndex = prefix.findIndex(_prefix => _prefix.includes(""));
@@ -45,15 +41,14 @@ async function Commands(self, runMiddlewares) {
             const match = m.content.match(prefix);
             if (match) selectedPrefix = match[0];
         }
-
         if (!selectedPrefix) return resolve();
 
         const args = m.content.slice(selectedPrefix.length).trim().split(/\s+/) || [];
         const commandName = args?.shift().toLowerCase();
         if (!commandName) return resolve();
 
+        const commandsList = Array.from(cmd?.values() ?? []);
         const matchedCommands = commandsList.filter(command => command.name?.toLowerCase() === commandName || (Array.isArray(command.aliases) ? command.aliases.includes(commandName) : command.aliases === commandName));
-
         if (!matchedCommands.length) return resolve();
 
         const ctx = new Ctx({
