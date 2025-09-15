@@ -210,7 +210,7 @@ class Ctx {
                 const valid = [];
                 for (const mention of mentions) {
                     try {
-                        const [result] = await client.onWhatsApp(mention);
+                        const [result] = await this._client.onWhatsApp(mention);
                         if (result?.exists) valid.push(result.jid);
                     } catch {}
                 }

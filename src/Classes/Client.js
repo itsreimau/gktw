@@ -204,7 +204,8 @@ class Client {
             const withDecodedId = event.map(call => ({
                 ...call,
                 decodedFrom: Functions.decodeJid(call.from),
-                decodedChatId: Functions.decodeJid(call.chatId)
+                decodedChatId: Functions.decodeJid(call.chatId),
+                fromLid: Baileys.isLidUser(call.from) ? call.from : (await this.core.onWhatsApp(call.from))[0].lid
             }));
             this.ev.emit(Events.Call, withDecodedId);
         });
