@@ -180,6 +180,7 @@ class Ctx {
             },
             senderJid,
             decodedSenderJid: Functions.decodeJid(senderJid),
+            senderLid: Baileys.isLidUser(senderJid) ? senderJid : (await this.clientReq.self.core.onWhatsApp(senderJid))[0].lid,
             pushName: Functions.getPushname(senderJid, this._self.pushNames),
             media: {
                 toBuffer: async () => await this.getMediaMessage({

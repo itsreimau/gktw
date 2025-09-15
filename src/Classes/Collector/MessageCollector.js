@@ -45,7 +45,7 @@ class MessageCollector extends Collector {
                 decodedId: m.key.remoteJid ? Functions.decodeJid(m.key.remoteJid) : null,
                 senderJid: senderJid,
                 decodedSenderJid: senderJid ? Functions.decodeJid(senderJid) : null,
-                lid: Baileys.isLidUser(senderJid) ? senderJid : (await this.clientReq.self.core.onWhatsApp(senderJid))[0].lid
+                senderLid: Baileys.isLidUser(senderJid) ? senderJid : (await this.clientReq.self.core.onWhatsApp(senderJid))[0].lid
             };
         } catch {
             return null;
