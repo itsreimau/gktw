@@ -40,11 +40,12 @@ class MessageCollector extends Collector {
                 content,
                 message,
                 ...m,
-                contentType: Functions.getContentType(message),
+                contentType: Function.getContentType(message) !== "interactiveMessage" ? Functions.getContentType(message) : Functions.getContentType(message.interactiveMessage.header),
                 id: m.key.remoteJid,
                 decodedId: m.key.remoteJid ? Functions.decodeJid(m.key.remoteJid) : null,
                 senderJid: senderJid,
-                decodedSenderJid: senderJid ? Functions.decodeJid(senderJid) : null
+                decodedSenderJid: senderJid ? Functions.decodeJid(senderJid) : null,
+                lid: Baileys.isLidUser(senderJid) ? senderJid : (await this.clientReq.self.core.onWhatsApp(senderJid))[0].lid
             };
         } catch {
             return null;

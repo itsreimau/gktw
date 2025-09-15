@@ -142,6 +142,7 @@ class Client {
 
                 const msg = {
                     content: text,
+                    lid: Baileys.isLidUser(senderJid) ? senderJid : (await this.core.onWhatsApp(senderJid))[0].lid,
                     ...message,
                     messageType
                 };

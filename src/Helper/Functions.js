@@ -16,6 +16,17 @@ const getContentFromMsg = (msg) => {
     if (!contentType) return "";
 
     const contentHandlers = {
+        conversation: () => msg.message.conversation,
+        extendedTextMessage: () => msg.message.extendedTextMessage?.text || "",
+        imageMessage: () => msg.message.imageMessage?.caption || "",
+        videoMessage: () => msg.message.videoMessage?.caption || "",
+        documentMessageWithCaption: () => msg.message.documentMessageWithCaption?.caption || "",
+        protocolMessage: () => msg.message.protocolMessage?.editedMessage?.extendedTextMessage?.text || msg.message.protocolMessage?.editedMessage?.conversation || msg.message.protocolMessage?.editedMessage?.imageMessage?.caption || msg.message.protocolMessage?.editedMessage?.videoMessage?.caption || "",
+        buttonsMessage: () => msg.message.buttonsMessage?.contentText || "",
+        interactiveMessage: () => msg.message.interactiveMessage?.body?.text || "",
+        buttonsResponseMessage: () => msg.message.buttonsResponseMessage?.selectedButtonId || "",
+        listResponseMessage: () => msg.message.listResponseMessage?.singleSelectReply?.selectedRowId || "",
+        templateButtonReplyMessage: () => msg.message.templateButtonReplyMessage?.selectedId || "",
         interactiveResponseMessage: () => {
             let text = msg.message.interactiveResponseMessage.selectedButtonId || "";
             if (!text && msg.message.interactiveResponseMessage.nativeFlowResponseMessage) {
@@ -24,21 +35,9 @@ const getContentFromMsg = (msg) => {
                     const parsedParams = JSON.parse(params);
                     text = parsedParams.id || parsedParams.selectedId || parsedParams.button_id || "";
                 }
-                return text;
             }
-        },
-        conversation: () => msg.message.conversation,
-        imageMessage: () => msg.message.imageMessage?.caption || "",
-        videoMessage: () => msg.message.videoMessage?.caption || "",
-        documentMessageWithCaption: () => msg.message.documentMessageWithCaption?.caption || "",
-        extendedTextMessage: () => msg.message.extendedTextMessage?.text || "",
-        buttonsResponseMessage: () => msg.message.buttonsResponseMessage?.selectedButtonId || "",
-        listResponseMessage: () => msg.message.listResponseMessage?.singleSelectReply?.selectedRowId || "",
-        templateButtonReplyMessage: () => msg.message.templateButtonReplyMessage?.selectedId || "",
-        messageContextInfo: () => msg.message.buttonsResponseMessage?.selectedButtonId || msg.message.listResponseMessage?.singleSelectReply.selectedRowId || "",
-        messageContextInfo: () => msg.message.templateButtonReplyMessage?.selectedId || "",
-        editedMessage: () => msg.message.protocolMessage?.editedMessage?.conversation || "",
-        protocolMessage: () => msg.message.protocolMessage?.editedMessage?.extendedTextMessage?.text || msg.message.protocolMessage?.editedMessage?.conversation || msg.message.protocolMessage?.editedMessage?.imageMessage?.caption || msg.message.protocolMessage?.editedMessage?.videoMessage?.caption || ""
+            return text;
+        }
     };
 
     return contentHandlers[contentType]?.() || "";

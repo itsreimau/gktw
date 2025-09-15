@@ -16,6 +16,7 @@ class Ctx {
         this._sender = {
             jid: Functions.getSender(this._msg, this._client),
             decodedJid: null,
+            lid: this._msg.lid,
             pushName: this._msg.pushName
         };
 
@@ -145,7 +146,7 @@ class Ctx {
 
         return {
             ...rawMsg,
-            contentType: this.getContentType(msg),
+            contentType: Functions.getContentType(msg) !== "interactiveMessage" ? Functions.getContentType(msg) : Functions.getContentType(msg.interactiveMessage.header),
             media: {
                 toBuffer: async () => await this.getMediaMessage({
                     message: msg
@@ -169,8 +170,8 @@ class Ctx {
                 message
             }),
             message: msgContext.quotedMessage,
-            messageType: Functions.getContentType(msgContext.quotedMessage) || Object.keys(msgContext.quotedMessage)[0],
-            contentType: Functions.getContentType(message),
+            messageType: Baileys.getContentType(msgContext.quotedMessage) || Object.keys(msgContext.quotedMessage)[0],
+            contentType: Function.getContentType(message) !== "interactiveMessage" ? Functions.getContentType(message) : Functions.getContentType(message.interactiveMessage.header),
             key: {
                 remoteJid: chatId,
                 participant: Baileys.isJidGroup(chatId) ? senderJid : null,
@@ -204,8 +205,15 @@ class Ctx {
         if (this._self.autoMention) {
             const extractMentions = (text) => {
                 if (!text) return [];
-                const mentions = (text.match(/@(\d+)/g) || []);
-                return mentions.map(mention => mention.replace("@", "") + Baileys.S_WHATSAPP_NET);
+                const mentions = (text?.match(/@(\d+)/g) || []).map(mention => mention.replace("@", "") + Baileys.S_WHATSAPP_NET);
+                const valid = [];
+                for (const mention of mentions) {
+                    try {
+                        const [result] = await client.onWhatsApp(mention);
+                        if (result?.exists) valid.push(result.jid);
+                    } catch {}
+                }
+                return valid;
             };
 
             const allMentions = [...extractMentions(content.text), ...extractMentions(content.caption), ...extractMentions(content.header), ...extractMentions(content.footer)].filter(Boolean);
@@ -221,7 +229,6 @@ class Ctx {
         }
 
         if ((content.header || content.footer) && !content.buttons && !content.interactiveButtons) content.interactiveButtons = [];
-        if (content.image || content.video || (content.product && ((content.interactiveButtons && content.interactiveButtons.length > 0) || (content.buttons && content.buttons.length > 0)))) content.media = true;
         if (this._self.autoAiLabel && Baileys.isJidUser(jid)) content.ai = true;
 
         return this._client.sendMessage(jid, content, options);
