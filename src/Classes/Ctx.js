@@ -184,7 +184,7 @@ class Ctx {
             },
             senderJid,
             decodedSenderJid: Functions.decodeJid(senderJid),
-            senderLid: await Functions.convertJid("lid", senderJid, this._self.jids, this._client),
+            senderLid: async () => await Functions.convertJid("lid", senderJid, this._self.jids, this._client),
             pushName: Functions.getPushname(senderJid, this._self.jid),
             media: {
                 toBuffer: async () => await this.getMediaMessage({
