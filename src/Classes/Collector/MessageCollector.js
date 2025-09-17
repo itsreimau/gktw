@@ -37,10 +37,10 @@ class MessageCollector extends Collector {
             const message = Baileys.extractMessageContent(m.message);
             const senderJid = Functions.getSender(m, this.clientReq.self.core);
             return {
+                ...m,
                 content,
                 message,
-                ...m,
-                contentType: Function.getContentType(message) !== "interactiveMessage" ? Functions.getContentType(message) : Functions.getContentType(message.interactiveMessage.header),
+                contentType: Functions.getContentType(message) !== "interactiveMessage" ? Functions.getContentType(message) : Functions.getContentType(message.interactiveMessage.header),
                 id: m.key.remoteJid,
                 decodedId: m.key.remoteJid ? Functions.decodeJid(m.key.remoteJid) : null,
                 senderJid: senderJid,

@@ -175,7 +175,7 @@ class Ctx {
             }),
             message: msgContext.quotedMessage,
             messageType: Baileys.getContentType(msgContext.quotedMessage) || Object.keys(msgContext.quotedMessage)[0],
-            contentType: Function.getContentType(message) !== "interactiveMessage" ? Functions.getContentType(message) : Functions.getContentType(message.interactiveMessage.header),
+            contentType: Functions.getContentType(message) !== "interactiveMessage" ? Functions.getContentType(message) : Functions.getContentType(message.interactiveMessage.header),
             key: {
                 remoteJid: chatId,
                 participant: Baileys.isJidGroup(chatId) ? senderJid : null,
@@ -197,13 +197,8 @@ class Ctx {
         };
     }
 
-    read() {
-        const m = this._msg;
-        this._client.readMessages([{
-            remoteJid: m.key.remoteJid,
-            id: m.key.id,
-            participant: m.key.participant
-        }]);
+    async read() {
+        await this._client.readMessages([this._msg.key]);
     }
 
     async sendMessage(jid, content, options = {}) {
@@ -228,14 +223,14 @@ class Ctx {
         if ((content.header || content.footer) && !content.buttons && !content.interactiveButtons) content.interactiveButtons = [];
         if (this._self.autoAiLabel && Baileys.isJidUser(jid)) content.ai = true;
 
-        return this._client.sendMessage(jid, content, options);
+        return await this._client.sendMessage(jid, content, options);
     }
 
     async reply(content, options = {}) {
         if (typeof content === "string") content = {
             text: content
         };
-        return this.sendMessage(this.id, content, {
+        return await this.sendMessage(this.id, content, {
             ...options,
             quoted: this._msg
         });
@@ -245,14 +240,14 @@ class Ctx {
         if (typeof content === "string") content = {
             text: content
         };
-        return this.sendMessage(jid, content, {
+        return await this.sendMessage(jid, content, {
             ...options,
             quoted: this._msg
         });
     }
 
     async sendReact(jid, emoji, key) {
-        return this.sendMessage(jid, {
+        return await this.sendMessage(jid, {
             react: {
                 text: emoji,
                 key: key || this._msg.key
@@ -261,34 +256,34 @@ class Ctx {
     }
 
     async replyReact(emoji, key) {
-        return this.sendReact(this.id, emoji, key);
+        return await this.sendReact(this.id, emoji, key);
     }
 
     async deleteMessage(key) {
-        return this.sendMessage(this.id, {
+        return await this.sendMessage(this.id, {
             delete: key
         });
     }
 
     async editMessage(key, newText) {
-        return this.sendMessage(this.id, {
+        return await this.sendMessage(this.id, {
             text: newText,
             edit: key
         });
     }
 
     async forwardMessage(jid, msg) {
-        return this.sendMessage(jid, {
+        return await this.sendMessage(jid, {
             forward: msg
         });
     }
 
-    simulateTyping() {
-        this._client.sendPresenceUpdate("composing", this.id);
+    async simulateTyping() {
+        await this._client.sendPresenceUpdate("composing", this.id);
     }
 
-    simulateRecording() {
-        this._client.sendPresenceUpdate("recording", this.id);
+    async simulateRecording() {
+        await this._client.sendPresenceUpdate("recording", this.id);
     }
 
     MessageCollector(args = {

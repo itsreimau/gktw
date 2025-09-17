@@ -18,7 +18,6 @@ class Collector extends EventEmitter {
         this.filter = options.filter ?? (() => true);
 
         if (this.isRun) throw new Error("Some collector already run in another instance.");
-
         if (typeof this.filter !== "function") throw new Error("Filter options in collector must be function.");
 
         this.time = options.time;

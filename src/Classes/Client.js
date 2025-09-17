@@ -87,14 +87,6 @@ class Client {
         fs.writeFileSync(this.jidsPath, JSON.stringify(this.jids));
     }
 
-    read(m) {
-        this.core.readMessages([{
-            remoteJid: m.key.remoteJid,
-            id: m.key.id,
-            participant: m.key.participant
-        }]);
-    }
-
     async runMiddlewares(ctx, index = 0) {
         const middlewareFn = this.middlewares.get(index);
         if (!middlewareFn) return true;
@@ -146,9 +138,9 @@ class Client {
                 }
 
                 const msg = {
+                    ...message,
                     content: text,
                     lid: senderLid,
-                    ...message,
                     messageType
                 };
 
@@ -167,7 +159,7 @@ class Client {
 
                 if (MessageEventList[messageType]) await MessageEventList[messageType](msg, this.ev, self, this.core);
                 this.ev.emit(Events.MessagesUpsert, msg, ctx);
-                if (this.readIncomingMsg) await this.read(msg);
+                if (this.readIncomingMsg) await this.core.readMessages([message.key]);
                 await require("../Handler/Commands.js")(self, this.runMiddlewares.bind(this));
             }
         });

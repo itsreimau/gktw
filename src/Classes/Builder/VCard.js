@@ -11,21 +11,18 @@ class VCardBuilder {
 
     setFullName(fullName) {
         if (!fullName) throw new Error("Need full name.");
-
         this.fullName = fullName;
         return this;
     }
 
     setOrg(organizationName) {
         if (!organizationName) throw new Error("Need organization name.");
-
         this.org = organizationName;
         return this;
     }
 
     setNumber(number) {
         if (!number) throw new Error("Need number.");
-
         this.number = number;
         return this;
     }
