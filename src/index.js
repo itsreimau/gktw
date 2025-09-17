@@ -3,7 +3,8 @@
 module.exports = {
     Baileys: {
         ...require("baileys"),
-        G_US: "@g.us"
+        G_US: "@g.us",
+        LID: "@lid"
     },
     Client: require("./Classes/Client.js"),
     CommandHandler: require("./Classes/CommandHandler.js"),
