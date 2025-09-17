@@ -122,11 +122,15 @@ class Ctx {
     }
 
     getPushname(jid) {
-        return Functions.getPushname(jid, this._self.pushNames);
+        return Functions.getPushname(jid, this._self.jids);
     }
 
     getId(jid) {
         return Functions.getId(jid);
+    }
+
+    async convertJid(type, jid) {
+        return await Functions.convertJid(type, jid, this._self.jids, this._client);
     }
 
     async getMediaMessage(msg, type) {
@@ -180,8 +184,8 @@ class Ctx {
             },
             senderJid,
             decodedSenderJid: Functions.decodeJid(senderJid),
-            senderLid: Baileys.isLidUser(senderJid) ? senderJid : (await this.clientReq.self.core.onWhatsApp(senderJid))[0].lid,
-            pushName: Functions.getPushname(senderJid, this._self.pushNames),
+            senderLid: await Functions.convertJid("lid", senderJid, this._self.jids, this._client),
+            pushName: Functions.getPushname(senderJid, this._self.jid),
             media: {
                 toBuffer: async () => await this.getMediaMessage({
                     message
@@ -207,18 +211,10 @@ class Ctx {
             const extractMentions = (text) => {
                 if (!text) return [];
                 const mentions = (text?.match(/@(\d+)/g) || []).map(mention => mention.replace("@", "") + Baileys.S_WHATSAPP_NET);
-                const valid = [];
-                for (const mention of mentions) {
-                    try {
-                        const [result] = await this._client.onWhatsApp(mention);
-                        if (result?.exists) valid.push(result.jid);
-                    } catch {}
-                }
-                return valid;
+                return mentions;
             };
-
-            const allMentions = [...extractMentions(content.text), ...extractMentions(content.caption), ...extractMentions(content.header), ...extractMentions(content.footer)].filter(Boolean);
-            if (allMentions.length > 0) content.mentions = [...(content.mentions || []), ...allMentions.filter(mention => !(content.mentions || []).includes(mention))];
+            const mentions = [...extractMentions(content.text), ...extractMentions(content.caption), ...extractMentions(content.header), ...extractMentions(content.footer)].filter(Boolean);
+            if (mentions.length > 0) content.mentions = [...(content.mentions || []), ...mentions.filter(mention => !(content.mentions || []).includes(mention))];
         }
 
         if (content.buttons) {

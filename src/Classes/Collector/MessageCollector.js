@@ -35,7 +35,7 @@ class MessageCollector extends Collector {
         try {
             this.received++;
             const message = Baileys.extractMessageContent(m.message);
-            const senderJid = await Functions.getSender(m, this.clientReq.self.core);
+            const senderJid = Functions.getSender(m, this.clientReq.self.core);
             return {
                 content,
                 message,
@@ -45,7 +45,7 @@ class MessageCollector extends Collector {
                 decodedId: m.key.remoteJid ? Functions.decodeJid(m.key.remoteJid) : null,
                 senderJid: senderJid,
                 decodedSenderJid: senderJid ? Functions.decodeJid(senderJid) : null,
-                senderLid: Baileys.isLidUser(senderJid) ? senderJid : (await this.clientReq.self.core.onWhatsApp(senderJid))[0].lid
+                senderLid: await Functions.convertJid("lid", senderJid, this.clientReq.self.jids, this.clientReq.self.core)
             };
         } catch {
             return null;

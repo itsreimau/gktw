@@ -52,8 +52,8 @@ class Client {
             stdTTL: 30,
             useClones: false
         });
-        this.pushnamesPath = `${this.authDir}/pushnames.json`;
-        this.pushNames = {};
+        this.jidsPath = `${this.authDir}/jids.json`;
+        this.jids = {};
 
         if (typeof this.prefix === "string") this.prefix = this.prefix.split("");
     }
@@ -83,8 +83,8 @@ class Client {
         this.core.ev.on("creds.update", this.saveCreds);
     }
 
-    savePushnames() {
-        fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
+    saveJids() {
+        fs.writeFileSync(this.jidsPath, JSON.stringify(this.jids));
     }
 
     read(m) {
@@ -119,9 +119,9 @@ class Client {
 
     onMessage() {
         try {
-            Object.assign(this.pushNames, JSON.parse(fs.readFileSync(this.pushnamesPath).toString()));
+            Object.assign(this.jids, JSON.parse(fs.readFileSync(this.jidsPath).toString()));
         } catch (error) {
-            fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
+            fs.writeFileSync(this.jidsPath, JSON.stringify(this.jids));
         }
 
         this.core.ev.on("messages.upsert", async (event) => {
@@ -131,18 +131,23 @@ class Client {
 
                 if (Baileys.isJidGroup(message.key.remoteJid)) await this.setGroupCache(message.key.remoteJid);
 
-                const messageType = Baileys.getContentType(message.message);
+                const messageType = Baileys.getContentType(message.message) || Object.keys(message.message)[0];
                 const text = Functions.getContentFromMsg(message) ?? "";
-                const senderJid = await Functions.getSender(message, this.core);
+                const senderJid = Functions.getSender(message, this.core);
+                const senderLid = await Functions.convertJid("lid", senderJid, this.jids, this.core);
 
-                if (message.pushName && this.pushNames[senderJid] !== message.pushName) {
-                    this.pushNames[senderJid] = message.pushName;
-                    this.savePushnames();
+                if (message.pushName && !this.jids[senderLid] || this.jids[senderLid].pushName !== message.pushName) {
+                    this.jids[senderLid] = {
+                        ...(this.jids[senderLid] || {}),
+                        pushName: message.pushName
+                    };
+                    if (Baileys.isJidUser(senderJid)) this.jids[senderLid].pn = senderJid;
+                    this.saveJids();
                 }
 
                 const msg = {
                     content: text,
-                    lid: Baileys.isLidUser(senderJid) ? senderJid : (await this.core.onWhatsApp(senderJid))[0].lid,
+                    lid: senderLid,
                     ...message,
                     messageType
                 };
@@ -200,12 +205,12 @@ class Client {
     }
 
     onCall() {
-        this.core.ev.on("call", (event) => {
+        this.core.ev.on("call", async (event) => {
             const withDecodedId = event.map(call => ({
                 ...call,
                 decodedFrom: Functions.decodeJid(call.from),
                 decodedChatId: Functions.decodeJid(call.chatId),
-                fromLid: Baileys.isLidUser(call.from) ? call.from : (await this.core.onWhatsApp(call.from))[0].lid
+                fromLid: await Functions.convertJid("lid", call.from, this.jids, this.core)
             }));
             this.ev.emit(Events.Call, withDecodedId);
         });
@@ -247,11 +252,15 @@ class Client {
     }
 
     getPushname(jid) {
-        return Functions.getPushname(jid, this.pushNames);
+        return Functions.getPushname(jid, this.jids);
     }
 
     getId(jid) {
         return Functions.getId(jid);
+    }
+
+    async convertJid(type, jid) {
+        return await Functions.convertJid(type, jid, this.jids, this.core);
     }
 
     async launch() {

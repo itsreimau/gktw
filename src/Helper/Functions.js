@@ -10,11 +10,7 @@ const getContentType = (content) => {
 };
 
 const getContentFromMsg = (msg) => {
-    if (!msg?.message) return "";
-
     const contentType = getContentType(msg.message);
-    if (!contentType) return "";
-
     const contentHandlers = {
         conversation: () => msg.message.conversation,
         extendedTextMessage: () => msg.message.extendedTextMessage?.text || "",
@@ -39,15 +35,12 @@ const getContentFromMsg = (msg) => {
             return text;
         }
     };
-
     return contentHandlers[contentType]?.() || "";
 };
 
 const getSender = (msg, client) => msg.key.fromMe ? client.user.id : msg.key.participant || msg.key.remoteJid;
 
 const decodeJid = (jid) => {
-    if (!jid) return null;
-
     if (/:\d+@/gi.test(jid)) {
         const decoded = Baileys.jidDecode(jid);
         return decoded?.user && decoded?.server ? Baileys.jidEncode(decoded.user, decoded.server) : jid;
@@ -55,14 +48,36 @@ const decodeJid = (jid) => {
     return jid;
 };
 
-const getPushname = (jid, pushNames = {}) => {
+const getPushname = (jid, jids = {}) => {
     const decoded = decodeJid(jid);
-    return decoded ? pushNames[decoded] || decoded : null;
+    if (jids[decoded] && jids[decoded].pushName) return jids[decoded].pushName
+    for (const [lid, data] of Object.entries(jids)) {
+        if (data.pn === decoded && data.pushName) return data.pushName;
+    }
+    return decoded;
 };
 
 const getId = (jid) => {
     const decoded = Baileys.jidDecode(jid);
     return decoded?.user || jid;
+};
+
+const convertJid = async (type, jid, jids, client) => {
+    const decoced = decodeJid(jid);
+    if (type === "lid" && Baileys.isLidUser(jid)) {
+        for (const [lid, data] of Object.entries(jids)) {
+            if (data.pn === decoced) return lid;
+        }
+        try {
+            const results = await client.onWhatsApp(decoced);
+            if (results && results.length > 0 && results[0].exists) return results[0].jid;
+        } catch {}
+        return decoced;
+    } else if (type === "pn" && Baileys.isJidUser(jid)) {
+        if (jids[decoced] && jids[decoced].pn) return jids[decoced].pn;
+        return decoced;
+    }
+    return decoced;
 };
 
 module.exports = {
@@ -71,5 +86,6 @@ module.exports = {
     getSender,
     decodeJid,
     getPushname,
-    getId
+    getId,
+    convertJid
 };
