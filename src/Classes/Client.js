@@ -205,8 +205,8 @@ class Client {
     }
 
     onCall() {
-        this.core.ev.on("call", async (event) => {
-            const withDecodedId = event.map(call => ({
+        this.core.ev.on("call", (event) => {
+            const withDecodedId = event.map(async (call) => ({
                 ...call,
                 decodedFrom: Functions.decodeJid(call.from),
                 decodedChatId: Functions.decodeJid(call.chatId),
