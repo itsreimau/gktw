@@ -16,7 +16,7 @@ class Ctx {
         this._sender = {
             jid: Functions.getSender(this._msg, this._client),
             decodedJid: null,
-            lid: this._msg.lid,
+            lid: this._msg.senderLid,
             pushName: this._msg.pushName
         };
 
@@ -174,7 +174,7 @@ class Ctx {
                 message
             }),
             message: msgContext.quotedMessage,
-            messageType: Baileys.getContentType(msgContext.quotedMessage) || Object.keys(msgContext.quotedMessage)[0],
+            messageType: Baileys.getContentType(msgContext.quotedMessage) ?? "",
             contentType: Functions.getContentType(message) !== "interactiveMessage" ? Functions.getContentType(message) : Functions.getContentType(message.interactiveMessage.header),
             key: {
                 remoteJid: chatId,
@@ -183,7 +183,6 @@ class Ctx {
                 id: msgContext.stanzaId
             },
             senderJid,
-            decodedSenderJid: Functions.decodeJid(senderJid),
             senderLid: async () => await Functions.convertJid("lid", senderJid, this._self.jids, this._client),
             pushName: Functions.getPushname(senderJid, this._self.jid),
             media: {

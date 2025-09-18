@@ -42,9 +42,7 @@ class MessageCollector extends Collector {
                 message,
                 contentType: Functions.getContentType(message) !== "interactiveMessage" ? Functions.getContentType(message) : Functions.getContentType(message.interactiveMessage.header),
                 id: m.key.remoteJid,
-                decodedId: m.key.remoteJid ? Functions.decodeJid(m.key.remoteJid) : null,
                 senderJid: senderJid,
-                decodedSenderJid: senderJid ? Functions.decodeJid(senderJid) : null,
                 senderLid: await Functions.convertJid("lid", senderJid, this.clientReq.self.jids, this.clientReq.self.core)
             };
         } catch {

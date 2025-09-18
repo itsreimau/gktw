@@ -123,7 +123,7 @@ class Client {
 
                 if (Baileys.isJidGroup(message.key.remoteJid)) await this.setGroupCache(message.key.remoteJid);
 
-                const messageType = Baileys.getContentType(message.message) || Object.keys(message.message)[0];
+                const messageType = Baileys.getContentType(message.message) ?? "";
                 const text = Functions.getContentFromMsg(message) ?? "";
                 const senderJid = Functions.getSender(message, this.core);
                 const senderLid = await Functions.convertJid("lid", senderJid, this.jids, this.core);
@@ -140,7 +140,7 @@ class Client {
                 const msg = {
                     ...message,
                     content: text,
-                    lid: senderLid,
+                    senderLid,
                     messageType
                 };
 
@@ -304,7 +304,7 @@ class Client {
             this.consolefy.setTag("pairing-code");
 
             if (this.printQRInTerminal) {
-                this.consolefy.error("If you are set the usePairingCode to true then you need to set printQRInTerminal to false.");
+                this.consolefy.error("If you are set usePairingCode to true then you need to set printQRInTerminal to false.");
                 this.consolefy.resetTag();
                 return;
             }
@@ -325,7 +325,7 @@ class Client {
 
             const PHONENUMBER_MCC = (await fetch("https://gist.githubusercontent.com/itsreimau/3da60a4937a66e4b1ac34970500e926b/raw/5f4a57faf6d0133c37db60192915d4686e865329/PHONENUMBER_MCC.json")).json();
             if (!PHONENUMBER_MCC.some(mcc => this.phoneNumber.startsWith(mcc))) {
-                this.consolefy.error("phoneNumber format must be like: 62xxx (starts with the country code).");
+                this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code).");
                 this.consolefy.resetTag();
                 return;
             }

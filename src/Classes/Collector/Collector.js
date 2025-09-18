@@ -34,11 +34,10 @@ class Collector extends EventEmitter {
         const args = await this._collect(m);
         if (!args) return;
 
-        if (this.maxProcessed && this.maxProcessed === this.received) return this.stop("processedLimit");
-
         const filtered = await this.filter(args, this.collector);
         if (!filtered) return;
 
+        if (this.maxProcessed && this.maxProcessed === this.received) return this.stop("processedLimit");
         if (this.max && this.max <= this.collector.size) return this.stop("limit")
 
         if (this.isRun) {
