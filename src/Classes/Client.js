@@ -208,7 +208,6 @@ class Client {
 
     command(opts, code) {
         if (typeof opts !== "string") return this.cmd.set(this.cmd.size, opts);
-
         if (!code) code = () => null;
 
         return this.cmd.set(this.cmd.size, {

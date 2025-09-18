@@ -146,7 +146,7 @@ class Ctx {
 
         return {
             ...rawMsg,
-            contentType: this.getContentType(rawMsg.message),
+            contentType: Functions.getContentType(rawMsg.message),
             media: {
                 toBuffer: async () => await this.getMediaMessage({
                     message: msg
@@ -171,7 +171,7 @@ class Ctx {
             }),
             message: msgContext.quotedMessage,
             messageType: Baileys.getContentType(msgContext.quotedMessage) ?? "",
-            contentType: this.getContentType(msgContext.quotedMessage),
+            contentType: Functions.getContentType(msgContext.quotedMessage),
             key: {
                 remoteJid: chatId,
                 participant: Baileys.isJidGroup(chatId) ? senderJid : null,

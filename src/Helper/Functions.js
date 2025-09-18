@@ -63,7 +63,7 @@ const getId = (jid) => {
 
 const convertJid = async (type, jid, jids, client) => {
     const decoced = decodeJid(jid);
-    if (type === "lid" && Baileys.isLidUser(jid)) {
+    if (type === "lid" && Baileys.isJidUser(jid)) {
         for (const [lid, data] of Object.entries(jids)) {
             if (data.pn === decoced) return lid;
         }
@@ -72,7 +72,7 @@ const convertJid = async (type, jid, jids, client) => {
             if (results && results.length > 0 && results[0].exists) return results[0].jid;
         } catch {}
         return decoced;
-    } else if (type === "pn" && Baileys.isJidUser(jid)) {
+    } else if (type === "pn" && Baileys.isLidUser(jid)) {
         if (jids[decoced] && jids[decoced].pn) return jids[decoced].pn;
         return decoced;
     }
