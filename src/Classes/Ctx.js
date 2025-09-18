@@ -15,12 +15,9 @@ class Ctx {
         this._msg = this._self.m;
         this._sender = {
             jid: Functions.getSender(this._msg, this._client),
-            decodedJid: null,
             lid: this._msg.senderLid,
             pushName: this._msg.pushName
         };
-
-        if (this._sender.jid) this._sender.decodedJid = Functions.decodeJid(this._sender.jid);
 
         this._config = {
             prefix: this._self.prefix,
@@ -105,8 +102,7 @@ class Ctx {
     }
 
     getContentType() {
-        const msg = Baileys.extractMessageContent(this._msg);
-        return Functions.getContentType(msg);
+        return Baileys.getContentType(this._msg.message);
     }
 
     getMentioned() {
@@ -118,19 +114,19 @@ class Ctx {
     }
 
     decodeJid(jid) {
-        return Functions.decodeJid(jid);
+        return Functions.decodeJid(jid || this.sender.jid);
     }
 
     getPushname(jid) {
-        return Functions.getPushname(jid, this._self.jids);
+        return Functions.getPushname(jid || this.sender.jid, this._self.jids);
     }
 
     getId(jid) {
-        return Functions.getId(jid);
+        return Functions.getId(jid || this.sender.jid);
     }
 
     async convertJid(type, jid) {
-        return await Functions.convertJid(type, jid, this._self.jids, this._client);
+        return await Functions.convertJid(type, jid || this.sender.jid, this._self.jids, this._client);
     }
 
     async getMediaMessage(msg, type) {
@@ -150,7 +146,7 @@ class Ctx {
 
         return {
             ...rawMsg,
-            contentType: Functions.getContentType(msg) !== "interactiveMessage" ? Functions.getContentType(msg) : Functions.getContentType(msg.interactiveMessage.header),
+            contentType: this.getContentType(rawMsg.message),
             media: {
                 toBuffer: async () => await this.getMediaMessage({
                     message: msg
@@ -175,7 +171,7 @@ class Ctx {
             }),
             message: msgContext.quotedMessage,
             messageType: Baileys.getContentType(msgContext.quotedMessage) ?? "",
-            contentType: Functions.getContentType(message) !== "interactiveMessage" ? Functions.getContentType(message) : Functions.getContentType(message.interactiveMessage.header),
+            contentType: this.getContentType(msgContext.quotedMessage),
             key: {
                 remoteJid: chatId,
                 participant: Baileys.isJidGroup(chatId) ? senderJid : null,

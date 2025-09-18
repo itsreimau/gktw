@@ -34,15 +34,14 @@ class MessageCollector extends Collector {
 
         try {
             this.received++;
-            const message = Baileys.extractMessageContent(m.message);
             const senderJid = Functions.getSender(m, this.clientReq.self.core);
             return {
                 ...m,
                 content,
-                message,
-                contentType: Functions.getContentType(message) !== "interactiveMessage" ? Functions.getContentType(message) : Functions.getContentType(message.interactiveMessage.header),
+                message: Baileys.extractMessageContent(m.message),
+                contentType: Functions.getContentType(m.message),
                 id: m.key.remoteJid,
-                senderJid: senderJid,
+                senderJid,
                 senderLid: await Functions.convertJid("lid", senderJid, this.clientReq.self.jids, this.clientReq.self.core)
             };
         } catch {

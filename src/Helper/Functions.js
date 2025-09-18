@@ -1,23 +1,22 @@
 "use strict";
 
-const MessageType = require("../Constant/MessageType.js");
 const Baileys = require("baileys");
 
-const getContentType = (content) => {
-    const keys = Object.keys(content);
-    const type = keys.find(key => (key === MessageType.conversation || key.endsWith("Message") || key.endsWith("V2") || key.endsWith("V3")) && key !== MessageType.senderKeyDistributionMessage);
-    return type;
-};
+const getContentType = (msg) => {
+    const _msg = Baileys.extractMessageContent(msg);
+    const contentType = Baileys.getContentType(_msg);
+    return contentType !== "interactiveMessage" ? contentType : Baileys.getContentType(_msg.interactiveMessage.header);
+}
 
 const getContentFromMsg = (msg) => {
-    const contentType = getContentType(msg.message);
+    const contentType = getContentType(msg.message) ?? "";
     const contentHandlers = {
         conversation: () => msg.message.conversation,
         extendedTextMessage: () => msg.message.extendedTextMessage?.text || "",
         imageMessage: () => msg.message.imageMessage?.caption || "",
         videoMessage: () => msg.message.videoMessage?.caption || "",
         documentMessageWithCaption: () => msg.message.documentMessageWithCaption?.caption || "",
-        protocolMessage: () => msg.message.protocolMessage?.editedMessage?.extendedTextMessage?.text || msg.message.protocolMessage?.editedMessage?.conversation || msg.message.protocolMessage?.editedMessage?.imageMessage?.caption || msg.message.protocolMessage?.editedMessage?.videoMessage?.caption || "",
+        protocolMessage: () => msg.message.protocolMessage?.editedMessage?.conversation || msg.message.protocolMessage?.editedMessage?.extendedTextMessage?.text || msg.message.protocolMessage?.editedMessage?.imageMessage?.caption || msg.message.protocolMessage?.editedMessage?.videoMessage?.caption || "",
         buttonsMessage: () => msg.message.buttonsMessage?.contentText || "",
         interactiveMessage: () => msg.message.interactiveMessage?.body?.text || "",
         buttonsResponseMessage: () => msg.message.buttonsResponseMessage?.selectedButtonId || "",

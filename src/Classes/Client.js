@@ -198,13 +198,11 @@ class Client {
 
     onCall() {
         this.core.ev.on("call", (event) => {
-            const withDecodedId = event.map(async (call) => ({
+            const _event = event.map(async (call) => ({
                 ...call,
-                decodedFrom: Functions.decodeJid(call.from),
-                decodedChatId: Functions.decodeJid(call.chatId),
                 fromLid: await Functions.convertJid("lid", call.from, this.jids, this.core)
             }));
-            this.ev.emit(Events.Call, withDecodedId);
+            this.ev.emit(Events.Call, _event);
         });
     }
 
