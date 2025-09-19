@@ -23,7 +23,7 @@
     "@discordjs/collection": "^2.1.1",
     "@mengkodingan/consolefy": "^1.0.1",
     "array-move": "^3.0.1",
-    "baileys": "npm:@im-dims/baileys-md@7.2.3",
+    "baileys": "npm:@itsukichan/baileys@7.2.3",
     "glob": "^11.0.3",
     "pino": "^9.10.0",
     "vcard-parser": "^1.0.0"
