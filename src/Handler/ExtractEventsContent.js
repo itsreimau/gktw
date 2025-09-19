@@ -2,27 +2,26 @@
 
 const MessageType = require("../Constant/MessageType.js");
 
-function ExtractEventsContent(m, msgType) {
+function extractEventsContent(message, messageType) {
     const used = {
-        upsert: m.content
+        upsert: message.content
     };
-
-    const eventMapping = {
-        [MessageType.pollCreationMessage]: (msg) => ({
-            poll: msg.message.pollCreationMessage.name
-        }),
-        [MessageType.pollUpdateMessage]: (msg) => ({
+    const eventMapping = new Map([
+        [MessageType.pollCreationMessage, (msg) => ({
+            poll: msg.message?.pollCreationMessage?.name
+        })],
+        [MessageType.pollUpdateMessage, (msg) => ({
             pollVote: msg.content
-        }),
-        [MessageType.reactionMessage]: (msg) => ({
+        })],
+        [MessageType.reactionMessage, (msg) => ({
             reactions: msg.content
-        })
-    };
-
-    return eventMapping[msgType] ? {
+        })]
+    ]);
+    const handler = eventMapping.get(messageType);
+    return handler ? {
         ...used,
-        ...eventMapping[msgType](m)
+        ...handler(message)
     } : used;
 }
 
-module.exports = ExtractEventsContent;
+module.exports = extractEventsContent;

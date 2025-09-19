@@ -5,42 +5,63 @@ const MessageType = require("../Constant/MessageType.js");
 const Events = require("../Constant/Events.js");
 const Ctx = require("../Classes/Ctx.js");
 
-async function emitPollCreation(m, ev, self, core) {
+const emitPollCreation = async (m, ev, self, core) => {
+    const {
+        message: {
+            pollCreationMessage
+        }
+    } = m;
     const used = ExtractEventsContent(m, MessageType.pollCreationMessage);
-    m.pollValues = m.message.pollCreationMessage.options.map(msg => msg.optionName);
-    m.pollSingleSelect = Boolean(m.message.pollCreationMessage.selectableOptionsCount);
-    ev.emit(Events.Poll, m, new Ctx({
-        used,
+    const pollValues = pollCreationMessage.options.map(({
+        optionName
+    }) => optionName);
+    const pollSingleSelect = Boolean(pollCreationMessage.selectableOptionsCount);
+    const createContext = (usedValue) => new Ctx({
+        used: usedValue,
         args: [],
         self,
         client: core
-    }));
-}
+    });
+    Object.assign(m, {
+        pollValues,
+        pollSingleSelect
+    });
+    ev.emit(Events.Poll, m, createContext(used));
+};
 
-async function emitPollUpdate(m, ev, self, core) {
+const emitPollUpdate = async (m, ev, self, core) => {
     const used = ExtractEventsContent(m, MessageType.pollUpdateMessage);
-    ev.emit(Events.PollVote, m, new Ctx({
-        used,
+    const createContext = (usedValue) => new Ctx({
+        used: usedValue,
         args: [],
         self,
         client: core
-    }));
-}
+    });
+    ev.emit(Events.PollVote, m, createContext(used));
+};
 
-async function emitReaction(m, ev, self, core) {
+const emitReaction = async (m, ev, self, core) => {
     const used = ExtractEventsContent(m, MessageType.reactionMessage);
-    ev.emit(Events.Reactions, m, new Ctx({
-        used,
+    const createContext = (usedValue) => new Ctx({
+        used: usedValue,
         args: [],
         self,
         client: core
-    }));
-}
+    });
+    ev.emit(Events.Reactions, m, createContext(used));
+};
 
-const MessageEventList = {
+const createEventContext = (used, self, core) => new Ctx({
+    used,
+    args: [],
+    self,
+    client: core
+});
+
+const MessageEventList = Object.freeze({
     [MessageType.pollCreationMessage]: emitPollCreation,
     [MessageType.pollUpdateMessage]: emitPollUpdate,
     [MessageType.reactionMessage]: emitReaction
-};
+});
 
 module.exports = MessageEventList;

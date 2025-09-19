@@ -5,69 +5,104 @@ const Ctx = require("../Classes/Ctx.js");
 const arrayMove = require("array-move");
 
 async function Commands(self, runMiddlewares) {
-    return new Promise((resolve, reject) => {
-        let {
-            cmd,
-            prefix,
-            m
-        } = self;
+    const {
+        cmd,
+        prefix,
+        m
+    } = self;
 
-        if (!m.message || Baileys.isJidStatusBroadcast(m.key.remoteJid) || Baileys.isJidNewsletter(m.key.remoteJid)) return resolve();
+    if (!m.message || Baileys.isJidStatusBroadcast(m.key.remoteJid) || Baileys.isJidNewsletter(m.key.remoteJid)) return;
 
-        const hasHears = Array.from(self.hearsMap.values()).filter(hear => hear.name === m.content || hear.name === m.messageType || new RegExp(hear.name).test(m.content) || (Array.isArray(hear.name) && hear.name.includes(m.content)));
-        if (hasHears.length) {
-            hasHears.forEach(hear => {
-                hear.code(new Ctx({
-                    used: {
-                        hears: m.content
-                    },
-                    args: [],
-                    self,
-                    client: self.core
-                }));
-            });
-            return resolve();
-        }
+    await handleHears(self, m);
+    await processCommands(self, runMiddlewares, m, cmd, prefix);
+}
 
-        let selectedPrefix;
-        if (Array.isArray(prefix)) {
-            if (prefix[0] == "") {
-                const emptyIndex = prefix.findIndex(_prefix => _prefix.includes(""));
-                prefix = arrayMove(prefix, emptyIndex - 1, prefix.length - 1);
-            } else {
-                selectedPrefix = prefix.find(_prefix => m.content.startsWith(_prefix));
-            }
-        } else if (prefix instanceof RegExp) {
-            const match = m.content.match(prefix);
-            if (match) selectedPrefix = match[0];
-        }
-        if (!selectedPrefix) return resolve();
+async function handleHears(self, m) {
+    const hearsEntries = Array.from(self.hearsMap.values());
+    const matchingHears = hearsEntries.filter(hear => hear.name === m.content || hear.name === m.messageType || (hear.name instanceof RegExp && hear.name.test(m.content)) || (Array.isArray(hear.name) && hear.name.includes(m.content)));
 
-        const args = m.content.slice(selectedPrefix.length).trim().split(/\s+/) || [];
-        const commandName = args?.shift().toLowerCase();
-        if (!commandName) return resolve();
+    if (matchingHears.length === 0) return;
 
-        const commandsList = Array.from(cmd?.values() ?? []);
-        const matchedCommands = commandsList.filter(command => command.name?.toLowerCase() === commandName || (Array.isArray(command.aliases) ? command.aliases.includes(commandName) : command.aliases === commandName));
-        if (!matchedCommands.length) return resolve();
-
-        const ctx = new Ctx({
-            used: {
-                prefix: selectedPrefix,
-                command: commandName
-            },
-            args,
-            self,
-            client: self.core
-        });
-
-        runMiddlewares(ctx).then(shouldContinue => {
-            if (!shouldContinue) return resolve();
-
-            matchedCommands.forEach(command => command.code(ctx));
-            resolve();
-        }).catch(reject);
+    const ctx = new Ctx({
+        used: {
+            hears: m.content
+        },
+        args: [],
+        self,
+        client: self.core
     });
+
+    await Promise.allSettled(matchingHears.map(hear => Promise.resolve(hear.code(ctx))));
+}
+
+async function processCommands(self, runMiddlewares, m, cmd, prefix) {
+    const selectedPrefix = findMatchingPrefix(m.content, prefix);
+    if (!selectedPrefix) return;
+
+    const {
+        commandName,
+        args
+    } = parseCommand(m.content, selectedPrefix);
+    if (!commandName) return;
+
+    const matchedCommands = findMatchingCommands(cmd, commandName);
+    if (matchedCommands.length === 0) return;
+
+    const ctx = new Ctx({
+        used: {
+            prefix: selectedPrefix,
+            command: commandName
+        },
+        args,
+        self,
+        client: self.core
+    });
+
+    const shouldContinue = await runMiddlewares(ctx);
+    if (!shouldContinue) return;
+
+    for (const command of matchedCommands) {
+        await Promise.resolve(command.code(ctx));
+    }
+}
+
+function findMatchingPrefix(content, prefix) {
+    if (Array.isArray(prefix)) {
+        if (prefix.includes("")) {
+            const sortedPrefix = [...prefix].sort((a, b) => a === "" ? 1 : b === "" ? -1 : 0);
+            return sortedPrefix.find(_prefix => content.startsWith(_prefix));
+        }
+        return prefix.find(_prefix => content.startsWith(_prefix));
+    }
+
+    if (prefix instanceof RegExp) {
+        const match = content.match(prefix);
+        return match?.[0];
+    }
+
+    return content.startsWith(prefix) ? prefix : null;
+}
+
+function parseCommand(content, selectedPrefix) {
+    const remainingContent = content.slice(selectedPrefix.length).trim();
+    if (!remainingContent) return {
+        commandName: null,
+        args: []
+    };
+
+    const parts = remainingContent.split(/\s+/);
+    const commandName = parts[0]?.toLowerCase();
+    const args = parts.slice(1);
+
+    return {
+        commandName,
+        args
+    };
+}
+
+function findMatchingCommands(cmd, commandName) {
+    const commandsList = Array.from(cmd?.values() ?? []);
+    return commandsList.filter(command => command.name?.toLowerCase() === commandName || (Array.isArray(command.aliases) && command.aliases.includes(commandName)) || command.aliases === commandName);
 }
 
 module.exports = Commands;

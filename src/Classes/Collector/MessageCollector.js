@@ -21,10 +21,12 @@ class MessageCollector extends Collector {
         this.jid = this.clientReq.msg.key.remoteJid;
         this.hears = options.hears || [];
         this.received = 0;
+
         this.clientReq.self.ev.on(Events.MessagesUpsert, this.collect);
         this.once("end", () => {
             this.clientReq.self.ev.removeListener(Events.MessagesUpsert, this.collect);
         });
+
         return this;
     }
 
@@ -42,7 +44,7 @@ class MessageCollector extends Collector {
                 contentType: Functions.getContentType(m.message),
                 id: m.key.remoteJid,
                 senderJid,
-                senderLid: await Functions.convertJid("lid", senderJid, this.clientReq.self.jids, this.clientReq.self.core)
+                senderLid: await Functions.convertJid(senderJid, "lid", this.clientReq.self.jids, this.clientReq.self.core)
             };
         } catch {
             return null;

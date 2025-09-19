@@ -15,9 +15,12 @@ class Ctx {
         this._msg = this._self.m;
         this._sender = {
             jid: Functions.getSender(this._msg, this._client),
+            decodedJid: null,
             lid: this._msg.senderLid,
             pushName: this._msg.pushName
         };
+
+        if (this._sender.jid) this._sender.decodedJid = Functions.decodeJid(this._sender.jid);
 
         this._config = {
             prefix: this._self.prefix,
@@ -67,12 +70,12 @@ class Ctx {
     }
 
     async block(jid) {
-        const target = jid ? Functions.decodeJid(jid) : Functions.decodeJid(this.id);
+        const target = jid ? Functions.decodeJid(jid) : this._sender.decodedJid;
         return this._client.updateBlockStatus(target, "block");
     }
 
     async unblock(jid) {
-        const target = jid ? Functions.decodeJid(jid) : Functions.decodeJid(this.id);
+        const target = jid ? Functions.decodeJid(jid) : this._sender.decodedJid;
         return this._client.updateBlockStatus(target, "unblock");
     }
 
@@ -81,7 +84,7 @@ class Ctx {
     }
 
     async fetchBio(jid) {
-        const decodedJid = Functions.decodeJid(jid ? jid : this._client.user.id);
+        const decodedJid = jid ? Functions.decodeJid(jid) : this.me.decodedId;
         return await this._client.fetchStatus(decodedJid);
     }
 
@@ -125,8 +128,8 @@ class Ctx {
         return Functions.getId(jid || this.sender.jid);
     }
 
-    async convertJid(type, jid) {
-        return await Functions.convertJid(type, jid || this.sender.jid, this._self.jids, this._client);
+    async convertJid(jid, type) {
+        return await Functions.convertJid(jid || this.sender.jid, type, this._self.jids, this._client);
     }
 
     async getMediaMessage(msg, type) {
@@ -141,18 +144,18 @@ class Ctx {
     }
 
     get msg() {
-        const rawMsg = this._msg;
-        const msg = Baileys.extractMessageContent(rawMsg.message);
+        const msg = this._msg;
+        const message = Baileys.extractMessageContent(msg.message);
 
         return {
-            ...rawMsg,
-            contentType: Functions.getContentType(rawMsg.message),
+            ...msg,
+            contentType: Functions.getContentType(msg.message),
             media: {
                 toBuffer: async () => await this.getMediaMessage({
-                    message: msg
+                    message
                 }, "buffer"),
                 toStream: async () => await this.getMediaMessage({
-                    message: msg
+                    message
                 }, "stream")
             }
         };
@@ -175,11 +178,11 @@ class Ctx {
             key: {
                 remoteJid: chatId,
                 participant: Baileys.isJidGroup(chatId) ? senderJid : null,
-                fromMe: senderJid && this._client.user.id ? Baileys.areJidsSameUser(Functions.decodeJid(senderJid), Functions.decodeJid(this._client.user.id)) : false,
+                fromMe: senderJid && this._client.user.id ? Baileys.areJidsSameUser(Functions.decodeJid(senderJid), this.me.decodedId) : false,
                 id: msgContext.stanzaId
             },
             senderJid,
-            senderLid: async () => await Functions.convertJid("lid", senderJid, this._self.jids, this._client),
+            senderLid: async () => await Functions.convertJid(senderJid, "lid", this._self.jids, this._client),
             pushName: Functions.getPushname(senderJid, this._self.jid),
             media: {
                 toBuffer: async () => await this.getMediaMessage({
@@ -200,7 +203,8 @@ class Ctx {
         if (this._self.autoMention) {
             const extractMentions = (text) => {
                 if (!text) return [];
-                const mentions = (text?.match(/@(\d+)/g) || []).map(mention => mention.replace("@", "") + Baileys.S_WHATSAPP_NET);
+                const numbers = (text?.match(/@(\d+)/g) || []).map(mention => mention.replace("@", ""));
+                const mentions = numbers.flatMap(number => [number + Baileys.S_WHATSAPP_NET, number + Baileys.LID]);
                 return mentions;
             };
             const mentions = [...extractMentions(content.text), ...extractMentions(content.caption), ...extractMentions(content.header), ...extractMentions(content.footer)].filter(Boolean);

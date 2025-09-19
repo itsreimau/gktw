@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.3.13-phoenix",
+  "version": "1.3.14-phoenix",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -22,8 +22,7 @@
     "@cacheable/node-cache": "^1.7.1",
     "@discordjs/collection": "^2.1.1",
     "@mengkodingan/consolefy": "^1.0.1",
-    "array-move": "^3.0.1",
-    "baileys": "npm:@itsukichan/baileys@7.2.3",
+    "baileys": "npm:@yupra/baileys@^2.0.2",
     "glob": "^11.0.3",
     "pino": "^9.10.0",
     "vcard-parser": "^1.0.0"

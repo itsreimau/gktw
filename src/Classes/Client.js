@@ -126,7 +126,7 @@ class Client {
                 const messageType = Baileys.getContentType(message.message) ?? "";
                 const text = Functions.getContentFromMsg(message) ?? "";
                 const senderJid = Functions.getSender(message, this.core);
-                const senderLid = await Functions.convertJid("lid", senderJid, this.jids, this.core);
+                const senderLid = await Functions.convertJid(senderJid, "lid", this.jids, this.core);
 
                 if (message.pushName && !this.jids[senderLid] || this.jids[senderLid]?.pushName !== message.pushName) {
                     this.jids[senderLid] = {
@@ -198,11 +198,11 @@ class Client {
 
     onCall() {
         this.core.ev.on("call", (event) => {
-            const _event = event.map(async (call) => ({
+            const anotherEvent = event.map(async (call) => ({
                 ...call,
-                fromLid: await Functions.convertJid("lid", call.from, this.jids, this.core)
+                fromLid: await Functions.convertJid(call.from, "lid", this.jids, this.core)
             }));
-            this.ev.emit(Events.Call, _event);
+            this.ev.emit(Events.Call, anotherEvent);
         });
     }
 
@@ -248,8 +248,8 @@ class Client {
         return Functions.getId(jid);
     }
 
-    async convertJid(type, jid) {
-        return await Functions.convertJid(type, jid, this.jids, this.core);
+    async convertJid(jid, type) {
+        return await Functions.convertJid(jid, type, this.jids, this.core);
     }
 
     async launch() {
@@ -329,7 +329,6 @@ class Client {
 
             setTimeout(async () => {
                 const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
-
                 this.consolefy.info(`Pairing Code: ${code}`);
                 this.consolefy.resetTag();
             }, 3000);

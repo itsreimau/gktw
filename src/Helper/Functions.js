@@ -2,89 +2,84 @@
 
 const Baileys = require("baileys");
 
-const getContentType = (msg) => {
-    const _msg = Baileys.extractMessageContent(msg);
-    const contentType = Baileys.getContentType(_msg);
-    return contentType !== "interactiveMessage" ? contentType : Baileys.getContentType(_msg.interactiveMessage.header);
-}
+const getContentType = (message) => {
+    const messageContent = Baileys.extractMessageContent(message);
+    const contentType = Baileys.getContentType(messageContent);
+    return contentType !== "interactiveMessage" ? contentType : Baileys.getContentType(messageContent.interactiveMessage?.header);
+};
+
+const CONTENT_HANDLERS = {
+    conversation: (msg) => msg.conversation,
+    extendedTextMessage: (msg) => msg.extendedTextMessage?.text || "",
+    imageMessage: (msg) => msg.imageMessage?.caption || "",
+    videoMessage: (msg) => msg.videoMessage?.caption || "",
+    documentMessageWithCaption: (msg) => msg.documentMessageWithCaption?.caption || "",
+    protocolMessage: (msg) => {
+        const editedMessage = msg.protocolMessage?.editedMessage;
+        return editedMessage?.conversation || editedMessage?.extendedTextMessage?.text || editedMessage?.imageMessage?.caption || editedMessage?.videoMessage?.caption || "";
+    },
+    buttonsMessage: (msg) => msg.buttonsMessage?.contentText || "",
+    interactiveMessage: (msg) => msg.interactiveMessage?.body?.text || "",
+    buttonsResponseMessage: (msg) => msg.buttonsResponseMessage?.selectedButtonId || "",
+    listResponseMessage: (msg) => msg.listResponseMessage?.singleSelectReply?.selectedRowId || "",
+    templateButtonReplyMessage: (msg) => msg.templateButtonReplyMessage?.selectedId || "",
+    interactiveResponseMessage: (msg) => {
+        const interactiveMsg = msg.interactiveResponseMessage;
+        let text = interactiveMsg?.selectedButtonId || "";
+        if (!text && interactiveMsg?.nativeFlowResponseMessage) {
+            const params = JSON.parse(interactiveMsg.nativeFlowResponseMessage.paramsJson || "{}");
+            text = params.id || params.selectedId || params.button_id || "";
+        }
+        return text;
+    }
+};
 
 const getContentFromMsg = (msg) => {
     const contentType = getContentType(msg.message) ?? "";
-    const contentHandlers = {
-        conversation: () => msg.message.conversation,
-        extendedTextMessage: () => msg.message.extendedTextMessage?.text || "",
-        imageMessage: () => msg.message.imageMessage?.caption || "",
-        videoMessage: () => msg.message.videoMessage?.caption || "",
-        documentMessageWithCaption: () => msg.message.documentMessageWithCaption?.caption || "",
-        protocolMessage: () => msg.message.protocolMessage?.editedMessage?.conversation || msg.message.protocolMessage?.editedMessage?.extendedTextMessage?.text || msg.message.protocolMessage?.editedMessage?.imageMessage?.caption || msg.message.protocolMessage?.editedMessage?.videoMessage?.caption || "",
-        buttonsMessage: () => msg.message.buttonsMessage?.contentText || "",
-        interactiveMessage: () => msg.message.interactiveMessage?.body?.text || "",
-        buttonsResponseMessage: () => msg.message.buttonsResponseMessage?.selectedButtonId || "",
-        listResponseMessage: () => msg.message.listResponseMessage?.singleSelectReply?.selectedRowId || "",
-        templateButtonReplyMessage: () => msg.message.templateButtonReplyMessage?.selectedId || "",
-        interactiveResponseMessage: () => {
-            let text = msg.message.interactiveResponseMessage.selectedButtonId || "";
-            if (!text && msg.message.interactiveResponseMessage.nativeFlowResponseMessage) {
-                const params = msg.message.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson;
-                if (params) {
-                    const parsedParams = JSON.parse(params);
-                    text = parsedParams.id || parsedParams.selectedId || parsedParams.button_id || "";
-                }
-            }
-            return text;
-        }
-    };
-    return contentHandlers[contentType]?.() || "";
+    const handler = CONTENT_HANDLERS[contentType];
+    return handler ? handler(msg.message) : "";
 };
 
-const getSender = (msg, client) => msg.key.fromMe ? client.user.id : msg.key.participant || msg.key.remoteJid;
-
 const decodeJid = (jid) => {
-    if (/:\d+@/gi.test(jid)) {
-        const decoded = Baileys.jidDecode(jid);
-        return decoded?.user && decoded?.server ? Baileys.jidEncode(decoded.user, decoded.server) : jid;
-    }
-    return jid;
+    const decoded = Baileys.jidDecode(jid);
+    return decoded?.user && decoded?.server ? Baileys.jidEncode(decoded.user, decoded.server) : jid;
+};
+
+const getSender = (msg, client) => {
+    const {
+        fromMe,
+        participant,
+        remoteJid
+    } = msg.key;
+    return fromMe ? client.user.id : participant || remoteJid;
 };
 
 const getPushname = (jid, jids = {}) => {
-    const decoded = decodeJid(jid);
-    if (jids[decoded] && jids[decoded].pushName) return jids[decoded].pushName
-    for (const [lid, data] of Object.entries(jids)) {
-        if (data.pn === decoded && data.pushName) return data.pushName;
-    }
-    return decoded;
+    if (jids[jid]?.pushName) return jids[jid].pushName;
+    const matchingEntry = Object.entries(jids).find(([, data]) => data.pn === jid && data.pushName);
+    return matchingEntry?.[1]?.pushName || jid;
 };
 
-const getId = (jid) => {
-    const decoded = Baileys.jidDecode(jid);
-    return decoded?.user || jid;
-};
+const getId = (jid) => Baileys.jidDecode(jid)?.user || jid;
 
-const convertJid = async (type, jid, jids, client) => {
-    const decoced = decodeJid(jid);
+const convertJid = async (jid, type, jids, client) => {
     if (type === "lid" && Baileys.isJidUser(jid)) {
-        for (const [lid, data] of Object.entries(jids)) {
-            if (data.pn === decoced) return lid;
-        }
-        try {
-            const results = await client.onWhatsApp(decoced);
-            if (results && results.length > 0 && results[0].exists) return results[0].jid;
-        } catch {}
-        return decoced;
+        const existingMapping = Object.entries(jids).find(([, data]) => data.pn === jid);
+        if (existingMapping) return existingMapping[0];
+        const results = await client.onWhatsApp(jid);
+        if (results?.[0]?.exists) return results[0].lid;
     } else if (type === "pn" && Baileys.isLidUser(jid)) {
-        if (jids[decoced] && jids[decoced].pn) return jids[decoced].pn;
-        return decoced;
+        return jids[jid]?.pn || jid;
     }
-    return decoced;
+    return jid;
 };
 
 module.exports = {
     getContentType,
     getContentFromMsg,
     getSender,
-    decodeJid,
     getPushname,
     getId,
-    convertJid
+    convertJid,
+    decodeJid
 };
