@@ -2,7 +2,6 @@
 
 const Baileys = require("baileys");
 const Ctx = require("../Classes/Ctx.js");
-const arrayMove = require("array-move");
 
 async function Commands(self, runMiddlewares) {
     const {
