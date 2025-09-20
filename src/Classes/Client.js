@@ -128,7 +128,7 @@ class Client {
                 const senderJid = Functions.getSender(message, this.core);
                 const senderLid = await Functions.convertJid(senderJid, "lid", this.jids, this.core);
 
-                if (message.pushName && !this.jids[senderLid] || this.jids[senderLid]?.pushName !== message.pushName) {
+                if (message.pushName && (!this.jids[senderLid] || this.jids[senderLid]?.pushName !== message.pushName)) {
                     this.jids[senderLid] = {
                         ...(this.jids[senderLid] || {}),
                         pushName: message.pushName

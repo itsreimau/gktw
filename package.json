@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.3.16-phoenix",
+  "version": "1.3.17-phoenix",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -24,7 +24,7 @@
     "@mengkodingan/consolefy": "^1.0.1",
     "baileys": "npm:@yupra/baileys@^2.0.2",
     "glob": "^11.0.3",
-    "pino": "^9.10.0",
+    "pino": "^9.11.0",
     "vcard-parser": "^1.0.0"
   }
 }
