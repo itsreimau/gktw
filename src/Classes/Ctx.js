@@ -100,6 +100,10 @@ class Ctx {
         return Baileys.isJidGroup(this.id);
     }
 
+    isPrivate() {
+        return Baileys.isJidUser(this.id);
+    }
+
     getMessageType() {
         return this._msg.messageType;
     }
@@ -201,14 +205,16 @@ class Ctx {
 
     async sendMessage(jid, content, options = {}) {
         if (this._self.autoMention) {
-            const extractMentions = (text) => {
-                if (!text) return [];
-                const numbers = (text?.match(/@(\d+)/g) || []).map(mention => mention.replace("@", ""));
-                const mentions = numbers.flatMap(number => [number + Baileys.S_WHATSAPP_NET, number + Baileys.LID]);
-                return mentions;
-            };
-            const mentions = [...extractMentions(content.text), ...extractMentions(content.caption), ...extractMentions(content.header), ...extractMentions(content.footer)].filter(Boolean);
-            if (mentions.length > 0) content.mentions = [...(content.mentions || []), ...mentions.filter(mention => !(content.mentions || []).includes(mention))];
+            const extractNumbers = (text) => (text?.match(/@(\d+)/g) || []).map(m => m.replace("@", ""));
+            const extractedNumber = [...extractNumbers(content.text), ...extractNumbers(content.caption), ...extractNumbers(content.header), ...extractNumbers(content.footer)];
+            const numbers = [...new Set(extractedNumber)].filter(Boolean);
+            if (numbers.length > 0) {
+                const whatsappMentions = numbers.map(number => number + Baileys.S_WHATSAPP_NET);
+                content.mentions = [...new Set([...(content.mentions || []), ...whatsappMentions])];
+                const lidMentions = numbers.map(number => number + Baileys.LID);
+                content.contextInfo = content.contextInfo || {};
+                content.contextInfo.mentionedJid = [...new Set([...(content.contextInfo.mentionedJid || []), ...lidMentions])];
+            }
         }
 
         if (content.buttons) {

@@ -56,16 +56,16 @@ const getSender = (msg, client) => {
 
 const getPushname = (jid, jids = {}) => {
     if (jids[jid]?.pushName) return jids[jid].pushName;
-    const matchingEntry = Object.entries(jids).find(([, data]) => data.pn === jid && data.pushName);
-    return matchingEntry?.[1]?.pushName || jid;
+    const matchingJid = Object.entries(jids).find(([, data]) => data.pn === jid && data.pushName);
+    return matchingJid?.[1]?.pushName || jid;
 };
 
 const getId = (jid) => Baileys.jidDecode(jid)?.user || jid;
 
 const convertJid = async (jid, type, jids, client) => {
     if (type === "lid" && Baileys.isJidUser(jid)) {
-        const existingMapping = Object.entries(jids).find(([, data]) => data.pn === jid);
-        if (existingMapping) return existingMapping[0];
+        const existingLid = Object.entries(jids).find(([, data]) => data.pn === jid);
+        if (existingLid) return existingLid[0];
         const results = await client.onWhatsApp(jid);
         if (results?.[0]?.exists) return results[0].lid;
     } else if (type === "pn" && Baileys.isLidUser(jid)) {
