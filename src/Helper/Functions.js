@@ -50,7 +50,7 @@ const getSender = (msg, client) => {
 };
 
 const getPushname = (jid, pushNames = {}) => {
-    const decoded = decodeJid(jid);
+    const decoded = Baileys.jidNormalizedUser(jid);
     return decoded ? pushNames[decoded] || decoded : null;
 };
 
