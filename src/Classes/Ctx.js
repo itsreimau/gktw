@@ -204,19 +204,6 @@ class Ctx {
     }
 
     async sendMessage(jid, content, options = {}) {
-        if (this._self.autoMention) {
-            const extractNumbers = (text) => (text?.match(/@(\d+)/g) || []).map(m => m.replace("@", ""));
-            const extractedNumber = [...extractNumbers(content.text), ...extractNumbers(content.caption), ...extractNumbers(content.header), ...extractNumbers(content.footer)];
-            const numbers = [...new Set(extractedNumber)].filter(Boolean);
-            if (numbers.length > 0) {
-                const whatsappMentions = numbers.map(number => number + Baileys.S_WHATSAPP_NET);
-                content.mentions = [...new Set([...(content.mentions || []), ...whatsappMentions])];
-                const lidMentions = numbers.map(number => number + Baileys.LID);
-                content.contextInfo = content.contextInfo || {};
-                content.contextInfo.mentionedJid = [...new Set([...(content.contextInfo.mentionedJid || []), ...lidMentions])];
-            }
-        }
-
         if (content.buttons) {
             content.buttons = content.buttons.map(button => {
                 if (!button.type) button.type = 1;

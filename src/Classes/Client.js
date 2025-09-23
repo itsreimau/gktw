@@ -32,7 +32,6 @@ class Client {
         this.markOnlineOnConnect = opts.markOnlineOnConnect ?? true;
         this.prefix = opts.prefix;
         this.selfReply = opts.selfReply ?? false;
-        this.autoMention = opts.autoMention ?? false;
         this.autoAiLabel = opts.autoAiLabel ?? false;
 
         this.fallbackWAVersion = [2, 3000, 1021387508];
