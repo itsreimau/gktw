@@ -127,10 +127,10 @@ class Client {
 
                 const messageType = Baileys.getContentType(message.message) ?? "";
                 const text = Functions.getContentFromMsg(message) ?? "";
-                const senderJid = Functions.getSender(message, this.core);
+                const sender = Functions.getSender(message, this.core);
 
-                if (message.pushName && this.pushNames[senderJid] !== message.pushName) {
-                    this.pushNames[senderJid] = message.pushName;
+                if (message.pushName && this.pushNames[sender] !== message.pushName) {
+                    this.pushNames[sender] = message.pushName;
                     this.savePushnames();
                 }
 

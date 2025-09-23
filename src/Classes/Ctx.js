@@ -135,6 +135,10 @@ class Ctx {
         return Functions.getId(jid || this.sender.jid);
     }
 
+    async getLIDForPN(pn) {
+        const [isOnWhatsApp] = this._client.onWhatsApp(pn);
+        return isOnWhatsApp.lid ?? pn;
+    }
 
     async getMediaMessage(msg, type) {
         try {
