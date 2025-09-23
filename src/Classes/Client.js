@@ -51,39 +51,14 @@ class Client {
             stdTTL: 30,
             useClones: false
         });
-        this.jidsPath = `${this.authDir}/jids.json`;
-        this.jids = {};
+        this.pushnamesPath = `${this.authDir}/pushnames.json`;
+        this.pushNames = {};
 
         if (typeof this.prefix === "string") this.prefix = this.prefix.split("");
     }
 
-    onConnectionUpdate() {
-        this.core.ev.on("connection.update", (update) => {
-            this.ev.emit(Events.ConnectionUpdate, update);
-            const {
-                connection,
-                lastDisconnect
-            } = update;
-
-            if (update.qr) this.ev.emit(Events.QR, update.qr);
-
-            if (connection === "close") {
-                const shouldReconnect = lastDisconnect.error.output.statusCode !== Baileys.DisconnectReason.loggedOut;
-                this.consolefy.error(`Connection closed due to ${lastDisconnect.error}, reconnecting ${shouldReconnect}`);
-                if (shouldReconnect) this.launch();
-            } else if (connection === "open") {
-                this.readyAt = Date.now();
-                this.ev.emit(Events.ClientReady, this.core);
-            }
-        });
-    }
-
-    onCredsUpdate() {
-        this.core.ev.on("creds.update", this.saveCreds);
-    }
-
-    saveJids() {
-        fs.writeFileSync(this.jidsPath, JSON.stringify(this.jids));
+    savePushnames() {
+        fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
     }
 
     async runMiddlewares(ctx, index = 0) {
@@ -108,11 +83,39 @@ class Client {
         this.middlewares.set(this.middlewares.size, fn);
     }
 
-    onMessage() {
+    async setGroupCache(id) {
+        if (!this.groupCache.get(id)) {
+            const metadata = await this.core.groupMetadata(id);
+            this.groupCache.set(id, metadata);
+        }
+    }
+
+    onEvents() {
+        this.core.ev.on("connection.update", (update) => {
+            this.ev.emit(Events.ConnectionUpdate, update);
+            const {
+                connection,
+                lastDisconnect
+            } = update;
+
+            if (update.qr) this.ev.emit(Events.QR, update.qr);
+
+            if (connection === "close") {
+                const shouldReconnect = lastDisconnect.error.output.statusCode !== Baileys.DisconnectReason.loggedOut;
+                this.consolefy.error(`Connection closed due to ${lastDisconnect.error}, reconnecting ${shouldReconnect}`);
+                if (shouldReconnect) this.launch();
+            } else if (connection === "open") {
+                this.readyAt = Date.now();
+                this.ev.emit(Events.ClientReady, this.core);
+            }
+        });
+
+        this.core.ev.on("creds.update", this.saveCreds);
+
         try {
-            Object.assign(this.jids, JSON.parse(fs.readFileSync(this.jidsPath).toString()));
+            Object.assign(this.pushNames, JSON.parse(fs.readFileSync(this.pushnamesPath).toString()));
         } catch (error) {
-            fs.writeFileSync(this.jidsPath, JSON.stringify(this.jids));
+            fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
         }
 
         this.core.ev.on("messages.upsert", async (event) => {
@@ -125,23 +128,15 @@ class Client {
                 const messageType = Baileys.getContentType(message.message) ?? "";
                 const text = Functions.getContentFromMsg(message) ?? "";
                 const senderJid = Functions.getSender(message, this.core);
-                const senderLid = await Functions.convertJid(senderJid, "lid", this.jids, this.core);
 
-                if (Baileys.isLidUser(senderLid) && message.pushName && (!this.jids[senderLid] || this.jids[senderLid]?.pushName !== message.pushName)) {
-                    this.jids[senderLid] = {
-                        ...(this.jids[senderLid] || {}),
-                        pushName: message.pushName
-                    };
-                    this.saveJids();
-                } else if (Baileys.isJidUser(senderJid)) {
-                    this.jids[senderLid].pn = senderJid;
-                    this.saveJids();
+                if (message.pushName && this.pushNames[senderJid] !== message.pushName) {
+                    this.pushNames[senderJid] = message.pushName;
+                    this.savePushnames();
                 }
 
                 const msg = {
                     ...message,
                     content: text,
-                    senderLid,
                     messageType
                 };
 
@@ -164,28 +159,15 @@ class Client {
                 await require("../Handler/Commands.js")(self, this.runMiddlewares.bind(this));
             }
         });
-    }
 
-    onGroupsJoin() {
         this.core.ev.on("groups.upsert", (event) => {
             this.ev.emit(Events.GroupsJoin, event);
         });
-    }
 
-    async setGroupCache(id) {
-        if (!this.groupCache.get(id)) {
-            const metadata = await this.core.groupMetadata(id);
-            this.groupCache.set(id, metadata);
-        }
-    }
-
-    onGroupsUpdate() {
         this.core.ev.on("groups.update", async ([event]) => {
             await this.setGroupCache(event.id);
         });
-    }
 
-    onGroupParticipantsUpdate() {
         this.core.ev.on("group-participants.update", async (event) => {
             await this.setGroupCache(event.id);
 
@@ -195,15 +177,9 @@ class Client {
                 return this.ev.emit(Events.UserLeave, event);
             }
         });
-    }
 
-    onCall() {
         this.core.ev.on("call", (event) => {
-            const anotherEvent = event.map(async (call) => ({
-                ...call,
-                fromLid: await Functions.convertJid(call.from, "lid", this.jids, this.core)
-            }));
-            this.ev.emit(Events.Call, anotherEvent);
+            this.ev.emit(Events.Call, event);
         });
     }
 
@@ -224,33 +200,25 @@ class Client {
         });
     }
 
-    async groups() {
-        return await this.core.groupFetchAllParticipating();
-    }
-
     async bio(content) {
         await this.core.updateProfileStatus(content);
     }
 
     async fetchBio(jid) {
-        const decodedJid = Functions.decodeJid(jid ? jid : this.core.user.id);
+        const decodedJid = Baileys.jidNormalizedUser(jid ? jid : this.core.user.id);
         return await this.core.fetchStatus(decodedJid);
     }
 
     decodeJid(jid) {
-        return Functions.decodeJid(jid);
+        return Baileys.jidNormalizedUser(jid);
     }
 
     getPushname(jid) {
-        return Functions.getPushname(jid, this.jids);
+        return Functions.getPushname(jid, this.pushNames);
     }
 
     getId(jid) {
         return Functions.getId(jid);
-    }
-
-    async convertJid(jid, type) {
-        return await Functions.convertJid(jid, type, this.jids, this.core);
     }
 
     async launch() {
@@ -321,8 +289,7 @@ class Client {
                 return;
             }
 
-            const PHONENUMBER_MCC = (await fetch("https://gist.githubusercontent.com/itsreimau/3da60a4937a66e4b1ac34970500e926b/raw/5f4a57faf6d0133c37db60192915d4686e865329/PHONENUMBER_MCC.json")).json();
-            if (!PHONENUMBER_MCC.some(mcc => this.phoneNumber.startsWith(mcc))) {
+            if (!Baileys.PHONENUMBER_MCC.some(mcc => this.phoneNumber.startsWith(mcc))) {
                 this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code).");
                 this.consolefy.resetTag();
                 return;
@@ -335,13 +302,7 @@ class Client {
             }, 3000);
         }
 
-        this.onConnectionUpdate();
-        this.onCredsUpdate();
-        this.onMessage();
-        this.onGroupsJoin();
-        this.onGroupsUpdate();
-        this.onGroupParticipantsUpdate();
-        this.onCall();
+        this.onEvents();
     }
 }
 

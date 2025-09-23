@@ -16,11 +16,10 @@ class Ctx {
         this._sender = {
             jid: Functions.getSender(this._msg, this._client),
             decodedJid: null,
-            lid: this._msg.senderLid,
             pushName: this._msg.pushName
         };
 
-        if (this._sender.jid) this._sender.decodedJid = Functions.decodeJid(this._sender.jid);
+        if (this._sender.jid) this._sender.decodedJid = Baileys.jidNormalizedUser(this._sender.jid);
 
         this._config = {
             prefix: this._self.prefix,
@@ -41,7 +40,7 @@ class Ctx {
     }
 
     get decodedId() {
-        return this.id ? Functions.decodeJid(this.id) : null;
+        return this.id ? Baileys.jidNormalizedUser(this.id) : null;
     }
 
     get sender() {
@@ -51,7 +50,7 @@ class Ctx {
     get me() {
         let user = this._client.user;
         if (user) {
-            user.decodedId = Functions.decodeJid(user.id);
+            user.decodedId = Baileys.jidNormalizedUser(user.id);
             user.readyAt = this._self.readyAt;
         }
         return user;
@@ -70,12 +69,12 @@ class Ctx {
     }
 
     async block(jid) {
-        const target = jid ? Functions.decodeJid(jid) : this._sender.decodedJid;
+        const target = jid ? Baileys.jidNormalizedUser(jid) : this._sender.decodedJid;
         return this._client.updateBlockStatus(target, "block");
     }
 
     async unblock(jid) {
-        const target = jid ? Functions.decodeJid(jid) : this._sender.decodedJid;
+        const target = jid ? Baileys.jidNormalizedUser(jid) : this._sender.decodedJid;
         return this._client.updateBlockStatus(target, "unblock");
     }
 
@@ -84,7 +83,7 @@ class Ctx {
     }
 
     async fetchBio(jid) {
-        const decodedJid = jid ? Functions.decodeJid(jid) : this.me.decodedId;
+        const decodedJid = jid ? Baileys.jidNormalizedUser(jid) : this.me.decodedId;
         return await this._client.fetchStatus(decodedJid);
     }
 
@@ -121,20 +120,17 @@ class Ctx {
     }
 
     decodeJid(jid) {
-        return Functions.decodeJid(jid || this.sender.jid);
+        return Baileys.jidNormalizedUser(jid || this.sender.jid);
     }
 
     getPushname(jid) {
-        return Functions.getPushname(jid || this.sender.jid, this._self.jids);
+        return Functions.getPushname(jid || this.sender.jid, this._self.pushNames);
     }
 
     getId(jid) {
         return Functions.getId(jid || this.sender.jid);
     }
 
-    async convertJid(jid, type) {
-        return await Functions.convertJid(jid || this.sender.jid, type, this._self.jids, this._client);
-    }
 
     async getMediaMessage(msg, type) {
         try {
@@ -182,11 +178,10 @@ class Ctx {
             key: {
                 remoteJid: chatId,
                 participant: Baileys.isJidGroup(chatId) ? senderJid : null,
-                fromMe: senderJid && this._client.user.id ? Baileys.areJidsSameUser(Functions.decodeJid(senderJid), this.me.decodedId) : false,
+                fromMe: senderJid && this._client.user.id ? Baileys.areJidsSameUser(Baileys.jidNormalizedUser(senderJid), this.me.decodedId) : false,
                 id: msgContext.stanzaId
             },
             senderJid,
-            senderLid: async () => await Functions.convertJid(senderJid, "lid", this._self.jids, this._client),
             pushName: Functions.getPushname(senderJid, this._self.jid),
             media: {
                 toBuffer: async () => await this.getMediaMessage({
@@ -204,16 +199,8 @@ class Ctx {
     }
 
     async sendMessage(jid, content, options = {}) {
-        if (content.buttons) {
-            content.buttons = content.buttons.map(button => {
-                if (!button.type) button.type = 1;
-                return button;
-            });
-            if (!content.headerType) content.headerType = 1;
-        }
-
         if ((content.header || content.footer) && !content.buttons && !content.interactiveButtons) content.interactiveButtons = [];
-        if (this._self.autoAiLabel && Baileys.isJidUser(jid)) content.ai = true;
+        if (this._self.autoAiLabel && (Baileys.isJidUser(jid) || Baileys.isLidUser(jid))) content.ai = true;
 
         return await this._client.sendMessage(jid, content, options);
     }

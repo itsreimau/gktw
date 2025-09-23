@@ -56,13 +56,13 @@ class GroupData {
 
     async isAdmin(jid) {
         const members = await this.members();
-        const check = members.filter(member => Functions.decodeJid(member.jid) === Functions.decodeJid(jid) && (member.admin === "admin" || member.admin === "superadmin"));
+        const check = members.filter(member => Baileys.jidNormalizedUser(member.jid) === Baileys.jidNormalizedUser(jid) && (member.admin === "admin" || member.admin === "superadmin"));
         return check.length > 0;
     }
 
     async isOwner(jid) {
         const members = await this.members();
-        const check = members.filter(member => Functions.decodeJid(member.jid) === Functions.decodeJid(jid) && member.admin === "superadmin");
+        const check = members.filter(member => Baileys.jidNormalizedUser(member.jid) === Baileys.jidNormalizedUser(jid) && member.admin === "superadmin");
         return check.length > 0;
     }
 

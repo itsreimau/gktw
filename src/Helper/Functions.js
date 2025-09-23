@@ -40,11 +40,6 @@ const getContentFromMsg = (msg) => {
     return handler ? handler(msg.message) : "";
 };
 
-const decodeJid = (jid) => {
-    const decoded = Baileys.jidDecode(jid);
-    return decoded?.user && decoded?.server ? Baileys.jidEncode(decoded.user, decoded.server) : jid;
-};
-
 const getSender = (msg, client) => {
     const {
         fromMe,
@@ -54,32 +49,17 @@ const getSender = (msg, client) => {
     return fromMe ? client.user.id : participant || remoteJid;
 };
 
-const getPushname = (jid, jids = {}) => {
-    if (jids[jid]?.pushName) return jids[jid].pushName;
-    const matchingJid = Object.entries(jids).find(([, data]) => data.pn === jid && data.pushName);
-    return matchingJid?.[1]?.pushName || jid;
+const getPushname = (jid, pushNames = {}) => {
+    const decoded = decodeJid(jid);
+    return decoded ? pushNames[decoded] || decoded : null;
 };
 
 const getId = (jid) => Baileys.jidDecode(jid)?.user || jid;
-
-const convertJid = async (jid, type, jids, client) => {
-    if (type === "lid" && Baileys.isJidUser(jid)) {
-        const existingLid = Object.entries(jids).find(([, data]) => data.pn === jid);
-        if (existingLid) return existingLid[0];
-        const results = await client.onWhatsApp(jid);
-        if (results?.[0]?.exists) return results[0].lid;
-    } else if (type === "pn" && Baileys.isLidUser(jid)) {
-        return jids[jid]?.pn || jid;
-    }
-    return jid;
-};
 
 module.exports = {
     getContentType,
     getContentFromMsg,
     getSender,
     getPushname,
-    getId,
-    convertJid,
-    decodeJid
+    getId
 };

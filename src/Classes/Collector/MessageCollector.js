@@ -43,8 +43,7 @@ class MessageCollector extends Collector {
                 message: Baileys.extractMessageContent(m.message),
                 contentType: Functions.getContentType(m.message),
                 id: m.key.remoteJid,
-                senderJid,
-                senderLid: await Functions.convertJid(senderJid, "lid", this.clientReq.self.jids, this.clientReq.self.core)
+                senderJid
             };
         } catch {
             return null;
