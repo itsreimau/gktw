@@ -1,6 +1,6 @@
 "use strict";
 
-const Functions = require("../../Helper/Functions.js");
+const Baileys = require("baileys");
 
 class GroupData {
     constructor(ctx, jid) {
