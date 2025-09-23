@@ -2,8 +2,8 @@
 
 const ExtractEventsContent = require("./ExtractEventsContent.js");
 const MessageType = require("../Constant/MessageType.js");
-const Events = require("../Constant/Events.js");
 const Ctx = require("../Classes/Ctx.js");
+const Events = require("../Constant/Events.js");
 
 const emitPollCreation = async (m, ev, self, core) => {
     const {

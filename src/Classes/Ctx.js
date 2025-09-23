@@ -169,6 +169,7 @@ class Ctx {
         };
     }
 
+    // Does this require taking a PN?
     get quoted() {
         const msgContext = this._msg.message?.[this.getMessageType()]?.contextInfo ?? {};
         if (!msgContext?.quotedMessage) return null;

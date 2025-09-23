@@ -9,7 +9,6 @@ async function Commands(self, runMiddlewares) {
         prefix,
         m
     } = self;
-
     if (!m.message || Baileys.isJidStatusBroadcast(m.key.remoteJid) || Baileys.isJidNewsletter(m.key.remoteJid)) return;
 
     await handleHears(self, m);
@@ -19,7 +18,6 @@ async function Commands(self, runMiddlewares) {
 async function handleHears(self, m) {
     const hearsEntries = Array.from(self.hearsMap.values());
     const matchingHears = hearsEntries.filter(hear => hear.name === m.content || hear.name === m.messageType || (hear.name instanceof RegExp && hear.name.test(m.content)) || (Array.isArray(hear.name) && hear.name.includes(m.content)));
-
     if (matchingHears.length === 0) return;
 
     const ctx = new Ctx({
