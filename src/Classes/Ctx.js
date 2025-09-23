@@ -16,10 +16,13 @@ class Ctx {
         this._sender = {
             jid: Functions.getSender(this._msg, this._client),
             decodedJid: null,
+            jidPn: Functions.getSender(this._msg, this._client, "pn"),
+            decodedJidPn: null,
             pushName: this._msg.pushName
         };
 
         if (this._sender.jid) this._sender.decodedJid = Baileys.jidNormalizedUser(this._sender.jid);
+        if (this._sender.jidPn) this._sender.decodedJidPn = Baileys.jidNormalizedUser(this._sender.jidPn);
 
         this._config = {
             prefix: this._self.prefix,
@@ -51,6 +54,7 @@ class Ctx {
         let user = this._client.user;
         if (user) {
             user.decodedId = Baileys.jidNormalizedUser(user.id);
+            user.decodedLid = Baileys.jidNormalizedUser(user.lid);
             user.readyAt = this._self.readyAt;
         }
         return user;
@@ -100,7 +104,7 @@ class Ctx {
     }
 
     isPrivate() {
-        return Baileys.isJidUser(this.id);
+        return Baileys.isJidUser(this.id) || Baileys.isLidUser(this.id);
     }
 
     getMessageType() {
@@ -165,8 +169,8 @@ class Ctx {
         const msgContext = this._msg.message?.[this.getMessageType()]?.contextInfo ?? {};
         if (!msgContext?.quotedMessage) return null;
         const message = Baileys.extractMessageContent(msgContext.quotedMessage) ?? {};
-        const chatId = msgContext?.remoteJid || this.id;
-        const senderJid = msgContext?.participant || chatId;
+        const chat = msgContext?.remoteJid || this.id;
+        const sender = msgContext?.participant || chat;
 
         return {
             content: Functions.getContentFromMsg({
@@ -176,13 +180,13 @@ class Ctx {
             messageType: Baileys.getContentType(msgContext.quotedMessage) ?? "",
             contentType: Functions.getContentType(msgContext.quotedMessage),
             key: {
-                remoteJid: chatId,
-                participant: Baileys.isJidGroup(chatId) ? senderJid : null,
-                fromMe: senderJid && this._client.user.id ? Baileys.areJidsSameUser(Baileys.jidNormalizedUser(senderJid), this.me.decodedId) : false,
+                remoteJid: chat,
+                participant: Baileys.isJidGroup(chat) ? sender : null,
+                fromMe: sender && this._client.user.id ? Baileys.areJidsSameUser(Baileys.jidNormalizedUser(sender), this.me.decodedId) : false,
                 id: msgContext.stanzaId
             },
-            senderJid,
-            pushName: Functions.getPushname(senderJid, this._self.jid),
+            sender,
+            pushName: Functions.getPushname(sender, this._self.pushNames),
             media: {
                 toBuffer: async () => await this.getMediaMessage({
                     message
