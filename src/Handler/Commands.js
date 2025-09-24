@@ -58,19 +58,11 @@ async function processCommands(self, runMiddlewares, m, cmd, prefix) {
     const shouldContinue = await runMiddlewares(ctx);
     if (!shouldContinue) return;
 
-    for (const command of matchedCommands) {
-        await Promise.resolve(command.code(ctx));
-    }
+    await Promise.allSettled(matchedCommands.map(command => Promise.resolve(command.code(ctx))));
 }
 
 function findMatchingPrefix(content, prefix) {
-    if (Array.isArray(prefix)) {
-        if (prefix.includes("")) {
-            const sortedPrefix = [...prefix].sort((a, b) => a === "" ? 1 : b === "" ? -1 : 0);
-            return sortedPrefix.find(_prefix => content.startsWith(_prefix));
-        }
-        return prefix.find(_prefix => content.startsWith(_prefix));
-    }
+    if (Array.isArray(prefix)) return prefix.find(_prefix => content.startsWith(_prefix));
 
     if (prefix instanceof RegExp) {
         const match = content.match(prefix);

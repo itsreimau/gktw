@@ -4,8 +4,7 @@ const Baileys = require("baileys");
 
 const getContentType = (message) => {
     const messageContent = Baileys.extractMessageContent(message);
-    const contentType = Baileys.getContentType(messageContent);
-    return contentType;
+    return Baileys.getContentType(messageContent);
 };
 
 const CONTENT_HANDLERS = {

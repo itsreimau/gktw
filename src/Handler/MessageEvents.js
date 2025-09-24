@@ -51,13 +51,6 @@ const emitReaction = async (m, ev, self, core) => {
     ev.emit(Events.Reactions, m, createContext(used));
 };
 
-const createEventContext = (used, self, core) => new Ctx({
-    used,
-    args: [],
-    self,
-    client: core
-});
-
 const MessageEventList = Object.freeze({
     [MessageType.pollCreationMessage]: emitPollCreation,
     [MessageType.pollUpdateMessage]: emitPollUpdate,

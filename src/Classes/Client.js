@@ -12,6 +12,7 @@ const Functions = require("../Helper/Functions.js");
 const ExtractEventsContent = require("../Handler/ExtractEventsContent.js");
 const Ctx = require("./Ctx.js");
 const MessageEventList = require("../Handler/MessageEvents.js");
+const Commands = require("../Handler/Commands.js");
 
 class Client {
     constructor(opts) {
@@ -54,6 +55,7 @@ class Client {
         this.pushnamesPath = `${this.authDir}/pushnames.json`;
         this.pushNames = {};
 
+        if (Array.isArray(this.prefix) && this.prefix.includes("")) this.prefix.sort((a, b) => a === "" ? 1 : b === "" ? -1 : 0);
         if (typeof this.prefix === "string") this.prefix = this.prefix.split("");
     }
 
@@ -156,7 +158,7 @@ class Client {
                 if (MessageEventList[messageType]) await MessageEventList[messageType](msg, this.ev, self, this.core);
                 this.ev.emit(Events.MessagesUpsert, msg, ctx);
                 if (this.readIncomingMsg) await this.core.readMessages([message.key]);
-                await require("../Handler/Commands.js")(self, this.runMiddlewares.bind(this));
+                await Commands(self, this.runMiddlewares.bind(this));
             }
         });
 
@@ -259,6 +261,14 @@ class Client {
 
         if (this.useStore) {
             this.store.bind(this.core.ev);
+
+            this.store.cleanupMessages = (cutoff) => {
+                Object.keys(this.store.messages).forEach((jid) => {
+                    this.store.messages[jid] = this.store.messages[jid].filter(
+                        (msg) => msg.messageTimestamp * 1000 > cutoff
+                    );
+                });
+            };
 
             setInterval(() => {
                 const cutoff = Date.now() - (7 * 24 * 60 * 60 * 1000);

@@ -51,13 +51,14 @@ class Ctx {
     }
 
     get me() {
-        let user = this._client.user;
-        if (user) {
-            user.decodedId = Baileys.jidNormalizedUser(user.id);
-            user.decodedLid = Baileys.jidNormalizedUser(user.lid);
-            user.readyAt = this._self.readyAt;
-        }
-        return user;
+        const user = this._client.user;
+        if (!user) return null;
+        return {
+            ...user,
+            decodedId: Baileys.jidNormalizedUser(user.id),
+            decodedLid: Baileys.jidNormalizedUser(user.lid),
+            readyAt: this._self.readyAt
+        };
     }
 
     get store() {
@@ -173,7 +174,8 @@ class Ctx {
     get quoted() {
         const msgContext = this._msg.message?.[this.getMessageType()]?.contextInfo ?? {};
         if (!msgContext?.quotedMessage) return null;
-        const message = Baileys.extractMessageContent(msgContext.quotedMessage) ?? {};
+        const quotedMessage = msgContext.quotedMessage;
+        const message = Baileys.extractMessageContent(quotedMessage) ?? {};
         const chat = msgContext?.remoteJid || this.id;
         const sender = msgContext?.participant || chat;
 
@@ -181,9 +183,9 @@ class Ctx {
             content: Functions.getContentFromMsg({
                 message
             }),
-            message: msgContext.quotedMessage,
-            messageType: Baileys.getContentType(msgContext.quotedMessage) ?? "",
-            contentType: Functions.getContentType(msgContext.quotedMessage),
+            message: quotedMessage,
+            messageType: Baileys.getContentType(quotedMessage) ?? "",
+            contentType: Functions.getContentType(quotedMessage),
             key: {
                 remoteJid: chat,
                 participant: Baileys.isJidGroup(chat) ? sender : null,
