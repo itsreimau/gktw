@@ -14,10 +14,8 @@ class Ctx {
         this._client = options.client;
         this._msg = this._self.m;
         this._sender = {
-            jid: Functions.getSender(this._msg, this._client),
+            jid: this._msg.key.participant || this._msg.key.remoteJid,
             decodedJid: null,
-            pn: Functions.getSender(this._msg, this._client, "pn"),
-            decodedPn: null,
             pushName: this._msg.pushName
         };
 
@@ -27,12 +25,7 @@ class Ctx {
             this._sender.decodedJid = this._sender.jid;
         }
 
-        if (this._sender.pn && this._msg.key.fromMe) {
-            this._sender.decodedPn = Baileys.jidNormalizedUser(this._sender.pn);
-        } else {
-            this._sender.decodedJid = this._sender.jid;
-        }
-
+        this._db = this._self.setupDb();
         this._config = {
             prefix: this._self.prefix,
             cmd: this._self.cmd
@@ -82,12 +75,22 @@ class Ctx {
         return this._args;
     }
 
-    get keyDb() {
+    get db() {
+        const users = this._db.createCollection("users");
+        const groups = this._db.createCollection("groups");
+
+        users.getOrCreate(user => user.jid === this._sender.jid, {
+            jid: this._sender.jid
+        });
+        groups.getOrCreate(user => user.jid === this.id, {
+            jid: this.id
+        });
+
         return {
-            user: Functions.getId(this._sender.jid),
-            userPn: Functions.getId(this._sender.pn),
-            group: Functions.getId(this.id)
-        }
+            users: users.get(user => user.jid === this._sender.jid),
+            groups: this.isGroup() ? groups.get(group => group.jid === this.id) : null,
+            core: this._db
+        };
     }
 
     async block(jid) {

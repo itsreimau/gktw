@@ -91,6 +91,10 @@ class Client {
         }
     }
 
+    setupDb() {
+        return new SimplDB();
+    }
+
     onEvents() {
         this.core.ev.on("connection.update", (update) => {
             this.ev.emit(Events.ConnectionUpdate, update);
@@ -128,7 +132,7 @@ class Client {
 
                 const messageType = Baileys.getContentType(message.message) ?? "";
                 const text = Functions.getContentFromMsg(message) ?? "";
-                const sender = Functions.getSender(message, this.core);
+                const sender = message.key.participant || message.key.remoteJid;
 
                 if (message.pushName && this.pushNames[sender] !== message.pushName) {
                     this.pushNames[sender] = message.pushName;
@@ -207,10 +211,6 @@ class Client {
 
     getId(jid) {
         return Functions.getId(jid);
-    }
-
-    db() {
-        return new SimplDB();
     }
 
     async launch() {

@@ -42,8 +42,7 @@ class MessageCollector extends Collector {
                 message: Baileys.extractMessageContent(m.message),
                 contentType: Functions.getContentType(m.message),
                 id: m.key.remoteJid,
-                sender: Functions.getSender(m, this.clientReq.self.core),
-                senderPn: Functions.getSender(m, this.clientReq.self.core, "pn")
+                sender: m.key.participant || m.key.remoteJid
             };
         } catch {
             return null;

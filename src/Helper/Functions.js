@@ -15,7 +15,7 @@ const CONTENT_HANDLERS = {
     documentMessageWithCaption: (msg) => msg.documentMessageWithCaption?.caption || "",
     protocolMessage: (msg) => {
         const editedMessage = msg.protocolMessage?.editedMessage;
-        return editedMessage?.conversation || editedMessage?.extendedTextMessage?.text || editedMessage?.imageMessage?.caption || editedMessage?.videoMessage?.caption || "";
+        return getContentFromMsg(editedMessage) ?? "";
     },
     buttonsMessage: (msg) => msg.buttonsMessage?.contentText || "",
     interactiveMessage: (msg) => msg.interactiveMessage?.body?.text || "",
@@ -39,12 +39,6 @@ const getContentFromMsg = (msg) => {
     return handler ? handler(msg.message) : "";
 };
 
-const getSender = (msg, client, address = "lid") => {
-    if (msg.key.fromMe) return address === "lid" ? client.user.lid : client.user.id;
-    if (address === "lid") return msg.key.participant || msg.key.remoteJid;
-    return msg.key.participantAlt || msg.key.remoteJidAlt;
-};
-
 const getPushname = (jid, fromMe, pushNames = {}) => {
     const decoded = fromMe ? Baileys.jidNormalizedUser(jid) : jid;
     return decoded ? pushNames[decoded] || decoded : null;
@@ -55,7 +49,6 @@ const getId = (jid) => Baileys.jidDecode(jid)?.user || jid;
 module.exports = {
     getContentType,
     getContentFromMsg,
-    getSender,
     getPushname,
     getId
 };
