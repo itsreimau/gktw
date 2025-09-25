@@ -84,8 +84,8 @@ class Ctx {
 
     get keyDb() {
         return {
-            user: Functions.getId(ctx._sender.jid),
-            userPn: Functions.getId(ctx._sender.pn),
+            user: Functions.getId(this._sender.jid),
+            userPn: Functions.getId(this._sender.pn),
             group: Functions.getId(this.id)
         }
     }

@@ -6,7 +6,7 @@ class GroupData {
     constructor(ctx, jid) {
         this.ctx = ctx;
         this.jid = jid;
-        this.fromMe = ctx.msg.key.fromMe;
+        this.fromMe = ctx._msg.key.fromMe;
     }
 
     _jidNormalizedUser(jid) {
