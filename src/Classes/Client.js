@@ -289,7 +289,7 @@ class Client {
                 return;
             }
 
-            if (!Baileys.PHONENUMBER_MCC.some(mcc => this.phoneNumber.startsWith(mcc))) {
+            if (!Objects.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
                 this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code).");
                 this.consolefy.resetTag();
                 return;
