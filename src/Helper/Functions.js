@@ -45,8 +45,8 @@ const getSender = (msg, client, address = "lid") => {
     return msg.key.participantAlt || msg.key.remoteJidAlt;
 };
 
-const getPushname = (jid, pushNames = {}) => {
-    const decoded = Baileys.jidNormalizedUser(jid);
+const getPushname = (jid, fromMe, pushNames = {}) => {
+    const decoded = fromMe ? Baileys.jidNormalizedUser(jid) : jid;
     return decoded ? pushNames[decoded] || decoded : null;
 };
 

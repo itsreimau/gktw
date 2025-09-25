@@ -36,7 +36,7 @@ class Collector extends EventEmitter {
         if (!filtered) return;
 
         if (this.maxProcessed && this.maxProcessed === this.received) return this.stop("processedLimit");
-        if (this.max && this.max <= this.collector.size) return this.stop("limit")
+        if (this.max && this.max <= this.collector.size) return this.stop("limit");
 
         if (this.isRun) {
             this.collector.set(args.jid, args);

@@ -1,6 +1,7 @@
 "use strict";
 
 const Baileys = require("baileys");
+const path = require("node:path");
 const pino = require("pino");
 const EventEmitter = require("node:events");
 const { Collection } = require("@discordjs/collection");
@@ -9,15 +10,13 @@ const { NodeCache } = require("@cacheable/node-cache");
 const Events = require("../Constant/Events.js");
 const fs = require("node:fs");
 const Functions = require("../Helper/Functions.js");
-const ExtractEventsContent = require("../Handler/ExtractEventsContent.js");
 const Ctx = require("./Ctx.js");
-const MessageEventList = require("../Handler/MessageEvents.js");
 const Commands = require("../Handler/Commands.js");
+const SimplDB = require("simpl.db");
 
 class Client {
     constructor(opts) {
-        this.authDir = opts.authDir ?? "./state";
-        this.authAdapter = opts.authAdapter ?? Baileys.useMultiFileAuthState(this.authDir);
+        this.authDir = opts.authDir ?? path.resolve(__dirname, "state");
         this.browser = opts.browser ?? Baileys.Browsers.ubuntu("CHROME");
         this.WAVersion = opts.WAVersion;
         this.printQRInTerminal = opts.printQRInTerminal ?? true;
@@ -43,7 +42,7 @@ class Client {
         this.middlewares = new Collection();
         this.consolefy = new Consolefy();
         this.store = Baileys.makeInMemoryStore({});
-        this.storePath = `${this.authDir}/gktw_store.json`;
+        this.storePath = path.resolve(this.authDir, "gktw_store.json");
         this.groupCache = new NodeCache({
             stdTTL: 30 * 60,
             useClones: false
@@ -52,8 +51,9 @@ class Client {
             stdTTL: 30,
             useClones: false
         });
-        this.pushnamesPath = `${this.authDir}/pushnames.json`;
+        this.pushnamesPath = path.resolve(this.authDir, "pushnames.json");
         this.pushNames = {};
+        this.databasePath = path.resolve(__dirname, "database.json");
 
         if (Array.isArray(this.prefix) && this.prefix.includes("")) this.prefix.sort((a, b) => a === "" ? 1 : b === "" ? -1 : 0);
         if (typeof this.prefix === "string") this.prefix = this.prefix.split("");
@@ -155,15 +155,10 @@ class Client {
                     client: this.core
                 });
 
-                if (MessageEventList[messageType]) await MessageEventList[messageType](msg, this.ev, self, this.core);
                 this.ev.emit(Events.MessagesUpsert, msg, ctx);
                 if (this.readIncomingMsg) await this.core.readMessages([message.key]);
                 await Commands(self, this.runMiddlewares.bind(this));
             }
-        });
-
-        this.core.ev.on("groups.upsert", (event) => {
-            this.ev.emit(Events.GroupsJoin, event);
         });
 
         this.core.ev.on("groups.update", async ([event]) => {
@@ -202,32 +197,27 @@ class Client {
         });
     }
 
-    async bio(content) {
-        await this.core.updateProfileStatus(content);
-    }
-
-    async fetchBio(jid) {
-        const decodedJid = Baileys.jidNormalizedUser(jid ? jid : this.core.user.id);
-        return await this.core.fetchStatus(decodedJid);
-    }
-
     decodeJid(jid) {
         return Baileys.jidNormalizedUser(jid);
     }
 
     getPushname(jid) {
-        return Functions.getPushname(jid, this.pushNames);
+        return Functions.getPushname(jid, false, this.pushNames);
     }
 
     getId(jid) {
         return Functions.getId(jid);
     }
 
+    db() {
+        return new SimplDB();
+    }
+
     async launch() {
         const {
             state,
             saveCreds
-        } = await this.authAdapter;
+        } = await Baileys.useMultiFileAuthState(this.authDir);
         this.state = state;
         this.saveCreds = saveCreds;
 
@@ -311,6 +301,8 @@ class Client {
                 this.consolefy.resetTag();
             }, 3000);
         }
+
+        if (!fs.existsSync(this.databasePath)) fs.writeFileSync(this.databasePath, "{}", "utf8");
 
         this.onEvents();
     }
