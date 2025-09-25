@@ -16,7 +16,7 @@ const SimplDB = require("simpl.db");
 
 class Client {
     constructor(opts) {
-        this.authDir = opts.authDir ?? path.resolve(__dirname, "state");
+        this.authDir = opts.authDir ?? "./state";
         this.browser = opts.browser ?? Baileys.Browsers.ubuntu("CHROME");
         this.WAVersion = opts.WAVersion;
         this.printQRInTerminal = opts.printQRInTerminal ?? true;
@@ -53,7 +53,6 @@ class Client {
         });
         this.pushnamesPath = path.resolve(this.authDir, "pushnames.json");
         this.pushNames = {};
-        this.databasePath = path.resolve(__dirname, "database.json");
 
         if (Array.isArray(this.prefix) && this.prefix.includes("")) this.prefix.sort((a, b) => a === "" ? 1 : b === "" ? -1 : 0);
         if (typeof this.prefix === "string") this.prefix = this.prefix.split("");
@@ -147,9 +146,10 @@ class Client {
                     m: msg
                 };
 
-                const used = ExtractEventsContent(msg, messageType);
                 const ctx = new Ctx({
-                    used,
+                    used: {
+                        upsert: message.content
+                    },
                     args: [],
                     self,
                     client: this.core
@@ -301,8 +301,6 @@ class Client {
                 this.consolefy.resetTag();
             }, 3000);
         }
-
-        if (!fs.existsSync(this.databasePath)) fs.writeFileSync(this.databasePath, "{}", "utf8");
 
         this.onEvents();
     }
