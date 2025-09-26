@@ -14,18 +14,11 @@ class Ctx {
         this._client = options.client;
         this._msg = this._self.m;
         this._sender = {
-            jid: this._msg.key.participant || this._msg.key.remoteJid,
-            decodedJid: null,
+            jid: Baileys.jidNormalizedUser(this._msg.key.participant || this._msg.key.remoteJid),
             pushName: this._msg.pushName
         };
 
-        if (this._sender.jid && this._msg.key.fromMe) {
-            this._sender.decodedJid = Baileys.jidNormalizedUser(this._sender.jid);
-        } else {
-            this._sender.decodedJid = this._sender.jid;
-        }
-
-        this._db = this._self.setupDb();
+        this._db = this._self.db;
         this._config = {
             prefix: this._self.prefix,
             cmd: this._self.cmd
@@ -41,11 +34,7 @@ class Ctx {
     }
 
     get id() {
-        return this._msg.key.remoteJid;
-    }
-
-    get decodedId() {
-        return this.id && this._msg.key.fromMe ? Baileys.jidNormalizedUser(this.id) : this.id;
+        return Baileys.jidNormalizedUser(this._msg.key.remoteJid);
     }
 
     get sender() {
@@ -56,9 +45,8 @@ class Ctx {
         const user = this._client.user;
         if (!user) return null;
         return {
-            ...user,
-            decodedId: Baileys.jidNormalizedUser(user.id),
-            decodedLid: Baileys.jidNormalizedUser(user.lid),
+            id: Baileys.jidNormalizedUser(user.id),
+            lid: Baileys.jidNormalizedUser(user.lid),
             readyAt: this._self.readyAt
         };
     }
@@ -76,30 +64,70 @@ class Ctx {
     }
 
     get db() {
+        const bot = this._db.createCollection("bot");
         const users = this._db.createCollection("users");
         const groups = this._db.createCollection("groups");
 
-        users.getOrCreate(user => user.jid === this._sender.jid, {
-            jid: this._sender.jid
-        });
-        groups.getOrCreate(user => user.jid === this.id, {
-            jid: this.id
-        });
-
         return {
-            users: users.get(user => user.jid === this._sender.jid),
-            groups: this.isGroup() ? groups.get(group => group.jid === this.id) : null,
+            bot: Functions.getDb(bot, this.me.lid),
+            users: Functions.getDb(users, this._sender.jid),
+            groups: this.isGroup() ? Functions.getDb(groups, this.id) : null,
             core: this._db
         };
     }
 
+    get citation() {
+        return new Proxy({}, {
+            get(target, prop) {
+                if (typeof prop === "string" && prop.startsWith("is")) {
+                    const citationName = prop.substring(2).toLowerCase();
+                    return this._checkCitation(citationName);
+                }
+                return undefined;
+            }
+        });
+    }
+
+    _checkCitation(citationName) {
+        const citationConfig = this._self.citation;
+        if (!citationConfig || !citationConfig[citationName]) return false;
+
+        const citationList = citationConfig[citationName];
+        if (!Array.isArray(citationList)) return false;
+
+        const botIds = new Set();
+        if (this.me.decodedId) botIds.add(Functions.getId(this.me.decodedId));
+        if (this.decodedLid) botIds.add(Functions.getId(this.decodedLid));
+
+        const senderNumber = Functions.getId(this.sender.jid);
+
+        return citationList.some(citationItem => {
+            const citationString = String(citationItem);
+            const citationNumber = citationString.replace(/[^0-9]/g, "");
+
+            if (citationString.toLowerCase() === "bot") {
+                if (this._msg.key.id.startsWith("SUKI")) return;
+                return botIds.has(senderNumber) && this._msg?.key?.fromMe === true;
+            }
+
+            if (citationNumber && botIds.has(citationNumber)) {
+                if (this._msg.key.id.startsWith("SUKI")) return;
+                return botIds.has(senderNumber) && this._msg?.key?.fromMe === true;
+            }
+
+            if (citationNumber === senderNumber) return true;
+
+            return false;
+        });
+    }
+
     async block(jid) {
-        const target = jid ? (this._msg.key.fromMe ? Baileys.jidNormalizedUser(jid) : jid) : this._sender.decodedJid;
+        const target = jid ? Baileys.jidNormalizedUser(jid) : this._sender.jid;
         return this._client.updateBlockStatus(target, "block");
     }
 
     async unblock(jid) {
-        const target = jid ? (this._msg.key.fromMe ? Baileys.jidNormalizedUser(jid) : jid) : this._sender.decodedJid;
+        const target = jid ? Baileys.jidNormalizedUser(jid) : this._sender.jid;
         return this._client.updateBlockStatus(target, "unblock");
     }
 
@@ -108,8 +136,8 @@ class Ctx {
     }
 
     async fetchBio(jid) {
-        const decodedJid = jid ? (this._msg.key.fromMe ? Baileys.jidNormalizedUser(jid) : jid) : this.me.decodedId;
-        return await this._client.fetchStatus(decodedJid);
+        const target = jid ? Baileys.jidNormalizedUser(jid) : this._sender.jid;
+        return await this._client.fetchStatus(target);
     }
 
     get groups() {
@@ -149,14 +177,18 @@ class Ctx {
     }
 
     getPushname(jid) {
-        return Functions.getPushname(jid || this.sender.jid, this._msg.key.fromMe, this._self.pushNames);
+        return Functions.getPushname(jid || this.sender.jid, this._self.pushNames);
     }
 
     getId(jid) {
         return Functions.getId(jid || this.sender.jid);
     }
 
-    async getMediaMessage(msg, type) {
+    getDb(collection, jid) {
+        return Functions.getDb(collection || this._db.createCollection("users"), jid || this.sender.jid);
+    }
+
+    async _getMediaMessage(msg, type) {
         try {
             return await Baileys.downloadMediaMessage(msg, type, {}, {
                 logger: this._self.logger,
@@ -175,10 +207,10 @@ class Ctx {
             ...msg,
             contentType: Functions.getContentType(msg.message),
             media: {
-                toBuffer: async () => await this.getMediaMessage({
+                toBuffer: async () => await this._getMediaMessage({
                     message
                 }, "buffer"),
-                toStream: async () => await this.getMediaMessage({
+                toStream: async () => await this._getMediaMessage({
                     message
                 }, "stream")
             }
@@ -191,9 +223,8 @@ class Ctx {
         if (!msgContext?.quotedMessage) return null;
         const quotedMessage = msgContext.quotedMessage;
         const message = Baileys.extractMessageContent(quotedMessage) ?? {};
-        const chat = msgContext?.remoteJid || this.id;
-        const sender = msgContext?.participant || chat;
-        const fromMe = sender && this.me.decodedId ? Baileys.areJidsSameUser(Baileys.jidNormalizedUser(sender), this.me.decodedId) : false;
+        const chat = Baileys.jidNormalizedUser(msgContext?.remoteJid || this.id);
+        const sender = Baileys.jidNormalizedUser(msgContext?.participant || chat);
 
         return {
             content: Functions.getContentFromMsg({
@@ -205,16 +236,16 @@ class Ctx {
             key: {
                 remoteJid: chat,
                 participant: Baileys.isJidGroup(chat) ? sender : null,
-                fromMe,
+                fromMe: sender && this.me.id ? Baileys.areJidsSameUser(Baileys.jidNormalizedUser(sender), this.me.id) : false,
                 id: msgContext.stanzaId
             },
             sender,
-            pushName: Functions.getPushname(sender, fromMe, this._self.pushNames),
+            pushName: Functions.getPushname(sender, this._self.pushNames),
             media: {
-                toBuffer: async () => await this.getMediaMessage({
+                toBuffer: async () => await this._getMediaMessage({
                     message
                 }, "buffer"),
-                toStream: async () => await this.getMediaMessage({
+                toStream: async () => await this._getMediaMessage({
                     message
                 }, "stream")
             }

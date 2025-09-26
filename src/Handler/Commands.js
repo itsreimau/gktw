@@ -3,7 +3,7 @@
 const Baileys = require("baileys");
 const Ctx = require("../Classes/Ctx.js");
 
-async function Commands(self, runMiddlewares) {
+async function Commands(self, _runMiddlewares) {
     const {
         cmd,
         prefix,
@@ -12,7 +12,7 @@ async function Commands(self, runMiddlewares) {
     if (!m.message || Baileys.isJidStatusBroadcast(m.key.remoteJid) || Baileys.isJidNewsletter(m.key.remoteJid)) return;
 
     await handleHears(self, m);
-    await processCommands(self, runMiddlewares, m, cmd, prefix);
+    await processCommands(self, _runMiddlewares, m, cmd, prefix);
 }
 
 async function handleHears(self, m) {
@@ -32,7 +32,7 @@ async function handleHears(self, m) {
     await Promise.allSettled(matchingHears.map(hear => Promise.resolve(hear.code(ctx))));
 }
 
-async function processCommands(self, runMiddlewares, m, cmd, prefix) {
+async function processCommands(self, _runMiddlewares, m, cmd, prefix) {
     const selectedPrefix = findMatchingPrefix(m.content, prefix);
     if (!selectedPrefix) return;
 
@@ -55,7 +55,7 @@ async function processCommands(self, runMiddlewares, m, cmd, prefix) {
         client: self.core
     });
 
-    const shouldContinue = await runMiddlewares(ctx);
+    const shouldContinue = await _runMiddlewares(ctx);
     if (!shouldContinue) return;
 
     await Promise.allSettled(matchedCommands.map(command => Promise.resolve(command.code(ctx))));

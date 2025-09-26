@@ -15,9 +15,9 @@ class VCardBuilder {
         return this;
     }
 
-    setOrg(orgName) {
-        if (!orgName) throw new Error("Need organization name.");
-        this.org = orgName;
+    setOrg(org) {
+        if (!org) throw new Error("Need organization name.");
+        this.org = org;
         return this;
     }
 

@@ -18,7 +18,7 @@ class MessageCollector extends Collector {
         }) {
         super(options);
         this.clientReq = clientReq;
-        this.jid = this.clientReq.msg.key.remoteJid;
+        this.jid = Baileys.jidNormalizedUser(this.clientReq.msg.key.remoteJid);
         this.hears = options.hears || [];
         this.received = 0;
 
@@ -32,7 +32,8 @@ class MessageCollector extends Collector {
 
     async _collect(m) {
         const content = Functions.getContentFromMsg(m);
-        if (!content || (!this.jid === m.key.remoteJid && !this.hears.includes(m.key.remoteJid))) return null;
+        const id = Baileys.jidNormalizedUser(m.key.remoteJid);
+        if (!content || (!this.jid === id && !this.hears.includes(id))) return null;
 
         try {
             this.received++;
@@ -41,8 +42,8 @@ class MessageCollector extends Collector {
                 content,
                 message: Baileys.extractMessageContent(m.message),
                 contentType: Functions.getContentType(m.message),
-                id: m.key.remoteJid,
-                sender: m.key.participant || m.key.remoteJid
+                id,
+                sender: Baileys.jidNormalizedUser(m.key.participant || m.key.remoteJid)
             };
         } catch {
             return null;

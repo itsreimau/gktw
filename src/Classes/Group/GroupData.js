@@ -6,11 +6,6 @@ class GroupData {
     constructor(ctx, jid) {
         this.ctx = ctx;
         this.jid = jid;
-        this.fromMe = ctx._msg.key.fromMe;
-    }
-
-    _jidNormalizedUser(jid) {
-        return this.fromMe ? Baileys.jidNormalizedUser(jid) : jid;
     }
 
     async members() {
@@ -61,19 +56,19 @@ class GroupData {
 
     async isMemberExist(jid) {
         const members = await this.members();
-        const check = members.some(member => this._jidNormalizedUser(member.id) === this._jidNormalizedUser(jid) || this._jidNormalizedUser(member.lid) === this._jidNormalizedUser(jid));
+        const check = members.some(member => Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) || Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid));
         return check;
     }
 
     async isAdmin(jid) {
         const members = await this.members();
-        const check = members.filter(member => (this._jidNormalizedUser(member.id) === this._jidNormalizedUser(jid) || this._jidNormalizedUser(member.lid) === this._jidNormalizedUser(jid)) && (member.admin === "admin" || member.admin === "superadmin"));
+        const check = members.filter(member => (Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) || Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) && (member.admin === "admin" || member.admin === "superadmin"));
         return check.length > 0;
     }
 
     async isOwner(jid) {
         const members = await this.members();
-        const check = members.filter(member => (this._jidNormalizedUser(member.id) === this._jidNormalizedUser(jid) || this._jidNormalizedUser(member.lid) === this._jidNormalizedUser(jid)) && member.admin === "superadmin");
+        const check = members.filter(member => (Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) || Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) && member.admin === "superadmin");
         return check.length > 0;
     }
 
@@ -102,8 +97,7 @@ class GroupData {
     }
 
     async membersUpdate(members, action) {
-        const _members = Array.isArray(members) ? members : [members];
-        return await this.ctx._client.groupParticipantsUpdate(this.jid, _members, action);
+        return await this.ctx._client.groupParticipantsUpdate(this.jid, Array.isArray(members) ? members : [members], action);
     }
 
     async kick(members) {

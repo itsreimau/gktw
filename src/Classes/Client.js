@@ -33,6 +33,8 @@ class Client {
         this.prefix = opts.prefix;
         this.selfReply = opts.selfReply ?? false;
         this.autoAiLabel = opts.autoAiLabel ?? false;
+        this.rawCitation = opts.citation ?? {};
+        this.citation = {};
 
         this.fallbackWAVersion = [2, 3000, 1021387508];
         this.ev = new EventEmitter();
@@ -58,11 +60,11 @@ class Client {
         if (typeof this.prefix === "string") this.prefix = this.prefix.split("");
     }
 
-    savePushnames() {
+    _savePushnames() {
         fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
     }
 
-    async runMiddlewares(ctx, index = 0) {
+    async _runMiddlewares(ctx, index = 0) {
         const middlewareFn = this.middlewares.get(index);
         if (!middlewareFn) return true;
 
@@ -72,7 +74,7 @@ class Client {
         await middlewareFn(ctx, async () => {
             if (nextCalled) throw new Error("next() called multiple times in middleware");
             nextCalled = true;
-            middlewareCompleted = await this.runMiddlewares(ctx, index + 1);
+            middlewareCompleted = await this._runMiddlewares(ctx, index + 1);
         });
 
         if (!nextCalled && !middlewareCompleted) return false;
@@ -84,18 +86,55 @@ class Client {
         this.middlewares.set(this.middlewares.size, fn);
     }
 
-    async setGroupCache(id) {
+    async _setGroupCache(id) {
         if (!this.groupCache.get(id)) {
             const metadata = await this.core.groupMetadata(id);
             this.groupCache.set(id, metadata);
         }
     }
 
-    setupDb() {
-        return new SimplDB();
+    async _resolveCitation() {
+        if (Object.keys(this.rawCitation).length === 0) return;
+
+        const resolvedCitation = {};
+        for (const [citationName, citationList] of Object.entries(this.rawCitation)) {
+            if (!Array.isArray(citationList)) {
+                resolvedCitation[citationName] = citationList;
+                continue;
+            }
+
+            const resolvedList = new Set();
+            for (const citationItem of citationList) {
+                try {
+                    const citationString = String(citationItem);
+
+                    if (citationString.toLowerCase() === "bot") {
+                        resolvedList.add("bot");
+                        continue;
+                    }
+
+                    const cleanCitation = citationString.replace(/[^0-9]/g, "");
+                    if (!cleanCitation) continue;
+
+                    const lidResult = await this.core.getLidUser(cleanCitation + Baileys.S_WHATSAPP_NET);
+                    if (lidResult && lidResult[0]) {
+                        resolvedList.add(cleanCitation);
+                        resolvedList.add(Functions.getId(lidResult[0].lid));
+                    } else {
+                        resolvedList.add(cleanCitation);
+                    }
+                } catch (error) {
+                    resolvedList.add(String(citationItem).replace(/[^0-9]/g, ""));
+                }
+            }
+
+            resolvedCitation[citationName] = Array.from(resolvedList);
+        }
+
+        this.citation = resolvedCitation;
     }
 
-    onEvents() {
+    _onEvents() {
         this.core.ev.on("connection.update", (update) => {
             this.ev.emit(Events.ConnectionUpdate, update);
             const {
@@ -110,6 +149,7 @@ class Client {
                 this.consolefy.error(`Connection closed due to ${lastDisconnect.error}, reconnecting ${shouldReconnect}`);
                 if (shouldReconnect) this.launch();
             } else if (connection === "open") {
+                await this._resolveCitation();
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
             }
@@ -128,15 +168,15 @@ class Client {
                 if (this.messageIdCache.get(message.key.id)) return;
                 this.messageIdCache.set(message.key.id, true);
 
-                if (Baileys.isJidGroup(message.key.remoteJid)) await this.setGroupCache(message.key.remoteJid);
+                if (Baileys.isJidGroup(message.key.remoteJid)) await this._setGroupCache(message.key.remoteJid);
 
                 const messageType = Baileys.getContentType(message.message) ?? "";
                 const text = Functions.getContentFromMsg(message) ?? "";
-                const sender = message.key.participant || message.key.remoteJid;
+                const sender = Baileys.jidNormalizedUser(message.key.participant || message.key.remoteJid);
 
                 if (message.pushName && this.pushNames[sender] !== message.pushName) {
                     this.pushNames[sender] = message.pushName;
-                    this.savePushnames();
+                    this._savePushnames();
                 }
 
                 const msg = {
@@ -161,16 +201,16 @@ class Client {
 
                 this.ev.emit(Events.MessagesUpsert, msg, ctx);
                 if (this.readIncomingMsg) await this.core.readMessages([message.key]);
-                await Commands(self, this.runMiddlewares.bind(this));
+                await Commands(self, this._runMiddlewares.bind(this));
             }
         });
 
         this.core.ev.on("groups.update", async ([event]) => {
-            await this.setGroupCache(event.id);
+            await this._setGroupCache(event.id);
         });
 
         this.core.ev.on("group-participants.update", async (event) => {
-            await this.setGroupCache(event.id);
+            await this._setGroupCache(event.id);
 
             if (event.action === "add") {
                 return this.ev.emit(Events.UserJoin, event);
@@ -206,11 +246,61 @@ class Client {
     }
 
     getPushname(jid) {
-        return Functions.getPushname(jid, false, this.pushNames);
+        return Functions.getPushname(jid, this.pushNames);
     }
 
     getId(jid) {
         return Functions.getId(jid);
+    }
+
+    get db() {
+        return new SimplDB();
+    }
+
+    async _reorganizeUsersCollection() {
+        const users = this.db.createCollection("users");
+
+        const altUsers = users.getMany(user => user.alt);
+        const lidUsers = users.getMany(user => !user.alt);
+
+        if (altUsers.length === 0) return;
+
+        const lidMap = new Map();
+        lidUsers.forEach(lidUser => lidMap.set(lidUser.jid, lidUser));
+
+        for (const altUser of altUsers) {
+            if (!altUser.alt) continue;
+
+            const lidResult = await this.core.getLidUser(altUser.alt);
+            if (!lidResult || !lidResult[0]) continue;
+
+            const lidJid = Baileys.jidNormalizedUser(lidResult[0].lid);
+            const lidUser = lidMap.get(lidJid);
+
+            if (lidUser) {
+                for (const [key, value] of Object.entries(altUser)) {
+                    if (key === "alt" || key === "jid") continue;
+
+                    if (typeof value === "number" && typeof lidUser[key] === "number") {
+                        lidUser[key] = Math.max(lidUser[key], value);
+                    } else {
+                        if (lidUser[key] === undefined) lidUser[key] = value;
+                    }
+                }
+
+                users.update(lidUser, user => user.jid === lidJid);
+            } else {
+                const newUser = {
+                    ...altUser,
+                    jid: lidJid
+                };
+                delete newUser.alt;
+                users.create(newUser);
+                lidMap.set(lidJid, newUser);
+            }
+
+            users.remove(user => user.jid === altUser.jid);
+        }
     }
 
     async launch() {
@@ -302,7 +392,11 @@ class Client {
             }, 3000);
         }
 
-        this.onEvents();
+        setTimeout(async () => {
+            await this._reorganizeUsersCollection();
+        }, 10000);
+
+        this._onEvents();
     }
 }
 

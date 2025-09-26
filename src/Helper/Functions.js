@@ -39,8 +39,32 @@ const getContentFromMsg = (msg) => {
     return handler ? handler(msg.message) : "";
 };
 
-const getPushname = (jid, fromMe, pushNames = {}) => {
-    const decoded = fromMe ? Baileys.jidNormalizedUser(jid) : jid;
+const getDb = (collection, jid) => {
+    const decoded = Baileys.jidNormalizedUser(jid);
+
+    if (Baileys.isJidGroup(decoded)) {
+        collection.getOrCreate(group => group.jid === decoded, {
+            jid: decoded
+        });
+
+        return collection.get(group => group.jid === decoded);
+    } else if (Baileys.isLidUser(decoded)) {
+        collection.getOrCreate(user => user.jid === decoded, {
+            jid: decoded
+        });
+
+        return collection.get(user => user.jid === decoded);
+    } else {
+        collection.getOrCreate(user => user.alt === decoded, {
+            alt: decoded
+        });
+
+        return collection.get(user => user.alt === decoded);
+    }
+};
+
+const getPushname = (jid, pushNames = {}) => {
+    const decoded = Baileys.jidNormalizedUser(jid);
     return decoded ? pushNames[decoded] || decoded : null;
 };
 
@@ -49,6 +73,7 @@ const getId = (jid) => Baileys.jidDecode(jid)?.user || jid;
 module.exports = {
     getContentType,
     getContentFromMsg,
+    getDb,
     getPushname,
     getId
 };
