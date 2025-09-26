@@ -249,7 +249,7 @@ class Client {
     }
 
     getDb(collection, jid) {
-        return Functions.getDb(collection, jid);
+        return Functions.getDb(this.db.createCollection(collection), jid);
     }
 
     get db() {
@@ -266,7 +266,6 @@ class Client {
         if (altUsers.length === 0) return;
 
         const lidMap = new Map(lidUsers.map(user => [user.jid, user]));
-
         for (const altUser of altUsers) {
             const lidResult = await this.core.getLidUser(altUser.alt);
             if (!lidResult?.[0]) continue;

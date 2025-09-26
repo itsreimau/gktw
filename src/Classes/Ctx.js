@@ -69,10 +69,12 @@ class Ctx {
         const groups = this._db.createCollection("groups");
 
         return {
+            core: this._db,
+            users,
+            groups,
             bot: Functions.getDb(bot, this.me.lid),
-            users: Functions.getDb(users, this._sender.jid),
-            groups: this.isGroup() ? Functions.getDb(groups, this.id) : null,
-            core: this._db
+            user: Functions.getDb(users, this._sender.jid),
+            group: this.isGroup() ? Functions.getDb(groups, this.id) : null
         };
     }
 
@@ -92,28 +94,21 @@ class Ctx {
         const citationList = this._self.citation?.[citationName];
         if (!Array.isArray(citationList)) return false;
 
-        const botIds = new Set([
-            this.me.id && Functions.getId(this.me.id),
-            this.me.lid && Functions.getId(this.me.lid)
-        ].filter(Boolean));
-
+        const botIds = new Set([this.me.id && Functions.getId(this.me.id), this.me.lid && Functions.getId(this.me.lid)].filter(Boolean));
         const senderNumber = Functions.getId(this.sender.jid);
         const isFromBot = this._msg.key.fromMe;
         const isFromBaileys = this._msg.key.id.startsWith("SUKI");
 
         return citationList.some(citationItem => {
             const citationString = String(citationItem);
-
             if (citationString.toLowerCase() === "bot") {
                 if (isFromBaileys) return false;
                 return isFromBot && botIds.has(senderNumber);
             }
-
             if (citationNumber && botIds.has(citationNumber)) {
                 if (isFromBaileys) return false;
                 return isFromBot && botIds.has(senderNumber);
             }
-
             return citationNumber === senderNumber;
         });
     }
@@ -182,7 +177,7 @@ class Ctx {
     }
 
     getDb(collection, jid) {
-        return Functions.getDb(collection || this._db.createCollection("users"), jid || this.sender.jid);
+        return Functions.getDb(this._db.createCollection(collection || "users"), jid || this.sender.jid);
     }
 
     async _getMediaMessage(msg, type) {
@@ -233,7 +228,7 @@ class Ctx {
             key: {
                 remoteJid: chat,
                 participant: Baileys.isJidGroup(chat) ? sender : null,
-                fromMe: sender && this.me.id ? Baileys.areJidsSameUser(Baileys.jidNormalizedUser(sender), this.me.id) : false,
+                fromMe: sender && this.me.id ? Baileys.areJidsSameUser(sender, this.me.id) : false,
                 id: msgContext.stanzaId
             },
             sender,
