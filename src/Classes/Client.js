@@ -254,7 +254,7 @@ class Client {
 
     get db() {
         return new SimplDB({
-            collectionsFolder: databaseDir
+            collectionsFolder: this.databaseDir
         });
     }
 
@@ -387,6 +387,8 @@ class Client {
                 this.consolefy.resetTag();
             }, 3000);
         }
+
+        if (!fs.existsSync(this.databaseDir)) fs.mkdirSync(this.databaseDir, { recursive: true });
 
         setTimeout(async () => {
             await this._reorganizeUsersCollection();
