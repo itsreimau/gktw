@@ -248,6 +248,10 @@ class Client {
         return Functions.getId(jid);
     }
 
+    getDb(collection, jid) {
+        return Functions.getDb(collection, jid);
+    }
+
     get db() {
         return new SimplDB({
             collectionsFolder: databaseDir
