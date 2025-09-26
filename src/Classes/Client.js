@@ -130,7 +130,7 @@ class Client {
     }
 
     _onEvents() {
-        this.core.ev.on("connection.update", (update) => {
+        this.core.ev.on("connection.update", async (update) => {
             this.ev.emit(Events.ConnectionUpdate, update);
             const {
                 connection,
