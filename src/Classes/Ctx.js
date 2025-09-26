@@ -78,46 +78,43 @@ class Ctx {
 
     get citation() {
         return new Proxy({}, {
-            get(target, prop) {
+            get: (target, prop) => {
                 if (typeof prop === "string" && prop.startsWith("is")) {
                     const citationName = prop.substring(2).toLowerCase();
                     return this._checkCitation(citationName);
                 }
                 return undefined;
-            }
+            }.bind(this)
         });
     }
 
     _checkCitation(citationName) {
-        const citationConfig = this._self.citation;
-        if (!citationConfig || !citationConfig[citationName]) return false;
-
-        const citationList = citationConfig[citationName];
+        const citationList = this._self.citation?.[citationName];
         if (!Array.isArray(citationList)) return false;
 
-        const botIds = new Set();
-        if (this.me.decodedId) botIds.add(Functions.getId(this.me.decodedId));
-        if (this.decodedLid) botIds.add(Functions.getId(this.decodedLid));
+        const botIds = new Set([
+            this.me.id && Functions.getId(this.me.id),
+            this.me.lid && Functions.getId(this.me.lid)
+        ].filter(Boolean));
 
         const senderNumber = Functions.getId(this.sender.jid);
+        const isFromBot = this._msg.key.fromMe;
+        const isFromBaileys = this._msg.key.id.startsWith("SUKI");
 
         return citationList.some(citationItem => {
             const citationString = String(citationItem);
-            const citationNumber = citationString.replace(/[^0-9]/g, "");
 
             if (citationString.toLowerCase() === "bot") {
-                if (this._msg.key.id.startsWith("SUKI")) return;
-                return botIds.has(senderNumber) && this._msg?.key?.fromMe === true;
+                if (isFromBaileys) return false;
+                return isFromBot && botIds.has(senderNumber);
             }
 
             if (citationNumber && botIds.has(citationNumber)) {
-                if (this._msg.key.id.startsWith("SUKI")) return;
-                return botIds.has(senderNumber) && this._msg?.key?.fromMe === true;
+                if (isFromBaileys) return false;
+                return isFromBot && botIds.has(senderNumber);
             }
 
-            if (citationNumber === senderNumber) return true;
-
-            return false;
+            return citationNumber === senderNumber;
         });
     }
 

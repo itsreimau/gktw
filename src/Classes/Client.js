@@ -33,6 +33,7 @@ class Client {
         this.prefix = opts.prefix;
         this.selfReply = opts.selfReply ?? false;
         this.autoAiLabel = opts.autoAiLabel ?? false;
+        this.databaseDir = opts.databaseDir;
         this.rawCitation = opts.citation ?? {};
         this.citation = {};
 
@@ -105,30 +106,24 @@ class Client {
 
             const resolvedList = new Set();
             for (const citationItem of citationList) {
-                try {
-                    const citationString = String(citationItem);
+                const citationString = String(citationItem);
+                if (citationString.toLowerCase() === "bot") {
+                    resolvedList.add("bot");
+                    continue;
+                }
 
-                    if (citationString.toLowerCase() === "bot") {
-                        resolvedList.add("bot");
-                        continue;
-                    }
-
-                    const cleanCitation = citationString.replace(/[^0-9]/g, "");
-                    if (!cleanCitation) continue;
-
-                    const lidResult = await this.core.getLidUser(cleanCitation + Baileys.S_WHATSAPP_NET);
-                    if (lidResult && lidResult[0]) {
-                        resolvedList.add(cleanCitation);
-                        resolvedList.add(Functions.getId(lidResult[0].lid));
-                    } else {
-                        resolvedList.add(cleanCitation);
-                    }
-                } catch (error) {
-                    resolvedList.add(String(citationItem).replace(/[^0-9]/g, ""));
+                const cleanCitation = citationString.replace(/[^0-9]/g, "");
+                if (!cleanCitation) continue;
+                const lidResult = await this.core.getLidUser(cleanCitation + Baileys.S_WHATSAPP_NET);
+                if (lidResult?.[0]) {
+                    resolvedList.add(cleanCitation);
+                    resolvedList.add(Functions.getId(lidResult[0].lid));
+                } else {
+                    resolvedList.add(cleanCitation);
                 }
             }
 
-            resolvedCitation[citationName] = Array.from(resolvedList);
+            resolvedCitation[citationName] = [...resolvedList];
         }
 
         this.citation = resolvedCitation;
@@ -254,47 +249,45 @@ class Client {
     }
 
     get db() {
-        return new SimplDB();
+        return new SimplDB({
+            collectionsFolder: databaseDir
+        });
     }
 
     async _reorganizeUsersCollection() {
         const users = this.db.createCollection("users");
-
         const altUsers = users.getMany(user => user.alt);
         const lidUsers = users.getMany(user => !user.alt);
 
         if (altUsers.length === 0) return;
 
-        const lidMap = new Map();
-        lidUsers.forEach(lidUser => lidMap.set(lidUser.jid, lidUser));
+        const lidMap = new Map(lidUsers.map(user => [user.jid, user]));
 
         for (const altUser of altUsers) {
-            if (!altUser.alt) continue;
-
             const lidResult = await this.core.getLidUser(altUser.alt);
-            if (!lidResult || !lidResult[0]) continue;
+            if (!lidResult?.[0]) continue;
 
             const lidJid = Baileys.jidNormalizedUser(lidResult[0].lid);
             const lidUser = lidMap.get(lidJid);
 
             if (lidUser) {
-                for (const [key, value] of Object.entries(altUser)) {
-                    if (key === "alt" || key === "jid") continue;
-
+                Object.entries(altUser).forEach(([key, value]) => {
+                    if (key === "alt" || key === "jid") return;
                     if (typeof value === "number" && typeof lidUser[key] === "number") {
                         lidUser[key] = Math.max(lidUser[key], value);
-                    } else {
-                        if (lidUser[key] === undefined) lidUser[key] = value;
+                    } else if (lidUser[key] === undefined) {
+                        lidUser[key] = value;
                     }
-                }
-
+                });
                 users.update(lidUser, user => user.jid === lidJid);
             } else {
-                const newUser = {
+                const {
+                    alt,
+                    ...newUser
+                } = {
                     ...altUser,
                     jid: lidJid
                 };
-                delete newUser.alt;
                 users.create(newUser);
                 lidMap.set(lidJid, newUser);
             }
