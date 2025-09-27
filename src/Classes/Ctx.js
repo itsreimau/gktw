@@ -86,7 +86,7 @@ class Ctx {
                     return this._checkCitation(citationName);
                 }
                 return undefined;
-            }.bind(this)
+            }
         });
     }
 
