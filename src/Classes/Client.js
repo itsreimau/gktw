@@ -97,36 +97,41 @@ class Client {
         }
     }
 
-    async _resolveCitation() {
+    async _registerCitation() {
+        this.consolefy.setTag("citation");
         if (Object.keys(this.rawCitation).length === 0) return;
 
-        const resolvedCitation = {};
+        const registeredCitation = {};
         for (const [citationName, citationList] of Object.entries(this.rawCitation)) {
+            this.consolefy.log("Registering citation...");
+
             if (!Array.isArray(citationList)) {
-                resolvedCitation[citationName] = citationList;
+                registeredCitation[citationName] = citationList;
                 continue;
             }
 
-            const resolvedList = new Set();
+            const registeredList = new Set();
             for (const citationItem of citationList) {
                 if (citationItem.toLowerCase() === "bot") {
-                    resolvedList.add("bot");
+                    registeredList.add("bot");
                     continue;
                 }
 
                 const lidResult = await this.core.getLidUser(citationItem + Baileys.S_WHATSAPP_NET);
                 if (lidResult?.[0]) {
-                    resolvedList.add(citationItem);
-                    resolvedList.add(Functions.getId(lidResult[0].lid));
+                    registeredList.add(citationItem);
+                    registeredList.add(Functions.getId(lidResult[0].lid));
                 } else {
-                    resolvedList.add(citationItem);
+                    registeredList.add(citationItem);
                 }
             }
 
-            resolvedCitation[citationName] = [...resolvedList];
+            registeredCitation[citationName] = [...registeredList];
+            this.consolefy.success("Successfully registered citation.");
         }
 
-        this.citation = resolvedCitation;
+        this.citation = registeredCitation;
+        this.consolefy.resetTag();
     }
 
     _onEvents() {
@@ -144,7 +149,7 @@ class Client {
                 this.consolefy.error(`Connection closed due to ${lastDisconnect.error}, reconnecting ${shouldReconnect}`);
                 if (shouldReconnect) this.launch();
             } else if (connection === "open") {
-                await this._resolveCitation();
+                await this._registerCitation();
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
             }
@@ -236,10 +241,6 @@ class Client {
         });
     }
 
-    decodeJid(jid) {
-        return Baileys.jidNormalizedUser(jid);
-    }
-
     getPushname(jid) {
         return Functions.getPushname(jid, this.pushNames);
     }
@@ -249,11 +250,11 @@ class Client {
     }
 
     getDb(collection, jid) {
-        return Functions.getDb(this.db.createCollection(collection), jid);
+        return Functions.getDb(this.db.getCollection(collection) || this.db.createCollection(collection), jid);
     }
 
-    async _reorganizeUsersCollection() {
-        const users = this.db.createCollection("users");
+    async _fixUsersDb() {
+        const users = this.db.getCollection("users") || this.db.createCollection("users");
         const altUsers = users.getMany(user => user.alt);
         const lidUsers = users.getMany(user => !user.alt);
 
@@ -387,7 +388,7 @@ class Client {
         });
 
         setTimeout(async () => {
-            await this._reorganizeUsersCollection();
+            await this._fixUsersDb();
         }, 10000);
 
         this._onEvents();

@@ -73,11 +73,11 @@ class GroupData {
     }
 
     async isSenderAdmin() {
-        return await this.isAdmin(this.ctx.sender.decodedJid);
+        return await this.isAdmin(this.ctx.sender.jid);
     }
 
     async isSenderOwner() {
-        return await this.isOwner(this.ctx.sender.decodedJid);
+        return await this.isOwner(this.ctx.sender.jid);
     }
 
     async isBotAdmin() {

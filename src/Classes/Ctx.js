@@ -64,9 +64,9 @@ class Ctx {
     }
 
     get db() {
-        const bot = this._db.createCollection("bot");
-        const users = this._db.createCollection("users");
-        const groups = this._db.createCollection("groups");
+        const bot = this._db.getCollection("bot") || this._db.createCollection("bot");
+        const users = this._db.getCollection("users") || this._db.createCollection("users");
+        const groups = this._db.getCollection("bot") || this._db.createCollection("groups");
 
         return {
             core: this._db,
@@ -163,10 +163,6 @@ class Ctx {
         return Baileys.getDevice(id || this._msg.key.id);
     }
 
-    decodeJid(jid) {
-        return Baileys.jidNormalizedUser(jid || this.sender.jid);
-    }
-
     getPushname(jid) {
         return Functions.getPushname(jid || this.sender.jid, this._self.pushNames);
     }
@@ -176,7 +172,7 @@ class Ctx {
     }
 
     getDb(collection, jid) {
-        return Functions.getDb(this._db.createCollection(collection || "users"), jid || this.sender.jid);
+        return Functions.getDb(this._db.getCollection(collection || "users") || this._db.createCollection(collection || "users"), jid || this.sender.jid);
     }
 
     async _getMediaMessage(msg, type) {
