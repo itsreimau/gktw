@@ -109,20 +109,17 @@ class Client {
 
             const resolvedList = new Set();
             for (const citationItem of citationList) {
-                const citationString = String(citationItem);
-                if (citationString.toLowerCase() === "bot") {
+                if (citationItem.toLowerCase() === "bot") {
                     resolvedList.add("bot");
                     continue;
                 }
 
-                const cleanCitation = citationString.replace(/[^0-9]/g, "");
-                if (!cleanCitation) continue;
-                const lidResult = await this.core.getLidUser(cleanCitation + Baileys.S_WHATSAPP_NET);
+                const lidResult = await this.core.getLidUser(citationItem + Baileys.S_WHATSAPP_NET);
                 if (lidResult?.[0]) {
-                    resolvedList.add(cleanCitation);
+                    resolvedList.add(citationItem);
                     resolvedList.add(Functions.getId(lidResult[0].lid));
                 } else {
-                    resolvedList.add(cleanCitation);
+                    resolvedList.add(citationItem);
                 }
             }
 
