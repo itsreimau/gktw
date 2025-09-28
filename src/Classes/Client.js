@@ -149,9 +149,9 @@ class Client {
                 this.consolefy.error(`Connection closed due to ${lastDisconnect.error}, reconnecting ${shouldReconnect}`);
                 if (shouldReconnect) this.launch();
             } else if (connection === "open") {
-                await this._registerCitation();
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
+                await this._registerCitation();
             }
         });
 
@@ -277,7 +277,7 @@ class Client {
                         lidUser[key] = value;
                     }
                 });
-                users.update(lidUser, user => user.jid === lidJid);
+                users.update(user => Object.assign(user, lidUser), user => user.jid === lidJid);
             } else {
                 const {
                     alt,
@@ -289,8 +289,6 @@ class Client {
                 users.create(newUser);
                 lidMap.set(lidJid, newUser);
             }
-
-            users.remove(user => user.jid === altUser.jid);
         }
     }
 
