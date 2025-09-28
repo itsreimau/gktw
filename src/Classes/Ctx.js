@@ -105,11 +105,11 @@ class Ctx {
                 if (isFromBaileys) return false;
                 return isFromBot && botIds.has(senderNumber);
             }
-            if (citationNumber && botIds.has(citationNumber)) {
+            if (citationItem && botIds.has(citationItem)) {
                 if (isFromBaileys) return false;
                 return isFromBot && botIds.has(senderNumber);
             }
-            return citationNumber === senderNumber;
+            return citationItem === senderNumber;
         });
     }
 
