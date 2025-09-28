@@ -56,6 +56,9 @@ class Client {
         });
         this.pushnamesPath = path.resolve(this.authDir, "pushnames.json");
         this.pushNames = {};
+        this.db = new SimplDB({
+            collectionsFolder: this.databaseDir
+        });
 
         if (Array.isArray(this.prefix) && this.prefix.includes("")) this.prefix.sort((a, b) => a === "" ? 1 : b === "" ? -1 : 0);
         if (typeof this.prefix === "string") this.prefix = this.prefix.split("");
@@ -250,12 +253,6 @@ class Client {
 
     getDb(collection, jid) {
         return Functions.getDb(this.db.createCollection(collection), jid);
-    }
-
-    get db() {
-        return new SimplDB({
-            collectionsFolder: this.databaseDir
-        });
     }
 
     async _reorganizeUsersCollection() {
