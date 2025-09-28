@@ -100,8 +100,7 @@ class Ctx {
         const isFromBaileys = this._msg.key.id.startsWith("SUKI");
 
         return citationList.some(citationItem => {
-            const citationString = String(citationItem);
-            if (citationString.toLowerCase() === "bot") {
+            if (String(citationItem).toLowerCase() === "bot") {
                 if (isFromBaileys) return false;
                 return isFromBot && botIds.has(senderNumber);
             }

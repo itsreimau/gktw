@@ -43,17 +43,17 @@ const getContentFromMsg = (msg) => {
 
 const getDb = (collection, jid) => {
     const decoded = Baileys.jidNormalizedUser(jid);
-    if (Baileys.isJidGroup(decoded)) {
-        return collection.getOrCreate(group => group.jid === decoded, {
-            jid: decoded
-        });
-    } else if (Baileys.isLidUser(decoded)) {
+    if (Baileys.isLidUser(decoded)) {
         return collection.getOrCreate(user => user.jid === decoded, {
             jid: decoded
         });
-    } else {
+    } else if (Baileys.isJidUser(decoded)) {
         return collection.getOrCreate(user => user.alt === decoded, {
             alt: decoded
+        });
+    } else if (Baileys.isJidGroup(decoded)) {
+        return collection.getOrCreate(group => group.jid === decoded, {
+            jid: decoded
         });
     }
 };

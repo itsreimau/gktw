@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.3.21+phoenix.11",
+  "version": "1.3.21+phoenix.12",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {

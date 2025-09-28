@@ -13,7 +13,7 @@ const Events = require("./Constant/Events.js");
 const MessageType = require("./Constant/MessageType.js");
 const Formatter = require("./Helper/Formatter.js");
 
-const ANOTHER_UTILS = {
+const anotherUtils = {
     analyzeBug: analyzeMessage,
     didYouMean,
     mime,
@@ -27,7 +27,7 @@ const ANOTHER_UTILS = {
 module.exports = {
     Baileys: {
         ...Baileys,
-        ...ANOTHER_UTILS
+        ...anotherUtils
     },
     Client,
     CommandHandler,
