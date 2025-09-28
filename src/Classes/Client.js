@@ -388,7 +388,9 @@ class Client {
             }, 3000);
         }
 
-        if (!fs.existsSync(this.databaseDir)) fs.mkdirSync(this.databaseDir, { recursive: true });
+        if (!fs.existsSync(this.databaseDir)) fs.mkdirSync(this.databaseDir, {
+            recursive: true
+        });
 
         setTimeout(async () => {
             await this._reorganizeUsersCollection();
