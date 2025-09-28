@@ -112,7 +112,7 @@ class Client {
 
             const registeredList = new Set();
             for (const citationItem of citationList) {
-                if (citationItem.toLowerCase() === "bot") {
+                if (citationItem === "bot") {
                     registeredList.add("bot");
                     continue;
                 }
