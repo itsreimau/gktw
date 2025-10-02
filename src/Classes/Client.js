@@ -98,7 +98,7 @@ class Client {
     }
 
     async _registerCitation() {
-        this.consolefy.setTag("citation");
+        this.consolefy.group("Register Citation");
         if (Object.keys(this.rawCitation).length === 0) return;
 
         const registeredCitation = {};
@@ -131,7 +131,7 @@ class Client {
         }
 
         this.citation = registeredCitation;
-        this.consolefy.resetTag();
+        this.consolefy.groupEnd();
     }
 
     _onEvents() {
@@ -262,6 +262,8 @@ class Client {
 
         const lidMap = new Map(lidUsers.map(user => [user.jid, user]));
         for (const altUser of altUsers) {
+            if (!Baileys.isJidUser(altUser.alt)) return;
+
             const lidResult = await this.core.getLidUser(altUser.alt);
             if (!lidResult?.[0]) continue;
 
