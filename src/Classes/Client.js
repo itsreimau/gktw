@@ -270,7 +270,7 @@ class Client {
                         lidUser[key] = value;
                     }
                 });
-                users.update(lidUser, user => user.jid === lidJid);
+                users.update(user => Object.assign(user, lidUser), user => user.jid === lidJid);
             } else {
                 const {
                     alt,
