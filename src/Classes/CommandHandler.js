@@ -19,13 +19,10 @@ class CommandHandler {
             cwd: this._path,
             nodir: true,
             absolute: true
-        });
-
-        files.sort((a, b) => a.localeCompare(b));
+        }).sort((a, b) => a.localeCompare(b));
 
         files.forEach(file => {
             const cmdObj = require(file);
-
             if (!cmdObj.type || cmdObj.type === "command") {
                 this._bot.cmd.set(cmdObj.name, cmdObj);
                 if (isShowLog) this.consolefy.success(`Loaded Command - ${cmdObj.name}`);

@@ -5,20 +5,19 @@ const Ctx = require("../Classes/Ctx.js");
 
 async function Commands(self, _runMiddlewares) {
     const {
-        cmd,
-        prefix,
         m
     } = self;
     if (!m.message || Baileys.isJidStatusBroadcast(m.key.remoteJid) || Baileys.isJidNewsletter(m.key.remoteJid)) return;
 
-    await handleHears(self, m);
-    await processCommands(self, _runMiddlewares, m, cmd, prefix);
+    await _handleHears(self, m);
+    await _processCommands(self, _runMiddlewares, m);
 }
 
-async function handleHears(self, m) {
+async function _handleHears(self, m) {
     const hearsEntries = Array.from(self.hearsMap.values());
-    const matchingHears = hearsEntries.filter(hear => hear.name === m.content || hear.name === m.messageType || (hear.name instanceof RegExp && hear.name.test(m.content)) || (Array.isArray(hear.name) && hear.name.includes(m.content)));
-    if (matchingHears.length === 0) return;
+    const matches = hearsEntries.filter(hear => hear.name === m.content || hear.name === m.messageType || (hear.name instanceof RegExp && hear.name.test(m.content)) || (Array.isArray(hear.name) && hear.name.includes(m.content)));
+
+    if (!matches.length) return;
 
     const ctx = new Ctx({
         used: {
@@ -28,22 +27,21 @@ async function handleHears(self, m) {
         self,
         client: self.core
     });
-
-    await Promise.allSettled(matchingHears.map(hear => Promise.resolve(hear.code(ctx))));
+    await Promise.allSettled(matches.map(hear => hear.code(ctx)));
 }
 
-async function processCommands(self, _runMiddlewares, m, cmd, prefix) {
-    const selectedPrefix = findMatchingPrefix(m.content, prefix);
+async function _processCommands(self, _runMiddlewares, m) {
+    const selectedPrefix = _findMatchingPrefix(m.content, self.prefix);
     if (!selectedPrefix) return;
 
     const {
         commandName,
         args
-    } = parseCommand(m.content, selectedPrefix);
+    } = _parseCommand(m.content, selectedPrefix);
     if (!commandName) return;
 
-    const matchedCommands = findMatchingCommands(cmd, commandName);
-    if (matchedCommands.length === 0) return;
+    const matchedCommands = _findMatchingCommands(self.cmd, commandName);
+    if (!matchedCommands.length) return;
 
     const ctx = new Ctx({
         used: {
@@ -58,38 +56,30 @@ async function processCommands(self, _runMiddlewares, m, cmd, prefix) {
     const shouldContinue = await _runMiddlewares(ctx);
     if (!shouldContinue) return;
 
-    await Promise.allSettled(matchedCommands.map(command => Promise.resolve(command.code(ctx))));
+    await Promise.allSettled(matchedCommands.map(command => command.code(ctx)));
 }
 
-function findMatchingPrefix(content, prefix) {
-    if (Array.isArray(prefix)) return prefix.find(_prefix => content.startsWith(_prefix));
-
-    if (prefix instanceof RegExp) {
-        const match = content.match(prefix);
-        return match?.[0];
-    }
-
+function _findMatchingPrefix(content, prefix) {
+    if (Array.isArray(prefix)) return prefix.find(p => content.startsWith(p));
+    if (prefix instanceof RegExp) return content.match(prefix)?.[0];
     return content.startsWith(prefix) ? prefix : null;
 }
 
-function parseCommand(content, selectedPrefix) {
-    const remainingContent = content.slice(selectedPrefix.length).trim();
-    if (!remainingContent) return {
+function _parseCommand(content, selectedPrefix) {
+    const remaining = content.slice(selectedPrefix.length).trim();
+    if (!remaining) return {
         commandName: null,
         args: []
     };
 
-    const parts = remainingContent.split(/\s+/);
-    const commandName = parts[0]?.toLowerCase();
-    const args = parts.slice(1);
-
+    const parts = remaining.split(/\s+/);
     return {
-        commandName,
-        args
+        commandName: parts[0]?.toLowerCase(),
+        args: parts.slice(1)
     };
 }
 
-function findMatchingCommands(cmd, commandName) {
+function _findMatchingCommands(cmd, commandName) {
     const commandsList = Array.from(cmd?.values() ?? []);
     return commandsList.filter(command => command.name?.toLowerCase() === commandName || (Array.isArray(command.aliases) && command.aliases.includes(commandName)) || command.aliases === commandName);
 }

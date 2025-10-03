@@ -4,28 +4,17 @@ const EventEmitter = require("node:events");
 const { Collection } = require("@discordjs/collection");
 
 class Collector extends EventEmitter {
-    constructor(options = {
-        filter: () => {
-            throw new Error("Function not implemented.");
-        },
-        time: 0,
-        max: 0,
-        maxProcessed: 0,
-        hears: []
-    }) {
+    constructor(opts = {}) {
         super();
-        this.isRun = false;
-        this.filter = options.filter ?? (() => true);
-        this.time = options.time;
-        this.max = options.max;
-        this.maxProcessed = options.maxProcessed;
-        this.hears = options.hears || [];
+        this.filter = opts.filter ?? (() => true);
+        this.time = opts.time;
+        this.max = opts.max;
+        this.maxProcessed = opts.maxProcessed;
+        this.hears = opts.hears || [];
         this.collector = new Collection();
-        this.collect = this.collect.bind(this);
+        this.received = 0;
 
-        if (this.isRun) throw new Error("Some collector already run in another instance.");
-        if (typeof this.filter !== "function") throw new Error("Filter options in collector must be function.");
-        if (options.time) this.isRun = setTimeout(() => this.stop(), this.time);
+        if (this.time) this.isRun = setTimeout(() => this.stop(), this.time);
     }
 
     async collect(m) {
@@ -35,19 +24,17 @@ class Collector extends EventEmitter {
         const filtered = await this.filter(args, this.collector);
         if (!filtered) return;
 
-        if (this.maxProcessed && this.maxProcessed === this.received) return this.stop("processedLimit");
-        if (this.max && this.max <= this.collector.size) return this.stop("limit");
-
-        if (this.isRun) {
-            this.collector.set(args.jid, args);
-            this.emit("collect", args);
-        }
+        this.received++;
+        if (this.maxProcessed && this.received === this.maxProcessed) return this.stop("processedLimit");
+        this.collector.set(args.jid, args);
+        this.emit("collect", args);
+        if (this.max && this.collector.size >= this.max) this.stop("limit");
     }
 
     stop(reason = "timeout") {
         if (this.isRun) {
             clearTimeout(this.isRun);
-            this.isRun = undefined;
+            this.isRun = null;
             this.emit("end", this.collector, reason);
         }
     }

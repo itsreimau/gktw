@@ -6,48 +6,31 @@ const Events = require("../../Constant/Events.js");
 const Functions = require("../../Helper/Functions.js");
 
 class MessageCollector extends Collector {
-    constructor(clientReq,
-        options = {
-            filter: function(args, collector) {
-                throw new Error("Function not implemented.");
-            },
-            time: 0,
-            max: 0,
-            maxProcessed: 0,
-            hears: []
-        }) {
-        super(options);
+    constructor(clientReq, opts = {}) {
+        super(opts);
         this.clientReq = clientReq;
         this.jid = Baileys.jidNormalizedUser(this.clientReq.msg.key.remoteJid);
-        this.hears = options.hears || [];
-        this.received = 0;
+        this.hears = opts.hears || [];
 
-        this.clientReq.self.ev.on(Events.MessagesUpsert, this.collect);
+        this.clientReq.self.ev.on(Events.MessagesUpsert, this.collect.bind(this));
         this.once("end", () => {
-            this.clientReq.self.ev.removeListener(Events.MessagesUpsert, this.collect);
+            this.clientReq.self.ev.removeListener(Events.MessagesUpsert, this.collect.bind(this));
         });
-
-        return this;
     }
 
     async _collect(m) {
         const content = Functions.getContentFromMsg(m);
         const id = Baileys.jidNormalizedUser(m.key.remoteJid);
-        if (!content || (!this.jid === id && !this.hears.includes(id))) return null;
+        if (!content || (this.jid !== id && !this.hears.includes(id))) return null;
 
-        try {
-            this.received++;
-            return {
-                ...m,
-                content,
-                message: Baileys.extractMessageContent(m.message),
-                contentType: Functions.getContentType(m.message),
-                id,
-                sender: Baileys.jidNormalizedUser(m.key.participant || m.key.remoteJid)
-            };
-        } catch {
-            return null;
-        }
+        return {
+            ...m,
+            content,
+            message: Baileys.extractMessageContent(m.message),
+            contentType: Functions.getContentType(m.message),
+            id,
+            sender: Baileys.jidNormalizedUser(m.key.participant || m.key.remoteJid)
+        };
     }
 }
 

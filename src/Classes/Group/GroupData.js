@@ -56,32 +56,29 @@ class GroupData {
 
     async isMemberExist(jid) {
         const members = await this.members();
-        const check = members.some(member => Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) || Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid));
-        return check;
+        return members.some(member => Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) || Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid));
     }
 
     async isAdmin(jid) {
         const members = await this.members();
-        const check = members.filter(member => (Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) || Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) && (member.admin === "admin" || member.admin === "superadmin"));
-        return check.length > 0;
+        return members.some(member => (Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) || Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) && (member.admin === "admin" || member.admin === "superadmin"));
     }
 
     async isOwner(jid) {
         const members = await this.members();
-        const check = members.filter(member => (Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) || Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) && member.admin === "superadmin");
-        return check.length > 0;
+        return members.some(member => (Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) || Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) && member.admin === "superadmin");
     }
 
     async isSenderAdmin() {
-        return await this.isAdmin(this.ctx.sender.jid);
+        return await this.isAdmin(this.ctx._sender.jid);
     }
 
     async isSenderOwner() {
-        return await this.isOwner(this.ctx.sender.jid);
+        return await this.isOwner(this.ctx._sender.jid);
     }
 
     async isBotAdmin() {
-        return await this.isAdmin(this.ctx.me.decodedId);
+        return await this.isAdmin(this.ctx.me?.id || this.ctx.me?.lid);
     }
 
     async toggleEphemeral(expiration) {

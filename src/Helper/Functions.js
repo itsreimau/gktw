@@ -2,29 +2,26 @@
 
 const Baileys = require("baileys");
 
-const getContentType = (message) => {
+function getContentType(message) {
     const messageContent = Baileys.extractMessageContent(message);
     return Baileys.getContentType(messageContent);
-};
+}
 
 const CONTENT_HANDLERS = {
-    conversation: (msg) => msg.conversation,
-    extendedTextMessage: (msg) => msg.extendedTextMessage?.text || "",
-    imageMessage: (msg) => msg.imageMessage?.caption || "",
-    videoMessage: (msg) => msg.videoMessage?.caption || "",
-    documentMessageWithCaption: (msg) => msg.documentMessageWithCaption?.caption || "",
-    protocolMessage: (msg) => {
-        const editedMessage = msg.protocolMessage?.editedMessage;
-        return getContentFromMsg({
-            message: editedMessage
-        }) ?? "";
-    },
-    buttonsMessage: (msg) => msg.buttonsMessage?.contentText || "",
-    interactiveMessage: (msg) => msg.interactiveMessage?.body?.text || "",
-    buttonsResponseMessage: (msg) => msg.buttonsResponseMessage?.selectedButtonId || "",
-    listResponseMessage: (msg) => msg.listResponseMessage?.singleSelectReply?.selectedRowId || "",
-    templateButtonReplyMessage: (msg) => msg.templateButtonReplyMessage?.selectedId || "",
-    interactiveResponseMessage: (msg) => {
+    conversation: msg => msg.conversation,
+    extendedTextMessage: msg => msg.extendedTextMessage?.text || "",
+    imageMessage: msg => msg.imageMessage?.caption || "",
+    videoMessage: msg => msg.videoMessage?.caption || "",
+    documentMessageWithCaption: msg => msg.documentMessageWithCaption?.caption || "",
+    protocolMessage: msg => getContentFromMsg({
+        message: msg.protocolMessage?.editedMessage
+    }) ?? "",
+    buttonsMessage: msg => msg.buttonsMessage?.contentText || "",
+    interactiveMessage: msg => msg.interactiveMessage?.body?.text || "",
+    buttonsResponseMessage: msg => msg.buttonsResponseMessage?.selectedButtonId || "",
+    listResponseMessage: msg => msg.listResponseMessage?.singleSelectReply?.selectedRowId || "",
+    templateButtonReplyMessage: msg => msg.templateButtonReplyMessage?.selectedId || "",
+    interactiveResponseMessage: msg => {
         const interactiveMsg = msg.interactiveResponseMessage;
         let text = interactiveMsg?.selectedButtonId || "";
         if (!text && interactiveMsg?.nativeFlowResponseMessage) {
@@ -35,35 +32,36 @@ const CONTENT_HANDLERS = {
     }
 };
 
-const getContentFromMsg = (msg) => {
+function getContentFromMsg(msg) {
     const contentType = getContentType(msg.message) ?? "";
-    const handler = CONTENT_HANDLERS[contentType];
-    return handler ? handler(msg.message) : "";
-};
+    return CONTENT_HANDLERS[contentType]?.(msg.message) || "";
+}
 
-const getDb = (collection, jid) => {
-    const decoded = Baileys.jidNormalizedUser(jid);
-    if (Baileys.isLidUser(decoded)) {
-        return collection.getOrCreate(user => user.jid === decoded, {
-            jid: decoded
+function getDb(collection, jid) {
+    const normalized = Baileys.jidNormalizedUser(jid);
+    if (Baileys.isLidUser(normalized)) {
+        return collection.getOrCreate(user => user.jid === normalized, {
+            jid: normalized
         });
-    } else if (Baileys.isJidUser(decoded)) {
-        return collection.getOrCreate(user => user.alt === decoded, {
-            alt: decoded
+    } else if (Baileys.isJidUser(normalized)) {
+        return collection.getOrCreate(user => user.alt === normalized, {
+            alt: normalized
         });
-    } else if (Baileys.isJidGroup(decoded)) {
-        return collection.getOrCreate(group => group.jid === decoded, {
-            jid: decoded
+    } else if (Baileys.isJidGroup(normalized)) {
+        return collection.getOrCreate(group => group.jid === normalized, {
+            jid: normalized
         });
     }
-};
+}
 
-const getPushname = (jid, pushNames = {}) => {
-    const decoded = Baileys.jidNormalizedUser(jid);
-    return decoded ? pushNames[decoded] || decoded : null;
-};
+function getPushname(jid, pushNames = {}) {
+    const normalized = Baileys.jidNormalizedUser(jid);
+    return normalized ? pushNames[normalized] || normalized : null;
+}
 
-const getId = (jid) => Baileys.jidDecode(jid)?.user || jid;
+function getId(jid) {
+    return Baileys.jidDecode(jid)?.user || jid;
+}
 
 module.exports = {
     getContentType,

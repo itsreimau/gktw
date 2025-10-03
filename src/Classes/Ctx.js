@@ -17,7 +17,6 @@ class Ctx {
             jid: Baileys.jidNormalizedUser(this._msg.key.participant || this._msg.key.remoteJid),
             pushName: this._msg.pushName
         };
-
         this._db = this._self.db;
         this._config = {
             prefix: this._self.prefix,
@@ -66,7 +65,7 @@ class Ctx {
     get db() {
         const bot = this._db.getCollection("bot") || this._db.createCollection("bot");
         const users = this._db.getCollection("users") || this._db.createCollection("users");
-        const groups = this._db.getCollection("bot") || this._db.createCollection("groups");
+        const groups = this._db.getCollection("groups") || this._db.createCollection("groups");
 
         return {
             core: this._db,
@@ -95,19 +94,13 @@ class Ctx {
         if (!Array.isArray(citationList)) return false;
 
         const botIds = new Set([this.me.id && Functions.getId(this.me.id), this.me.lid && Functions.getId(this.me.lid)].filter(Boolean));
-        const senderNumber = Functions.getId(this.sender.jid);
+        const senderNumber = Functions.getId(this._sender.jid);
         const isFromBot = this._msg.key.fromMe;
         const isFromBaileys = this._msg.key.id.startsWith("SUKI");
 
         return citationList.some(citationItem => {
-            if (citationItem === "bot") {
-                if (isFromBaileys) return false;
-                return isFromBot && botIds.has(senderNumber);
-            }
-            if (citationItem && botIds.has(citationItem)) {
-                if (isFromBaileys) return false;
-                return isFromBot && botIds.has(senderNumber);
-            }
+            if (citationItem === "bot") return !isFromBaileys && isFromBot && botIds.has(senderNumber);
+            if (citationItem && botIds.has(citationItem)) return !isFromBaileys && isFromBot && botIds.has(senderNumber);
             return citationItem === senderNumber;
         });
     }
@@ -164,15 +157,15 @@ class Ctx {
     }
 
     getPushname(jid) {
-        return Functions.getPushname(jid || this.sender.jid, this._self.pushNames);
+        return Functions.getPushname(jid || this._sender.jid, this._self.pushNames);
     }
 
     getId(jid) {
-        return Functions.getId(jid || this.sender.jid);
+        return Functions.getId(jid || this._sender.jid);
     }
 
     getDb(collection, jid) {
-        return Functions.getDb(this._db.getCollection(collection || "users") || this._db.createCollection(collection || "users"), jid || this.sender.jid);
+        return Functions.getDb(this._db.getCollection(collection || "users") || this._db.createCollection(collection || "users"), jid || this._sender.jid);
     }
 
     async _getMediaMessage(msg, type) {
@@ -187,12 +180,10 @@ class Ctx {
     }
 
     get msg() {
-        const msg = this._msg;
-        const message = Baileys.extractMessageContent(msg.message);
-
+        const message = Baileys.extractMessageContent(this._msg.message);
         return {
-            ...msg,
-            contentType: Functions.getContentType(msg.message),
+            ...this._msg,
+            contentType: Functions.getContentType(this._msg.message),
             media: {
                 toBuffer: async () => await this._getMediaMessage({
                     message
@@ -208,14 +199,15 @@ class Ctx {
     get quoted() {
         const msgContext = this._msg.message?.[this.getMessageType()]?.contextInfo ?? {};
         if (!msgContext?.quotedMessage) return null;
+
         const quotedMessage = msgContext.quotedMessage;
         const message = Baileys.extractMessageContent(quotedMessage) ?? {};
-        const chat = Baileys.jidNormalizedUser(msgContext?.remoteJid || this.id);
-        const sender = Baileys.jidNormalizedUser(msgContext?.participant || chat);
+        const chat = Baileys.jidNormalizedUser(msgContext.remoteJid || this.id);
+        const sender = Baileys.jidNormalizedUser(msgContext.participant || chat);
 
         return {
             content: Functions.getContentFromMsg({
-                message
+                message: quotedMessage
             }),
             message: quotedMessage,
             messageType: Baileys.getContentType(quotedMessage) ?? "",
@@ -246,7 +238,6 @@ class Ctx {
     async sendMessage(jid, content, options = {}) {
         if ((content.header || content.footer) && !content.buttons && !content.interactiveButtons) content.interactiveButtons = [];
         if (this._self.autoAiLabel && (Baileys.isJidUser(jid) || Baileys.isLidUser(jid))) content.ai = true;
-
         return await this._client.sendMessage(jid, content, options);
     }
 
@@ -336,11 +327,8 @@ class Ctx {
         return new Promise((resolve, reject) => {
             const collector = this.MessageCollector(args);
             collector.once("end", (collected, reason) => {
-                if (args.endReason.includes(reason)) {
-                    reject(collected);
-                } else {
-                    resolve(collected);
-                }
+                if (args.endReason?.includes(reason)) reject(collected);
+                else resolve(collected);
             });
         });
     }

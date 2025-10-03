@@ -73,17 +73,13 @@ class Client {
         if (!middlewareFn) return true;
 
         let nextCalled = false;
-        let middlewareCompleted = false;
-
         await middlewareFn(ctx, async () => {
             if (nextCalled) throw new Error("next() called multiple times in middleware");
             nextCalled = true;
-            middlewareCompleted = await this._runMiddlewares(ctx, index + 1);
+            return await this._runMiddlewares(ctx, index + 1);
         });
 
-        if (!nextCalled && !middlewareCompleted) return false;
-
-        return middlewareCompleted;
+        return nextCalled;
     }
 
     use(fn) {
@@ -98,23 +94,24 @@ class Client {
     }
 
     async _registerCitation() {
-        this.consolefy.group("Register Citation");
-        if (Object.keys(this.rawCitation).length === 0) return;
+        this.consolefy.setTag("register-citation");
+        if (!Object.keys(this.rawCitation).length) {
+            this.consolefy.resetTag();
+            return;
+        }
 
         const registeredCitation = {};
         for (const [citationName, citationList] of Object.entries(this.rawCitation)) {
-            this.consolefy.log("Registering citation...");
-
             if (!Array.isArray(citationList)) {
                 registeredCitation[citationName] = citationList;
-                continue;
+                return;
             }
 
             const registeredList = new Set();
             for (const citationItem of citationList) {
                 if (citationItem === "bot") {
                     registeredList.add("bot");
-                    continue;
+                    return;
                 }
 
                 const lidResult = await this.core.getLidUser(citationItem + Baileys.S_WHATSAPP_NET);
@@ -127,11 +124,19 @@ class Client {
             }
 
             registeredCitation[citationName] = [...registeredList];
-            this.consolefy.success("Successfully registered citation.");
+            this.consolefy.success(`Registered Citation - ${citationName}`);
         }
 
         this.citation = registeredCitation;
-        this.consolefy.groupEnd();
+        this.consolefy.resetTag();
+    }
+
+    _loadPushNames() {
+        try {
+            this.pushNames = JSON.parse(fs.readFileSync(this.pushnamesPath, "utf8"));
+        } catch {
+            this._savePushnames();
+        }
     }
 
     _onEvents() {
@@ -139,14 +144,15 @@ class Client {
             this.ev.emit(Events.ConnectionUpdate, update);
             const {
                 connection,
-                lastDisconnect
+                lastDisconnect,
+                qr
             } = update;
 
-            if (update.qr) this.ev.emit(Events.QR, update.qr);
+            if (qr) this.ev.emit(Events.QR, qr);
 
             if (connection === "close") {
                 const shouldReconnect = lastDisconnect.error.output.statusCode !== Baileys.DisconnectReason.loggedOut;
-                this.consolefy.error(`Connection closed due to ${lastDisconnect.error}, reconnecting ${shouldReconnect}`);
+                this.consolefy.error(`Connection closed: ${lastDisconnect.error}, reconnecting ${shouldReconnect}`);
                 if (shouldReconnect) this.launch();
             } else if (connection === "open") {
                 this.readyAt = Date.now();
@@ -157,11 +163,7 @@ class Client {
 
         this.core.ev.on("creds.update", this.saveCreds);
 
-        try {
-            Object.assign(this.pushNames, JSON.parse(fs.readFileSync(this.pushnamesPath).toString()));
-        } catch (error) {
-            fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
-        }
+        this._loadPushNames();
 
         this.core.ev.on("messages.upsert", async (event) => {
             for (const message of event.messages) {
@@ -184,15 +186,13 @@ class Client {
                     content: text,
                     messageType
                 };
-
                 const self = {
                     ...this,
                     m: msg
                 };
-
                 const ctx = new Ctx({
                     used: {
-                        upsert: message.content
+                        upsert: text
                     },
                     args: [],
                     self,
@@ -211,12 +211,7 @@ class Client {
 
         this.core.ev.on("group-participants.update", async (event) => {
             await this._setGroupCache(event.id);
-
-            if (event.action === "add") {
-                return this.ev.emit(Events.UserJoin, event);
-            } else if (event.action === "remove") {
-                return this.ev.emit(Events.UserLeave, event);
-            }
+            this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, event);
         });
 
         this.core.ev.on("call", (event) => {
@@ -225,13 +220,12 @@ class Client {
     }
 
     command(opts, code) {
-        if (typeof opts !== "string") return this.cmd.set(this.cmd.size, opts);
-        if (!code) code = () => null;
-
-        return this.cmd.set(this.cmd.size, {
+        if (typeof opts === "string") opts = {
             name: opts,
             code
-        });
+        };
+        if (!code) opts.code = () => null;
+        this.cmd.set(this.cmd.size, opts);
     }
 
     hears(query, callback) {
@@ -256,19 +250,16 @@ class Client {
     async _fixUsersDb() {
         const users = this.db.getCollection("users") || this.db.createCollection("users");
         const altUsers = users.getMany(user => user.alt);
-        const lidUsers = users.getMany(user => !user.alt);
+        const lidMap = new Map(users.getMany(user => !user.alt).map(user => [user.jid, user]));
 
-        if (altUsers.length === 0) return;
-
-        const lidMap = new Map(lidUsers.map(user => [user.jid, user]));
         for (const altUser of altUsers) {
             if (!Baileys.isJidUser(altUser.alt)) return;
 
             const lidResult = await this.core.getLidUser(altUser.alt);
-            if (!lidResult?.[0]) continue;
+            if (!lidResult?.[0]) return;
 
             const lidJid = Baileys.jidNormalizedUser(lidResult[0].lid);
-            const lidUser = lidMap.get(lidJid);
+            let lidUser = lidMap.get(lidJid);
 
             if (lidUser) {
                 Object.entries(altUser).forEach(([key, value]) => {
@@ -279,7 +270,7 @@ class Client {
                         lidUser[key] = value;
                     }
                 });
-                users.update(user => Object.assign(user, lidUser), user => user.jid === lidJid);
+                users.update(lidUser, user => user.jid === lidJid);
             } else {
                 const {
                     alt,
@@ -302,14 +293,9 @@ class Client {
         this.state = state;
         this.saveCreds = saveCreds;
 
-        if (this.useStore) {
-            this.store.readFromFile(this.storePath);
-            setInterval(() => {
-                this.store.writeToFile(this.storePath);
-            }, 10_000)
-        }
+        if (this.useStore) this._initStore();
 
-        const version = this.WAVersion ? this.WAVersion : this.fallbackWAVersion;
+        const version = this.WAVersion ?? this.fallbackWAVersion;
         this.core = Baileys.default({
             version,
             browser: this.browser,
@@ -318,10 +304,7 @@ class Client {
             emitOwnEvents: this.selfReply,
             auth: this.state,
             markOnlineOnConnect: this.markOnlineOnConnect,
-            shouldSyncHistoryMessage: (msg) => {
-                const twoDaysAgo = Date.now() - (2 * 24 * 60 * 60 * 1000);
-                return msg.messageTimestamp * 1000 > twoDaysAgo;
-            },
+            shouldSyncHistoryMessage: (msg) => msg.messageTimestamp * 1000 > Date.now() - (2 * 24 * 60 * 60 * 1000),
             cachedGroupMetadata: async (jid) => this.groupCache.get(jid),
             qrTimeout: this.qrTimeout,
             msgRetryCounterCache: new NodeCache({
@@ -330,68 +313,66 @@ class Client {
             })
         });
 
-        if (this.useStore) {
-            this.store.bind(this.core.ev);
+        if (this.useStore) this.store.bind(this.core.ev);
 
-            this.store.cleanupMessages = (cutoff) => {
-                Object.keys(this.store.messages).forEach((jid) => {
-                    this.store.messages[jid] = this.store.messages[jid].filter(
-                        (msg) => msg.messageTimestamp * 1000 > cutoff
-                    );
-                });
-            };
-
-            setInterval(() => {
-                const cutoff = Date.now() - (7 * 24 * 60 * 60 * 1000);
-                this.store.cleanupMessages(cutoff);
-            }, 24 * 60 * 60 * 1000)
-        }
-
-        if (this.usePairingCode && !this.core.authState.creds.registered) {
-            this.consolefy.setTag("pairing-code");
-
-            if (this.printQRInTerminal) {
-                this.consolefy.error("If you are set usePairingCode to true then you need to set printQRInTerminal to false.");
-                this.consolefy.resetTag();
-                return;
-            }
-
-            if (!this.phoneNumber) {
-                this.consolefy.error("phoneNumber options are required if you are using usePairingCode.");
-                this.consolefy.resetTag();
-                return;
-            }
-
-            this.phoneNumber = this.phoneNumber.replace(/[^0-9]/g, "");
-
-            if (!this.phoneNumber.length) {
-                this.consolefy.error("Invalid phoneNumber.");
-                this.consolefy.resetTag();
-                return;
-            }
-
-            if (!Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
-                this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code).");
-                this.consolefy.resetTag();
-                return;
-            }
-
-            setTimeout(async () => {
-                const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
-                this.consolefy.info(`Pairing Code: ${code}`);
-                this.consolefy.resetTag();
-            }, 3000);
-        }
+        if (this.usePairingCode && !this.core.authState.creds.registered) await this._handlePairingCode();
 
         if (!fs.existsSync(this.databaseDir)) fs.mkdirSync(this.databaseDir, {
             recursive: true
         });
 
-        setTimeout(async () => {
-            await this._fixUsersDb();
-        }, 10000);
-
+        setTimeout(() => this._fixUsersDb(), 10000);
         this._onEvents();
+    }
+
+    _initStore() {
+        this.store.readFromFile(this.storePath);
+        setInterval(() => this.store.writeToFile(this.storePath), 10000);
+
+        this.store.cleanupMessages = (cutoff) => {
+            Object.keys(this.store.messages).forEach((jid) => {
+                this.store.messages[jid] = this.store.messages[jid].filter(
+                    (msg) => msg.messageTimestamp * 1000 > cutoff
+                );
+            });
+        };
+
+        setInterval(() => this.store.cleanupMessages(Date.now() - (7 * 24 * 60 * 60 * 1000)), 24 * 60 * 60 * 1000);
+    }
+
+    async _handlePairingCode() {
+        this.consolefy.setTag("pairing-code");
+
+        if (this.printQRInTerminal) {
+            this.consolefy.error("printQRInTerminal must be false for usePairingCode");
+            this.consolefy.resetTag();
+            return;
+        }
+
+        if (!this.phoneNumber) {
+            this.consolefy.error("phoneNumber is required for usePairingCode");
+            this.consolefy.resetTag();
+            return;
+        }
+
+        this.phoneNumber = this.phoneNumber.replace(/[^0-9]/g, "");
+        if (!this.phoneNumber.length) {
+            this.consolefy.error("Invalid phoneNumber");
+            this.consolefy.resetTag();
+            return;
+        }
+
+        if (!Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
+            this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code)");
+            this.consolefy.resetTag();
+            return;
+        }
+
+        setTimeout(async () => {
+            const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
+            this.consolefy.info(`Pairing Code: ${code}`);
+            this.consolefy.resetTag();
+        }, 3000);
     }
 }
 
