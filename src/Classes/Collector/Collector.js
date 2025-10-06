@@ -6,6 +6,7 @@ const { Collection } = require("@discordjs/collection");
 class Collector extends EventEmitter {
     constructor(opts = {}) {
         super();
+        this.isRun = false;
         this.filter = opts.filter ?? (() => true);
         this.time = opts.time;
         this.max = opts.max;
@@ -14,10 +15,17 @@ class Collector extends EventEmitter {
         this.collector = new Collection();
         this.received = 0;
 
-        if (this.time) this.isRun = setTimeout(() => this.stop(), this.time);
+        if (typeof this.filter !== "function") throw new Error("Filter options in collector must be function.");
+
+        this.collect = this.collect.bind(this);
+        this.stop = this.stop.bind(this);
+
+        if (this.time && this.time > 0) this.isRun = setTimeout(() => this.stop("timeout"), this.time);
     }
 
     async collect(m) {
+        if (!this.isRun) return;
+
         const args = await this._collect(m);
         if (!args) return;
 
@@ -25,10 +33,12 @@ class Collector extends EventEmitter {
         if (!filtered) return;
 
         this.received++;
-        if (this.maxProcessed && this.received === this.maxProcessed) return this.stop("processedLimit");
-        this.collector.set(args.jid, args);
+
+        if (this.maxProcessed && this.received >= this.maxProcessed) return this.stop("processedLimit");
+        if (this.max && this.collector.size >= this.max) return this.stop("limit");
+
+        this.collector.set(args.id, args);
         this.emit("collect", args);
-        if (this.max && this.collector.size >= this.max) this.stop("limit");
     }
 
     stop(reason = "timeout") {

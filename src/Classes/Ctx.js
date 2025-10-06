@@ -7,11 +7,11 @@ const GroupData = require("./Group/GroupData.js");
 const MessageCollector = require("./Collector/MessageCollector.js");
 
 class Ctx {
-    constructor(options) {
-        this._used = options.used;
-        this._args = options.args;
-        this._self = options.self;
-        this._client = options.client;
+    constructor(opts) {
+        this._used = opts.used;
+        this._args = opts.args;
+        this._self = opts.self;
+        this._client = opts.client;
         this._msg = this._self.m;
         this._sender = {
             jid: Baileys.jidNormalizedUser(this._msg.key.participant || this._msg.key.remoteJid),
@@ -93,15 +93,15 @@ class Ctx {
         const citationList = this._self.citation?.[citationName];
         if (!Array.isArray(citationList)) return false;
 
-        const botIds = new Set([this.me.id && Functions.getId(this.me.id), this.me.lid && Functions.getId(this.me.lid)].filter(Boolean));
-        const senderNumber = Functions.getId(this._sender.jid);
+        const botIds = [Functions.getId(this.me.lid), Functions.getId(this.me.id)];
+        const senderId = Functions.getId(this._sender.jid);
         const isFromBot = this._msg.key.fromMe;
         const isFromBaileys = this._msg.key.id.startsWith("SUKI");
 
-        return citationList.some(citationItem => {
-            if (citationItem === "bot") return !isFromBaileys && isFromBot && botIds.has(senderNumber);
-            if (citationItem && botIds.has(citationItem)) return !isFromBaileys && isFromBot && botIds.has(senderNumber);
-            return citationItem === senderNumber;
+        return citationList.some(citationId => {
+            if (citationId === "bot") return isFromBot && !isFromBaileys && botIds.includes(senderId);
+            if (botIds.includes(citationId)) return isFromBot && !isFromBaileys && botIds.includes(senderId);
+            return citationId === senderId;
         });
     }
 
@@ -195,7 +195,6 @@ class Ctx {
         };
     }
 
-    // Does this require taking a PN?
     get quoted() {
         const msgContext = this._msg.message?.[this.getMessageType()]?.contextInfo ?? {};
         if (!msgContext?.quotedMessage) return null;
@@ -215,7 +214,7 @@ class Ctx {
             key: {
                 remoteJid: chat,
                 participant: Baileys.isJidGroup(chat) ? sender : null,
-                fromMe: sender && this.me.id ? Baileys.areJidsSameUser(sender, this.me.id) : false,
+                fromMe: Baileys.isLidUser(sender) ? Baileys.areJidsSameUser(sender, this.me.lid) : Baileys.areJidsSameUser(sender, this.me.id),
                 id: msgContext.stanzaId
             },
             sender,
@@ -235,28 +234,28 @@ class Ctx {
         await this._client.readMessages([this._msg.key]);
     }
 
-    async sendMessage(jid, content, options = {}) {
+    async sendMessage(jid, content, opts = {}) {
         if ((content.header || content.footer) && !content.buttons && !content.interactiveButtons) content.interactiveButtons = [];
         if (this._self.autoAiLabel && (Baileys.isJidUser(jid) || Baileys.isLidUser(jid))) content.ai = true;
-        return await this._client.sendMessage(jid, content, options);
+        return await this._client.sendMessage(jid, content, opts);
     }
 
-    async reply(content, options = {}) {
+    async reply(content, opts = {}) {
         if (typeof content === "string") content = {
             text: content
         };
         return await this.sendMessage(this.id, content, {
-            ...options,
+            ...opts,
             quoted: this._msg
         });
     }
 
-    async replyWithJid(jid, content, options = {}) {
+    async replyWithJid(jid, content, opts = {}) {
         if (typeof content === "string") content = {
             text: content
         };
         return await this.sendMessage(jid, content, {
-            ...options,
+            ...opts,
             quoted: this._msg
         });
     }

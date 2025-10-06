@@ -9,13 +9,16 @@ class MessageCollector extends Collector {
     constructor(clientReq, opts = {}) {
         super(opts);
         this.clientReq = clientReq;
-        this.jid = Baileys.jidNormalizedUser(this.clientReq.msg.key.remoteJid);
+        this.jid = this.clientReq.msg.key.remoteJid;
         this.hears = opts.hears || [];
 
-        this.clientReq.self.ev.on(Events.MessagesUpsert, this.collect.bind(this));
+        this.handleCollect = this.collect.bind(this);
+        this.clientReq.self.ev.on(Events.MessagesUpsert, this.handleCollect);
         this.once("end", () => {
-            this.clientReq.self.ev.removeListener(Events.MessagesUpsert, this.collect.bind(this));
+            this.clientReq.self.ev.removeListener(Events.MessagesUpsert, this.handleCollect);
         });
+
+        return this;
     }
 
     async _collect(m) {

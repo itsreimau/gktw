@@ -56,17 +56,17 @@ class GroupData {
 
     async isMemberExist(jid) {
         const members = await this.members();
-        return members.some(member => Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) || Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid));
+        return members.some(member => Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) || Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid);
     }
 
     async isAdmin(jid) {
         const members = await this.members();
-        return members.some(member => (Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) || Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) && (member.admin === "admin" || member.admin === "superadmin"));
+        return members.some(member => (Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) || Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) && (member.admin === "admin" || member.admin === "superadmin"));
     }
 
     async isOwner(jid) {
         const members = await this.members();
-        return members.some(member => (Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) || Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) && member.admin === "superadmin");
+        return members.some(member => (Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) || Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) && member.admin === "superadmin");
     }
 
     async isSenderAdmin() {
@@ -78,7 +78,7 @@ class GroupData {
     }
 
     async isBotAdmin() {
-        return await this.isAdmin(this.ctx.me?.id || this.ctx.me?.lid);
+        return await this.isAdmin(this.ctx.me.lid || this.ctx.me.id);
     }
 
     async toggleEphemeral(expiration) {

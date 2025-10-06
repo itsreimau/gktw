@@ -39,19 +39,15 @@ function getContentFromMsg(msg) {
 
 function getDb(collection, jid) {
     const normalized = Baileys.jidNormalizedUser(jid);
-    if (Baileys.isLidUser(normalized)) {
-        return collection.getOrCreate(user => user.jid === normalized, {
-            jid: normalized
-        });
-    } else if (Baileys.isJidUser(normalized)) {
-        return collection.getOrCreate(user => user.alt === normalized, {
-            alt: normalized
-        });
-    } else if (Baileys.isJidGroup(normalized)) {
-        return collection.getOrCreate(group => group.jid === normalized, {
-            jid: normalized
-        });
-    }
+    if (collection.name === "users" && Baileys.isLidUser(normalized)) return collection.getOrCreate(user => user.jid === normalized, {
+        jid: normalized
+    });
+    if (collection.name === "users" && Baileys.isJidUser(normalized)) return collection.getOrCreate(user => user.alt === normalized, {
+        alt: normalized
+    });
+    if (collection.name === "groups" && Baileys.isJidGroup(normalized)) return collection.getOrCreate(group => group.jid === normalized, {
+        jid: normalized
+    });
 }
 
 function getPushname(jid, pushNames = {}) {

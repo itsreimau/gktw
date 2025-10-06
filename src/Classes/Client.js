@@ -94,41 +94,35 @@ class Client {
     }
 
     async _registerCitation() {
-        this.consolefy.setTag("register-citation");
-        if (!Object.keys(this.rawCitation).length) {
-            this.consolefy.resetTag();
-            return;
-        }
+        if (!Object.keys(this.rawCitation).length) return;
 
         const registeredCitation = {};
-        for (const [citationName, citationList] of Object.entries(this.rawCitation)) {
-            if (!Array.isArray(citationList)) {
-                registeredCitation[citationName] = citationList;
-                return;
+        for (const [citationName, citationIds] of Object.entries(this.rawCitation)) {
+            if (!Array.isArray(citationIds)) {
+                registeredCitation[citationName] = citationIds;
+                continue;
             }
 
-            const registeredList = new Set();
-            for (const citationItem of citationList) {
-                if (citationItem === "bot") {
-                    registeredList.add("bot");
-                    return;
+            const registeredIds = [];
+            for (const citationId of citationIds) {
+                if (citationId === "bot") {
+                    registeredIds.push("bot");
+                    continue;
                 }
 
-                const lidResult = await this.core.getLidUser(citationItem + Baileys.S_WHATSAPP_NET);
-                if (lidResult?.[0]) {
-                    registeredList.add(citationItem);
-                    registeredList.add(Functions.getId(lidResult[0].lid));
+                const lidResult = await this.core.getLidUser(citationId + Baileys.S_WHATSAPP_NET);
+                if (lidResult?.[0]?.lid) {
+                    registeredIds.push(Functions.getId(lidResult[0].lid));
+                    registeredIds.push(citationId);
                 } else {
-                    registeredList.add(citationItem);
+                    registeredIds.push(citationId);
                 }
             }
 
-            registeredCitation[citationName] = [...registeredList];
-            this.consolefy.success(`Registered Citation - ${citationName}`);
+            registeredCitation[citationName] = [...registeredIds];
         }
 
         this.citation = registeredCitation;
-        this.consolefy.resetTag();
     }
 
     _loadPushNames() {
@@ -304,13 +298,8 @@ class Client {
             emitOwnEvents: this.selfReply,
             auth: this.state,
             markOnlineOnConnect: this.markOnlineOnConnect,
-            shouldSyncHistoryMessage: (msg) => msg.messageTimestamp * 1000 > Date.now() - (2 * 24 * 60 * 60 * 1000),
             cachedGroupMetadata: async (jid) => this.groupCache.get(jid),
-            qrTimeout: this.qrTimeout,
-            msgRetryCounterCache: new NodeCache({
-                stdTTL: 300,
-                checkperiod: 60
-            })
+            qrTimeout: this.qrTimeout
         });
 
         if (this.useStore) this.store.bind(this.core.ev);

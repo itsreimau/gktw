@@ -10,19 +10,19 @@ class VCardBuilder {
     }
 
     setFullName(fullName) {
-        if (!fullName) throw new Error("Need full name.");
+        if (!fullName) throw new Error("Full name is required.");
         this.fullName = fullName;
         return this;
     }
 
     setOrg(org) {
-        if (!org) throw new Error("Need organization name.");
+        if (!org) throw new Error("Organization name is required.");
         this.org = org;
         return this;
     }
 
     setNumber(number) {
-        if (!number) throw new Error("Need number.");
+        if (!number) throw new Error("Number is required.");
         this.number = number;
         return this;
     }

@@ -16,7 +16,6 @@ async function Commands(self, _runMiddlewares) {
 async function _handleHears(self, m) {
     const hearsEntries = Array.from(self.hearsMap.values());
     const matches = hearsEntries.filter(hear => hear.name === m.content || hear.name === m.messageType || (hear.name instanceof RegExp && hear.name.test(m.content)) || (Array.isArray(hear.name) && hear.name.includes(m.content)));
-
     if (!matches.length) return;
 
     const ctx = new Ctx({
