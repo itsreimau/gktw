@@ -68,15 +68,15 @@ class Client {
         fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
     }
 
-    async _runMiddlewares(ctx, index = 0) {
+    _runMiddlewares(ctx, index = 0) {
         const middlewareFn = this.middlewares.get(index);
         if (!middlewareFn) return true;
 
         let nextCalled = false;
-        await middlewareFn(ctx, async () => {
+        middlewareFn(ctx, () => {
             if (nextCalled) throw new Error("next() called multiple times in middleware");
             nextCalled = true;
-            return await this._runMiddlewares(ctx, index + 1);
+            return this._runMiddlewares(ctx, index + 1);
         });
 
         return nextCalled;
@@ -229,8 +229,8 @@ class Client {
         });
     }
 
-    getPushname(jid) {
-        return Functions.getPushname(jid, this.pushNames);
+    getPushName(jid) {
+        return Functions.getPushName(jid, this.pushNames);
     }
 
     getId(jid) {

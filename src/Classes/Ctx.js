@@ -8,8 +8,6 @@ const MessageCollector = require("./Collector/MessageCollector.js");
 
 class Ctx {
     constructor(opts) {
-        this._used = opts.used;
-        this._args = opts.args;
         this._self = opts.self;
         this._client = opts.client;
         this._msg = this._self.m;
@@ -17,11 +15,9 @@ class Ctx {
             jid: Baileys.jidNormalizedUser(this._msg.key.participant || this._msg.key.remoteJid),
             pushName: this._msg.pushName
         };
+        this._used = opts.used;
+        this._args = opts.args;
         this._db = this._self.db;
-        this._config = {
-            prefix: this._self.prefix,
-            cmd: this._self.cmd
-        };
     }
 
     get bot() {
@@ -84,21 +80,21 @@ class Ctx {
                     const citationName = prop.substring(2).toLowerCase();
                     return this._checkCitation(citationName);
                 }
-                return undefined;
+                return null;
             }
         });
     }
 
     _checkCitation(citationName) {
-        const citationList = this._self.citation?.[citationName];
-        if (!Array.isArray(citationList)) return false;
+        const citationIds = this._self.citation?.[citationName];
+        if (!Array.isArray(citationIds)) return false;
 
         const botIds = [Functions.getId(this.me.lid), Functions.getId(this.me.id)];
         const senderId = Functions.getId(this._sender.jid);
         const isFromBot = this._msg.key.fromMe;
         const isFromBaileys = this._msg.key.id.startsWith("SUKI");
 
-        return citationList.some(citationId => {
+        return citationIds.some(citationId => {
             if (citationId === "bot") return isFromBot && !isFromBaileys && botIds.includes(senderId);
             if (botIds.includes(citationId)) return isFromBot && !isFromBaileys && botIds.includes(senderId);
             return citationId === senderId;
@@ -128,8 +124,9 @@ class Ctx {
         return new Group(this);
     }
 
-    group(jid) {
-        return new GroupData(this, jid || this.id);
+    group(jid = this.id) {
+        if (!Baileys.isJidGroup(jid)) return;
+        return new GroupData(this, jid);
     }
 
     isGroup() {
@@ -152,20 +149,20 @@ class Ctx {
         return this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
     }
 
-    getDevice(id) {
-        return Baileys.getDevice(id || this._msg.key.id);
+    getDevice(id = this._msg.key.id) {
+        return Baileys.getDevice(id);
     }
 
-    getPushname(jid) {
-        return Functions.getPushname(jid || this._sender.jid, this._self.pushNames);
+    getPushName(jid = this._sender.jid) {
+        return Functions.getPushName(jid, this._self.pushNames);
     }
 
-    getId(jid) {
-        return Functions.getId(jid || this._sender.jid);
+    getId(jid = this._sender.jid) {
+        return Functions.getId(jid);
     }
 
-    getDb(collection, jid) {
-        return Functions.getDb(this._db.getCollection(collection || "users") || this._db.createCollection(collection || "users"), jid || this._sender.jid);
+    getDb(collection, jid = this._sender.jid) {
+        return Functions.getDb(this._db.getCollection(collection) || this._db.createCollection(collection), jid);
     }
 
     async _getMediaMessage(msg, type) {
@@ -217,8 +214,9 @@ class Ctx {
                 fromMe: Baileys.isLidUser(sender) ? Baileys.areJidsSameUser(sender, this.me.lid) : Baileys.areJidsSameUser(sender, this.me.id),
                 id: msgContext.stanzaId
             },
+            id: chat,
             sender,
-            pushName: Functions.getPushname(sender, this._self.pushNames),
+            pushName: Functions.getPushName(sender, this._self.pushNames),
             media: {
                 toBuffer: async () => await this._getMediaMessage({
                     message
@@ -234,28 +232,28 @@ class Ctx {
         await this._client.readMessages([this._msg.key]);
     }
 
-    async sendMessage(jid, content, opts = {}) {
+    async sendMessage(jid, content, options = {}) {
         if ((content.header || content.footer) && !content.buttons && !content.interactiveButtons) content.interactiveButtons = [];
         if (this._self.autoAiLabel && (Baileys.isJidUser(jid) || Baileys.isLidUser(jid))) content.ai = true;
-        return await this._client.sendMessage(jid, content, opts);
+        return await this._client.sendMessage(jid, content, options);
     }
 
-    async reply(content, opts = {}) {
+    async reply(content, options = {}) {
         if (typeof content === "string") content = {
             text: content
         };
         return await this.sendMessage(this.id, content, {
-            ...opts,
+            ...options,
             quoted: this._msg
         });
     }
 
-    async replyWithJid(jid, content, opts = {}) {
+    async replyWithJid(jid, content, options = {}) {
         if (typeof content === "string") content = {
             text: content
         };
         return await this.sendMessage(jid, content, {
-            ...opts,
+            ...options,
             quoted: this._msg
         });
     }
@@ -315,19 +313,11 @@ class Ctx {
         }, args);
     }
 
-    awaitMessages(args = {
-        filter: () => {
-            throw new Error("Function not implemented.");
-        },
-        time: 0,
-        max: 0,
-        maxProcessed: 0
-    }) {
+    awaitMessages(args) {
         return new Promise((resolve, reject) => {
             const collector = this.MessageCollector(args);
             collector.once("end", (collected, reason) => {
-                if (args.endReason?.includes(reason)) reject(collected);
-                else resolve(collected);
+                resolve(collected);
             });
         });
     }

@@ -50,7 +50,7 @@ function getDb(collection, jid) {
     });
 }
 
-function getPushname(jid, pushNames = {}) {
+function getPushName(jid, pushNames) {
     const normalized = Baileys.jidNormalizedUser(jid);
     return normalized ? pushNames[normalized] || normalized : null;
 }
@@ -63,6 +63,6 @@ module.exports = {
     getContentType,
     getContentFromMsg,
     getDb,
-    getPushname,
+    getPushName,
     getId
 };

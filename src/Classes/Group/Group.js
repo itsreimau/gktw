@@ -17,8 +17,8 @@ class Group {
         return await this.ctx._client.groupAcceptInvite(code);
     }
 
-    async acceptInviteV4(key, inviteMessage) {
-        return await this.ctx._client.groupAcceptInviteV4(key, inviteMessage);
+    async acceptInviteV4(jid, inviteMessage) {
+        return await this.ctx._client.groupAcceptInviteV4(jid, inviteMessage);
     }
 }
 
