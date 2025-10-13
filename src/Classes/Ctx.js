@@ -298,15 +298,7 @@ class Ctx {
         await this._client.sendPresenceUpdate("recording", this.id);
     }
 
-    MessageCollector(args = {
-        filter: () => {
-            throw new Error("Function not implemented.");
-        },
-        time: 0,
-        max: 0,
-        maxProcessed: 0,
-        hears: []
-    }) {
+    MessageCollector(args) {
         return new MessageCollector({
             self: this._self,
             msg: this._msg

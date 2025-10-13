@@ -52,7 +52,7 @@ async function _processCommands(self, _runMiddlewares, m) {
         client: self.core
     });
 
-    const shouldContinue = await _runMiddlewares(ctx);
+    const shouldContinue = _runMiddlewares(ctx);
     if (!shouldContinue) return;
 
     await Promise.allSettled(matchedCommands.map(command => command.code(ctx)));

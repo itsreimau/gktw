@@ -15,7 +15,7 @@ const CONTENT_HANDLERS = {
     documentMessageWithCaption: msg => msg.documentMessageWithCaption?.caption || "",
     protocolMessage: msg => getContentFromMsg({
         message: msg.protocolMessage?.editedMessage
-    }) ?? "",
+    }),
     buttonsMessage: msg => msg.buttonsMessage?.contentText || "",
     interactiveMessage: msg => msg.interactiveMessage?.body?.text || "",
     buttonsResponseMessage: msg => msg.buttonsResponseMessage?.selectedButtonId || "",

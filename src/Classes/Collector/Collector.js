@@ -8,10 +8,10 @@ class Collector extends EventEmitter {
         super();
         this.isRun = false;
         this.filter = opts.filter ?? (() => true);
-        this.time = opts.time;
-        this.max = opts.max;
-        this.maxProcessed = opts.maxProcessed;
-        this.hears = opts.hears || [];
+        this.time = opts.time ?? 0;
+        this.max = opts.max ?? 0;
+        this.maxProcessed = opts.maxProcessed ?? 0;
+        this.hears = opts.hears ?? [];
         this.collector = new Collection();
         this.received = 0;
 

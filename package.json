@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.4.1+gaxtawu",
+  "version": "1.4.2+gaxtawu",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -28,7 +28,7 @@
     "glob": "^11.0.3",
     "mime-types": "^2.1.35",
     "pino": "^10.0.0",
-    "safety-safe": "^2.0.0",
+    "safety-safe": "^3.0.0",
     "simpl.db": "^2.13.0",
     "vcard-parser": "^1.0.0"
   }
