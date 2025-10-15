@@ -125,7 +125,7 @@ class Ctx {
     }
 
     group(jid = this.id) {
-        if (!Baileys.isJidGroup(jid)) return;
+        if (!Baileys.isJidGroup(jid)) return null;
         return new GroupData(this, jid);
     }
 

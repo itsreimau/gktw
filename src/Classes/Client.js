@@ -41,7 +41,7 @@ class Client {
         this.ev = new EventEmitter();
         this.cmd = new Collection();
         this.cooldown = new Collection();
-        this.hearsMap = new Collection();
+        this.hearsCollection = new Collection();
         this.middlewares = new Collection();
         this.consolefy = new Consolefy();
         this.store = Baileys.makeInMemoryStore({});
@@ -68,15 +68,15 @@ class Client {
         fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
     }
 
-    _runMiddlewares(ctx, index = 0) {
+    async _runMiddlewares(ctx, index = 0) {
         const middlewareFn = this.middlewares.get(index);
         if (!middlewareFn) return true;
 
         let nextCalled = false;
-        middlewareFn(ctx, () => {
+        await middlewareFn(ctx, async () => {
             if (nextCalled) throw new Error("next() called multiple times in middleware");
             nextCalled = true;
-            return this._runMiddlewares(ctx, index + 1);
+            return await this._runMiddlewares(ctx, index + 1);
         });
 
         return nextCalled;
@@ -223,7 +223,7 @@ class Client {
     }
 
     hears(query, callback) {
-        this.hearsMap.set(this.hearsMap.size, {
+        this.hearsCollection.set(this.hearsCollection.size, {
             name: query,
             code: callback
         });
@@ -244,7 +244,7 @@ class Client {
     async _fixUsersDb() {
         const users = this.db.getCollection("users") || this.db.createCollection("users");
         const altUsers = users.getMany(user => user.alt);
-        const lidMap = new Map(users.getMany(user => !user.alt).map(user => [user.jid, user]));
+        const lidCollection = new Collection(users.getMany(user => !user.alt).map(user => [user.jid, user]));
 
         for (const altUser of altUsers) {
             if (!Baileys.isJidUser(altUser.alt)) return;
@@ -253,7 +253,7 @@ class Client {
             if (!lidResult?.[0]) return;
 
             const lidJid = Baileys.jidNormalizedUser(lidResult[0].lid);
-            let lidUser = lidMap.get(lidJid);
+            let lidUser = lidCollection.get(lidJid);
 
             if (lidUser) {
                 Object.entries(altUser).forEach(([key, value]) => {
@@ -274,7 +274,7 @@ class Client {
                     jid: lidJid
                 };
                 users.create(newUser);
-                lidMap.set(lidJid, newUser);
+                lidCollection.set(lidJid, newUser);
             }
         }
     }

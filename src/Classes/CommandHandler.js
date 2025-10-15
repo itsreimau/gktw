@@ -27,7 +27,7 @@ class CommandHandler {
                 this._bot.cmd.set(cmdObj.name, cmdObj);
                 if (isShowLog) this.consolefy.success(`Loaded Command: ${cmdObj.name}`);
             } else if (cmdObj.type === "hears") {
-                this._bot.hearsMap.set(cmdObj.name, cmdObj);
+                this._bot.hearsCollection.set(cmdObj.name, cmdObj);
                 if (isShowLog) this.consolefy.success(`Loaded Hears: ${cmdObj.name}`);
             }
         });

@@ -7,6 +7,7 @@ const mime = require("mime-types");
 const { tmpfiles } = require("@neoxr/helper");
 const Client = require("./Classes/Client.js");
 const CommandHandler = require("./Classes/CommandHandler.js");
+const { Consolefy } = require("@mengkodingan/consolefy");
 const Cooldown = require("./Classes/Cooldown.js");
 const VCardBuilder = require("./Classes/Builder/VCard.js");
 const Events = require("./Constant/Events.js");
@@ -31,6 +32,7 @@ module.exports = {
     },
     Client,
     CommandHandler,
+    Consolefy,
     Cooldown,
     VCardBuilder,
     Events,
