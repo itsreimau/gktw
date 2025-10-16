@@ -271,14 +271,14 @@ class Ctx {
         return await this.sendReact(this.id, emoji, key);
     }
 
-    async deleteMessage(key) {
-        return await this.sendMessage(this.id, {
+    async deleteMessage(key, jid = this.id) {
+        return await this.sendMessage(jid, {
             delete: key
         });
     }
 
-    async editMessage(key, newText) {
-        return await this.sendMessage(this.id, {
+    async editMessage(key, newText, jid = this.id) {
+        return await this.sendMessage(jid, {
             text: newText,
             edit: key
         });

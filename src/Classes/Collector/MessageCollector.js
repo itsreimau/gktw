@@ -10,7 +10,7 @@ class MessageCollector extends Collector {
         super(opts);
         this.clientReq = clientReq;
         this.jid = this.clientReq.msg.key.remoteJid;
-        this.hears = opts.hears;
+        this.hears = opts.hears ?? [];
 
         this.handleCollect = this.collect.bind(this);
         this.clientReq.self.ev.on(Events.MessagesUpsert, this.handleCollect);

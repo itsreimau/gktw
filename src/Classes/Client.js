@@ -4,7 +4,6 @@ const Baileys = require("baileys");
 const path = require("node:path");
 const pino = require("pino");
 const EventEmitter = require("node:events");
-const { Collection } = require("@discordjs/collection");
 const { Consolefy } = require("@mengkodingan/consolefy");
 const { NodeCache } = require("@cacheable/node-cache");
 const Events = require("../Constant/Events.js");
@@ -37,12 +36,12 @@ class Client {
         this.rawCitation = opts.citation ?? {};
         this.citation = {};
 
-        this.fallbackWAVersion = [2, 3000, 1021387508];
+        this.fallbackWAVersion = [2, 3000, 1025091846];
         this.ev = new EventEmitter();
-        this.cmd = new Collection();
-        this.cooldown = new Collection();
-        this.hearsCollection = new Collection();
-        this.middlewares = new Collection();
+        this.cmd = new Map();
+        this.cooldown = new Map();
+        this.hearsMap = new Map();
+        this.middlewares = new Map();
         this.consolefy = new Consolefy();
         this.store = Baileys.makeInMemoryStore({});
         this.storePath = path.resolve(this.authDir, "gktw_store.json");
@@ -68,6 +67,10 @@ class Client {
         fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
     }
 
+    use(fn) {
+        this.middlewares.set(this.middlewares.size, fn);
+    }
+
     async _runMiddlewares(ctx, index = 0) {
         const middlewareFn = this.middlewares.get(index);
         if (!middlewareFn) return true;
@@ -80,10 +83,6 @@ class Client {
         });
 
         return nextCalled;
-    }
-
-    use(fn) {
-        this.middlewares.set(this.middlewares.size, fn);
     }
 
     async _setGroupCache(id) {
@@ -223,7 +222,7 @@ class Client {
     }
 
     hears(query, callback) {
-        this.hearsCollection.set(this.hearsCollection.size, {
+        this.hearsMap.set(this.hearsMap.size, {
             name: query,
             code: callback
         });
@@ -242,9 +241,11 @@ class Client {
     }
 
     async _fixUsersDb() {
+        if (!this.core.authState.creds.registered) return;
+
         const users = this.db.getCollection("users") || this.db.createCollection("users");
         const altUsers = users.getMany(user => user.alt);
-        const lidCollection = new Collection(users.getMany(user => !user.alt).map(user => [user.jid, user]));
+        const lidMap = new Map(users.getMany(user => !user.alt).map(user => [user.jid, user]));
 
         for (const altUser of altUsers) {
             if (!Baileys.isJidUser(altUser.alt)) return;
@@ -253,7 +254,7 @@ class Client {
             if (!lidResult?.[0]) return;
 
             const lidJid = Baileys.jidNormalizedUser(lidResult[0].lid);
-            let lidUser = lidCollection.get(lidJid);
+            let lidUser = lidMap.get(lidJid);
 
             if (lidUser) {
                 Object.entries(altUser).forEach(([key, value]) => {
@@ -274,7 +275,7 @@ class Client {
                     jid: lidJid
                 };
                 users.create(newUser);
-                lidCollection.set(lidJid, newUser);
+                lidMap.set(lidJid, newUser);
             }
         }
     }
@@ -318,13 +319,7 @@ class Client {
         this.store.readFromFile(this.storePath);
         setInterval(() => this.store.writeToFile(this.storePath), 10000);
 
-        this.store.cleanupMessages = (cutoff) => {
-            Object.keys(this.store.messages).forEach((jid) => {
-                this.store.messages[jid] = this.store.messages[jid].filter(
-                    (msg) => msg.messageTimestamp * 1000 > cutoff
-                );
-            });
-        };
+        this.store.cleanupMessages = (cutoff) => Object.keys(this.store.messages).forEach(jid => this.store.messages[jid] = this.store.messages[jid].filter((msg) => msg.messageTimestamp * 1000 > cutoff));
 
         setInterval(() => this.store.cleanupMessages(Date.now() - (7 * 24 * 60 * 60 * 1000)), 24 * 60 * 60 * 1000);
     }

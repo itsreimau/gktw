@@ -14,7 +14,7 @@ async function Commands(self, _runMiddlewares) {
 }
 
 async function _handleHears(self, m) {
-    const hearsEntries = Array.from(self.hearsCollection.values());
+    const hearsEntries = Array.from(self.hearsMap.values());
     const matches = hearsEntries.filter(hear => hear.name === m.content || hear.name === m.messageType || (hear.name instanceof RegExp && hear.name.test(m.content)) || (Array.isArray(hear.name) && hear.name.includes(m.content)));
     if (!matches.length) return;
 
@@ -79,7 +79,7 @@ function _parseCommand(content, selectedPrefix) {
 }
 
 function _findMatchingCommands(cmd, commandName) {
-    const commandsList = Array.from(cmd?.values() ?? []);
+    const commandsList = Array.from(cmd.values());
     return commandsList.filter(command => command.name?.toLowerCase() === commandName || (Array.isArray(command.aliases) && command.aliases.includes(commandName)) || command.aliases === commandName);
 }
 

@@ -1,7 +1,6 @@
 "use strict";
 
 const EventEmitter = require("node:events");
-const { Collection } = require("@discordjs/collection");
 
 class Collector extends EventEmitter {
     constructor(opts = {}) {
@@ -11,8 +10,7 @@ class Collector extends EventEmitter {
         this.time = opts.time ?? 0;
         this.max = opts.max ?? 0;
         this.maxProcessed = opts.maxProcessed ?? 0;
-        this.hears = opts.hears ?? [];
-        this.collector = new Collection();
+        this.collector = new Map();
         this.received = 0;
 
         if (typeof this.filter !== "function") throw new Error("Filter options in collector must be function.");

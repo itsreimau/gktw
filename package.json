@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.4.3+gaxtawu",
+  "version": "1.4.4+gaxtawu",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -20,7 +20,6 @@
   "license": "MIT",
   "dependencies": {
     "@cacheable/node-cache": "^1.7.3",
-    "@discordjs/collection": "^2.1.1",
     "@mengkodingan/consolefy": "^1.0.1",
     "@neoxr/helper": "^2.3.5",
     "baileys": "github:Itsukichann/Baileys",
