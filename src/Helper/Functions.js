@@ -39,10 +39,10 @@ function getContentFromMsg(msg) {
 
 function getDb(collection, jid) {
     const normalized = Baileys.jidNormalizedUser(jid);
-    if (collection.name === "users" && Baileys.isLidUser(normalized)) return collection.getOrCreate(user => user.jid === normalized, {
+    if (["bot", "users"].includes(collection.name) && Baileys.isLidUser(normalized)) return collection.getOrCreate(user => user.jid === normalized, {
         jid: normalized
     });
-    if (collection.name === "users" && Baileys.isJidUser(normalized)) return collection.getOrCreate(user => user.alt === normalized, {
+    if (["bot", "users"].includes(collection.name) && Baileys.isJidUser(normalized)) return collection.getOrCreate(user => user.alt === normalized, {
         alt: normalized
     });
     if (collection.name === "groups" && Baileys.isJidGroup(normalized)) return collection.getOrCreate(group => group.jid === normalized, {
