@@ -78,26 +78,10 @@ class Ctx {
             get: (target, prop) => {
                 if (typeof prop === "string" && prop.startsWith("is")) {
                     const citationName = prop.substring(2).toLowerCase();
-                    return this._checkCitation(citationName);
+                    return this._self.checkCitation(this._msg, citationName);
                 }
                 return null;
             }
-        });
-    }
-
-    _checkCitation(citationName) {
-        const citationIds = this._self.citation?.[citationName];
-        if (!Array.isArray(citationIds)) return false;
-
-        const botIds = [Functions.getId(this.me.lid), Functions.getId(this.me.id)];
-        const senderId = Functions.getId(this._sender.jid);
-        const isFromBot = this._msg.key.fromMe;
-        const isFromBaileys = this._msg.key.id.startsWith("SUKI");
-
-        return citationIds.some(citationId => {
-            if (citationId === "bot") return isFromBot && !isFromBaileys && botIds.includes(senderId);
-            if (botIds.includes(citationId)) return isFromBot && !isFromBaileys && botIds.includes(senderId);
-            return citationId === senderId;
         });
     }
 
