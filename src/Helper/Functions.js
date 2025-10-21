@@ -59,10 +59,44 @@ function getId(jid) {
     return Baileys.jidDecode(jid)?.user || jid;
 }
 
+function checkCitation(msg, citationName, citation, core) {
+    if (!msg || !citationName || !citation[citationName]) return false;
+
+    const citationIds = citation[citationName];
+    if (!Array.isArray(citationIds)) return false;
+
+    let senderJid, senderId, isFromBot, isFromBaileys;
+
+    if (typeof msg === "string") {
+        senderJid = Baileys.jidNormalizedUser(msg);
+        senderId = getId(senderJid);
+        isFromBot = false;
+        isFromBaileys = false;
+    } else {
+        senderJid = Baileys.jidNormalizedUser(msg.key.participant || msg.key.remoteJid);
+        senderId = getId(senderJid);
+        isFromBot = msg.key.fromMe;
+        isFromBaileys = msg.key.id && msg.key.id.startsWith("SUKI");
+    }
+
+    const botIds = [];
+    if (core && core.user) {
+        if (core.user.lid) botIds.push(getId(core.user.lid));
+        if (core.user.id) botIds.push(getId(core.user.id));
+    }
+
+    return citationIds.some(citationId => {
+        if (citationId === "bot") return isFromBot && !isFromBaileys && botIds.includes(senderId);
+        if (botIds.includes(citationId)) return isFromBot && !isFromBaileys && botIds.includes(senderId);
+        return citationId === senderId;
+    });
+}
+
 module.exports = {
     getContentType,
     getContentFromMsg,
     getDb,
     getPushName,
-    getId
+    getId,
+    checkCitation
 };

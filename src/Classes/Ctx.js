@@ -78,7 +78,7 @@ class Ctx {
             get: (target, prop) => {
                 if (typeof prop === "string" && prop.startsWith("is")) {
                     const citationName = prop.substring(2).toLowerCase();
-                    return this._self.checkCitation(this._msg, citationName);
+                    return Functions.checkCitation(this._msg, citationName, this._self.citation, this._client)
                 }
                 return null;
             }

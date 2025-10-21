@@ -229,36 +229,7 @@ class Client {
     }
 
     checkCitation(msg, citationName) {
-        if (!msg || !citationName || !this.citation[citationName]) return false;
-
-        const citationIds = this.citation[citationName];
-        if (!Array.isArray(citationIds)) return false;
-
-        let senderJid, senderId, isFromBot, isFromBaileys;
-
-        if (typeof msg === "string") {
-            senderJid = Baileys.jidNormalizedUser(msg);
-            senderId = Functions.getId(senderJid);
-            isFromBot = false;
-            isFromBaileys = false;
-        } else {
-            senderJid = Baileys.jidNormalizedUser(msg.key.participant || msg.key.remoteJid);
-            senderId = Functions.getId(senderJid);
-            isFromBot = msg.key.fromMe;
-            isFromBaileys = msg.key.id && msg.key.id.startsWith("SUKI");
-        }
-
-        const botIds = [];
-        if (this.core && this.core.user) {
-            if (this.core.user.lid) botIds.push(Functions.getId(this.core.user.lid));
-            if (this.core.user.id) botIds.push(Functions.getId(this.core.user.id));
-        }
-
-        return citationIds.some(citationId => {
-            if (citationId === "bot") return isFromBot && !isFromBaileys && botIds.includes(senderId);
-            if (botIds.includes(citationId)) return isFromBot && !isFromBaileys && botIds.includes(senderId);
-            return citationId === senderId;
-        });
+        return Functions.checkCitation(msg, citationName, this.citation, this.core);
     }
 
     getPushName(jid) {
