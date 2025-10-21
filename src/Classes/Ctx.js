@@ -217,7 +217,6 @@ class Ctx {
     }
 
     async sendMessage(jid, content, options = {}) {
-        if ((content.header || content.footer) && !content.buttons && !content.interactiveButtons) content.interactiveButtons = [];
         if (this._self.autoAiLabel && (Baileys.isJidUser(jid) || Baileys.isLidUser(jid))) content.ai = true;
         return await this._client.sendMessage(jid, content, options);
     }

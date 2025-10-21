@@ -1,41 +1,41 @@
 "use strict";
 
 const Baileys = require("baileys");
-const { analyzeMessage } = require("safety-safe");
-const didYouMean = require("didyoumean");
-const mime = require("mime-types");
-const { tmpfiles } = require("@neoxr/helper");
 const Client = require("./Classes/Client.js");
 const CommandHandler = require("./Classes/CommandHandler.js");
-const { Consolefy } = require("@mengkodingan/consolefy");
 const Cooldown = require("./Classes/Cooldown.js");
 const VCardBuilder = require("./Classes/Builder/VCard.js");
 const Events = require("./Constant/Events.js");
 const MessageType = require("./Constant/MessageType.js");
 const Formatter = require("./Helper/Formatter.js");
-
-const anotherUtils = {
-    analyzeBug: analyzeMessage,
-    didYouMean,
-    mime,
-    uploadFile: tmpfiles,
-    OFFICIAL_BIZ_JID: Baileys.jidNormalizedUser(Baileys.OFFICIAL_BIZ_JID),
-    META_AI_JID: Baileys.jidNormalizedUser(Baileys.META_AI_JID),
-    G_US: "@g.us",
-    LID: "@lid"
-};
+const { Consolefy } = require("@mengkodingan/consolefy");
+const { analyzeMessage } = require("safety-safe");
+const didYouMean = require("didyoumean");
+const mime = require("mime-types");
+const { tmpfiles } = require("@neoxr/helper");
 
 module.exports = {
-    Baileys: {
-        ...Baileys,
-        ...anotherUtils
-    },
+    Baileys,
     Client,
     CommandHandler,
-    Consolefy,
     Cooldown,
     VCardBuilder,
     Events,
     MessageType,
-    Formatter
+    Formatter,
+    Consolefy,
+    Gktw: {
+        analyzeBug: analyzeMessage,
+        didYouMean,
+        mime,
+        uploadFile: tmpfiles,
+        G_US: "@g.us",
+        LID: "@lid",
+        WHATSAPP_JID: "0@s.whatsapp.net",
+        META_JID: "13135550002@s.whatsapp.net",
+        CHATGPT_JID: "18002428478@s.whatsapp.net",
+        COPILOT_JID: "18772241042@s.whatsapp.net",
+        INSTAGRAM_JID: "447723442971@s.whatsapp.net",
+        TIKTOK_JID: "6285574670498@s.whatsapp.net"
+    }
 };

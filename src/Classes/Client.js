@@ -36,7 +36,7 @@ class Client {
         this.rawCitation = opts.citation ?? {};
         this.citation = {};
 
-        this.fallbackWAVersion = [2, 3000, 1025091846];
+        this.fallbackWAVersion = [2, 3000, 1027934701];
         this.ev = new EventEmitter();
         this.cmd = new Map();
         this.cooldown = new Map();
