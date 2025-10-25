@@ -1,6 +1,6 @@
 "use strict";
 
-const Baileys = require("baileys");
+const { jidNormalizedUser } = require("baileys");
 
 class GroupData {
     constructor(ctx, jid) {
@@ -126,18 +126,21 @@ class GroupData {
     }
 
     async isMemberExist(jid) {
+        jid = jidNormalizedUser(jid);
         const members = await this.members();
-        return members.some(member => Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) || Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid);
+        return members.some(member => [jidNormalizedUser(member.id), jidNormalizedUser(member.lid)].includes(jid));
     }
 
     async isAdmin(jid) {
+        jid = jidNormalizedUser(jid);
         const members = await this.members();
-        return members.some(member => (Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) || Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) && (member.admin === "admin" || member.admin === "superadmin"));
+        return members.some(member => [jidNormalizedUser(member.id), jidNormalizedUser(member.lid)].includes(jid) && !!member.admin);
     }
 
     async isOwner(jid) {
+        jid = jidNormalizedUser(jid);
         const members = await this.members();
-        return members.some(member => (Baileys.jidNormalizedUser(member.lid) === Baileys.jidNormalizedUser(jid)) || Baileys.jidNormalizedUser(member.id) === Baileys.jidNormalizedUser(jid) && member.admin === "superadmin");
+        return members.some(member => [jidNormalizedUser(member.id), jidNormalizedUser(member.lid)].includes(jid) && member.admin === "superadmin");
     }
 
     async isSenderAdmin() {
