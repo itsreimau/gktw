@@ -1,5 +1,3 @@
-"use strict";
-
 const Baileys = require("baileys");
 const Functions = require("../Helper/Functions.js");
 const Group = require("./Group/Group.js");

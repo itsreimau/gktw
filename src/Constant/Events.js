@@ -1,5 +1,3 @@
-"use strict";
-
 const Events = {
     ClientReady: "ClientReady",
     QR: "QR",

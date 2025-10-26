@@ -1,5 +1,3 @@
-"use strict";
-
 const bold = (text) => `*${text}*`;
 const italic = (text) => `_${text}_`;
 const strikethrough = (text) => `~${text}~`;

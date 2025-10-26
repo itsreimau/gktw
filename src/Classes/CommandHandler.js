@@ -1,5 +1,3 @@
-"use strict";
-
 const { Consolefy } = require("@mengkodingan/consolefy");
 const { globSync } = require("glob");
 

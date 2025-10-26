@@ -1,5 +1,3 @@
-"use strict";
-
 const MessageType = {
     conversation: "conversation",
     senderKeyDistributionMessage: "senderKeyDistributionMessage",

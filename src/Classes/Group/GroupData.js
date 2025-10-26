@@ -1,5 +1,3 @@
-"use strict";
-
 const { jidNormalizedUser } = require("baileys");
 
 class GroupData {
@@ -126,21 +124,18 @@ class GroupData {
     }
 
     async isMemberExist(jid) {
-        jid = jidNormalizedUser(jid);
         const members = await this.members();
-        return members.some(member => [jidNormalizedUser(member.id), jidNormalizedUser(member.lid)].includes(jid));
+        return members.some(member => [jidNormalizedUser(member.id), jidNormalizedUser(member.lid)].includes(jidNormalizedUser(jid)));
     }
 
     async isAdmin(jid) {
-        jid = jidNormalizedUser(jid);
         const members = await this.members();
-        return members.some(member => [jidNormalizedUser(member.id), jidNormalizedUser(member.lid)].includes(jid) && !!member.admin);
+        return members.some(member => [jidNormalizedUser(member.id), jidNormalizedUser(member.lid)].includes(jidNormalizedUser(jid)) && !!member.admin);
     }
 
     async isOwner(jid) {
-        jid = jidNormalizedUser(jid);
         const members = await this.members();
-        return members.some(member => [jidNormalizedUser(member.id), jidNormalizedUser(member.lid)].includes(jid) && member.admin === "superadmin");
+        return members.some(member => [jidNormalizedUser(member.id), jidNormalizedUser(member.lid)].includes(jidNormalizedUser(jid)) && member.admin === "superadmin");
     }
 
     async isSenderAdmin() {

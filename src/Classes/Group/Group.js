@@ -1,5 +1,3 @@
-"use strict";
-
 class Group {
     constructor(ctx) {
         this.ctx = ctx;

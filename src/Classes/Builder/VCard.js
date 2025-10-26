@@ -1,5 +1,3 @@
-"use strict";
-
 const vCard = require("vcard-parser");
 
 class VCardBuilder {

@@ -1,5 +1,3 @@
-"use strict";
-
 const Baileys = require("baileys");
 const path = require("node:path");
 const pino = require("pino");

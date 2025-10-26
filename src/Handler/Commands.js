@@ -1,5 +1,3 @@
-"use strict";
-
 const Baileys = require("baileys");
 const Ctx = require("../Classes/Ctx.js");
 

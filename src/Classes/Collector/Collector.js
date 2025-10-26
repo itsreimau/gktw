@@ -1,5 +1,3 @@
-"use strict";
-
 const EventEmitter = require("node:events");
 
 class Collector extends EventEmitter {

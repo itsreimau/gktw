@@ -1,5 +1,3 @@
-"use strict";
-
 const Baileys = require("baileys");
 const Collector = require("./Collector.js");
 const Events = require("../../Constant/Events.js");
@@ -9,7 +7,7 @@ class MessageCollector extends Collector {
     constructor(clientReq, opts = {}) {
         super(opts);
         this.clientReq = clientReq;
-        this.jid = this.clientReq.msg.key.remoteJid;
+        this.jid = Baileys.jidNormalizedUser(this.clientReq.msg.key.remoteJid);
         this.hears = opts.hears ?? [];
 
         this.handleCollect = this.collect.bind(this);

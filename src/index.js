@@ -1,5 +1,3 @@
-"use strict";
-
 const Baileys = require("baileys");
 const Client = require("./Classes/Client.js");
 const CommandHandler = require("./Classes/CommandHandler.js");
