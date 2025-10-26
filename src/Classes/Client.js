@@ -29,7 +29,6 @@ class Client {
         this.markOnlineOnConnect = opts.markOnlineOnConnect ?? true;
         this.prefix = opts.prefix;
         this.selfReply = opts.selfReply ?? false;
-        this.autoAiLabel = opts.autoAiLabel ?? false;
         this.databaseDir = opts.databaseDir;
         this.rawCitation = opts.citation ?? {};
         this.citation = {};

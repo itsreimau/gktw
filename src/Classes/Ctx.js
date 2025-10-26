@@ -214,16 +214,11 @@ class Ctx {
         await this._client.readMessages([this._msg.key]);
     }
 
-    async sendMessage(jid, content, options = {}) {
-        if (this._self.autoAiLabel && (Baileys.isJidUser(jid) || Baileys.isLidUser(jid))) content.ai = true;
-        return await this._client.sendMessage(jid, content, options);
-    }
-
     async reply(content, options = {}) {
         if (typeof content === "string") content = {
             text: content
         };
-        return await this.sendMessage(this.id, content, {
+        return await this._client.sendMessage(this.id, content, {
             ...options,
             quoted: this._msg
         });
@@ -233,14 +228,14 @@ class Ctx {
         if (typeof content === "string") content = {
             text: content
         };
-        return await this.sendMessage(jid, content, {
+        return await this._client.sendMessage(jid, content, {
             ...options,
             quoted: this._msg
         });
     }
 
-    async sendReact(jid, emoji, key) {
-        return await this.sendMessage(jid, {
+    async replyReact(emoji, key) {
+        return await this._client.sendMessage(this.id, {
             react: {
                 text: emoji,
                 key: key || this._msg.key
@@ -248,25 +243,21 @@ class Ctx {
         });
     }
 
-    async replyReact(emoji, key) {
-        return await this.sendReact(this.id, emoji, key);
-    }
-
     async deleteMessage(key, jid = this.id) {
-        return await this.sendMessage(jid, {
+        return await this._client.sendMessage(jid, {
             delete: key
         });
     }
 
     async editMessage(key, newText, jid = this.id) {
-        return await this.sendMessage(jid, {
+        return await this._client.sendMessage(jid, {
             text: newText,
             edit: key
         });
     }
 
     async forwardMessage(jid, msg) {
-        return await this.sendMessage(jid, {
+        return await this._client.sendMessage(jid, {
             forward: msg
         });
     }

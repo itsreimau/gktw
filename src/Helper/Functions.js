@@ -64,7 +64,6 @@ function checkCitation(msg, citationName, citation, core) {
     if (!Array.isArray(citationIds)) return false;
 
     let senderJid, senderId, isFromBot, isFromBaileys;
-
     if (typeof msg === "string") {
         senderJid = Baileys.jidNormalizedUser(msg);
         senderId = getId(senderJid);
