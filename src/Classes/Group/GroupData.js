@@ -100,7 +100,7 @@ class GroupData {
     }
 
     async pendingMembersUpdate(members, action) {
-        return await this.ctx._client.groupRequestParticipantsUpdate(this.jid, members, action);
+        return await this.ctx._client.groupRequestParticipantsUpdate(this.jid, Array.isArray(members) ? members : [members], action);
     }
 
     async approvePendingMembers(members) {

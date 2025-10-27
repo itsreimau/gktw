@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.4.10+gaxtawu",
+  "version": "1.5.0+gaxtawu",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
