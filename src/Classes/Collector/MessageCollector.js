@@ -8,7 +8,6 @@ class MessageCollector extends Collector {
         super(opts);
         this.clientReq = clientReq;
         this.jid = Baileys.jidNormalizedUser(this.clientReq.msg.key.remoteJid);
-        this.hears = opts.hears ?? [];
 
         this.handleCollect = this.collect.bind(this);
         this.clientReq.self.ev.on(Events.MessagesUpsert, this.handleCollect);
@@ -24,7 +23,7 @@ class MessageCollector extends Collector {
         if (!content) return false;
 
         const id = Baileys.jidNormalizedUser(m.key.remoteJid);
-        if (!Baileys.areJidsSameUser(id, this.jid) && !this.hears.some(hear => Baileys.areJidsSameUser(id, Baileys.jidNormalizedUser(hear)))) return false;
+        if (!Baileys.areJidsSameUser(id, this.jid)) return false;
 
         return {
             ...m,
