@@ -239,16 +239,12 @@ class Client {
         const users = this.db.getCollection("users") || this.db.createCollection("users");
         const altUsers = users.getMany(user => user.alt);
         const lidMap = new Map(users.getMany(user => !user.alt).map(user => [user.jid, user]));
-
         for (const altUser of altUsers) {
             if (!Baileys.isJidUser(altUser.alt)) return;
-
             const citationLid = await Functions.getLidUser(altUser.alt, this.core.onWhatsApp);
             if (!citationLid) return;
-
             const lidJid = Baileys.jidNormalizedUser(citationLid);
             let lidUser = lidMap.get(lidJid);
-
             if (lidUser) {
                 Object.entries(altUser).forEach(([key, value]) => {
                     if (key === "alt" || key === "jid") return;
