@@ -100,5 +100,6 @@ module.exports = {
     getDb,
     getPushName,
     getId,
+    getLidUser,
     checkCitation
 };
