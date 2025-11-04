@@ -24,10 +24,7 @@ class MessageCollector extends Collector {
         if (!content) return false;
 
         const id = Baileys.jidNormalizedUser(m.key.remoteJid);
-        const idAlt = m.key.remoteJidAlt ? Baileys.jidNormalizedUser(m.key.remoteJidAlt) : null;
-
-        const allIds = [id, idAlt].filter(Boolean);
-        if (!allIds.includes(this.jid) && !this.hears.some(hear => allIds.includes(hear))) return false;
+        if (!Baileys.areJidsSameUser(id, this.jid) && !this.hears.some(hear => Baileys.areJidsSameUser(id, Baileys.jidNormalizedUser(hear)))) return false;
 
         return {
             ...m,

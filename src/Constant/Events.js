@@ -1,7 +1,5 @@
 const Events = {
     ClientReady: "ClientReady",
-    QR: "QR",
-    ConnectionUpdate: "ConnectionUpdate",
     MessagesUpsert: "MessagesUpsert",
     UserJoin: "UserJoin",
     UserLeave: "UserLeave",

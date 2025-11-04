@@ -98,15 +98,15 @@ class Client {
             const registeredIds = [];
             for (const citationId of citationIds) {
                 if (citationId === "bot") registeredIds.push("bot");
-                const lidResult = await Functions.getLidUser(citationId + Baileys.S_WHATSAPP_NET, this.core.onWhatsApp);
-                if (lidResult) {
-                    registeredIds.push(Functions.getId(lidResult));
-                    registeredIds.push(citationId);
+                const citationJid = citationId + Baileys.S_WHATSAPP_NET;
+                const citationLid = await Functions.getLidUser(citationJid, this.core.onWhatsApp);
+                if (citationLid) {
+                    registeredIds.push(Baileys.jidNormalizedUser(citationLid));
+                    registeredIds.push(citationJid);
                 } else {
-                    registeredIds.push(citationId);
+                    registeredIds.push(citationJid);
                 }
             }
-
             registeredCitation[citationName] = [...registeredIds];
         }
 
@@ -123,14 +123,10 @@ class Client {
 
     _onEvents() {
         this.core.ev.on("connection.update", async (update) => {
-            this.ev.emit(Events.ConnectionUpdate, update);
             const {
                 connection,
-                lastDisconnect,
-                qr
+                lastDisconnect
             } = update;
-
-            if (qr) this.ev.emit(Events.QR, qr);
 
             if (connection === "close") {
                 const shouldReconnect = lastDisconnect.error.output.statusCode !== Baileys.DisconnectReason.loggedOut;
@@ -218,7 +214,7 @@ class Client {
     }
 
     checkCitation(msg, citationName) {
-        return Functions.checkCitation(msg, citationName, this.citation, this.core);
+        return Functions.checkCitation(msg, citationName, this.citation, Baileys.jidNormalizedUser(this.core.user.id));
     }
 
     getPushName(jid) {
@@ -230,7 +226,7 @@ class Client {
     }
 
     async getLidUser(jid) {
-        return await Functions.getLidUser(altUser.alt, this.core.onWhatsApp);
+        return await Functions.getLidUser(jid, this.core.onWhatsApp);
     }
 
     getDb(collection, jid) {
@@ -247,10 +243,10 @@ class Client {
         for (const altUser of altUsers) {
             if (!Baileys.isJidUser(altUser.alt)) return;
 
-            const lidResult = await Functions.getLidUser(altUser.alt, this.core.onWhatsApp);
-            if (!lidResult) return;
+            const citationLid = await Functions.getLidUser(altUser.alt, this.core.onWhatsApp);
+            if (!citationLid) return;
 
-            const lidJid = Baileys.jidNormalizedUser(lidResult);
+            const lidJid = Baileys.jidNormalizedUser(citationLid);
             let lidUser = lidMap.get(lidJid);
 
             if (lidUser) {

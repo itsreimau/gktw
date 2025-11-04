@@ -59,38 +59,19 @@ function getId(jid) {
 }
 
 async function getLidUser(jid, onWhatsAppFunc) {
-    return (await onWhatsAppFunc(jid))[0].lid || jid;
+    return (await onWhatsAppFunc(jid))[0]?.lid || jid;
 }
 
-function checkCitation(msg, citationName, citation, core) {
+function checkCitation(msg, citationName, citation, botJid) {
     if (!msg || !citationName || !citation[citationName]) return false;
 
-    const citationIds = citation[citationName];
-    if (!Array.isArray(citationIds)) return false;
+    const citationJids = citation[citationName];
+    const senderJid = Baileys.jidNormalizedUser(typeof msg === "string" ? msg : (msg.key.participant || msg.key.remoteJid));
 
-    let senderJid, senderId, isFromBot, isFromBaileys;
-    if (typeof msg === "string") {
-        senderJid = Baileys.jidNormalizedUser(msg);
-        senderId = getId(senderJid);
-        isFromBot = false;
-        isFromBaileys = false;
-    } else {
-        senderJid = Baileys.jidNormalizedUser(msg.key.participant || msg.key.remoteJid);
-        senderId = getId(senderJid);
-        isFromBot = msg.key.fromMe;
-        isFromBaileys = msg.key.id && msg.key.id.startsWith("3EB0");
-    }
-
-    const botIds = [];
-    if (core && core.user) {
-        if (core.user.lid) botIds.push(getId(core.user.lid));
-        if (core.user.id) botIds.push(getId(core.user.id));
-    }
-
-    return citationIds.some(citationId => {
-        if (citationId === "bot") return isFromBot && !isFromBaileys && botIds.includes(senderId);
-        if (botIds.includes(citationId)) return isFromBot && !isFromBaileys && botIds.includes(senderId);
-        return citationId === senderId;
+    return citationJids.some(citationJid => {
+        const isBotCitation = citationJid === "bot" || Baileys.areJidsSameUser(citationJid, botJid);
+        const isFromBot = msg.key?.fromMe && !msg.key.id?.startsWith("3EB0") && Baileys.areJidsSameUser(senderJid, botJid);
+        return Baileys.areJidsSameUser(citationJid, senderJid) || (isBotCitation && isFromBot);
     });
 }
 

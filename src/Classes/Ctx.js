@@ -76,7 +76,7 @@ class Ctx {
             get: (target, prop) => {
                 if (typeof prop === "string" && prop.startsWith("is")) {
                     const citationName = prop.substring(2).toLowerCase();
-                    return Functions.checkCitation(this._msg, citationName, this._self.citation, this._client)
+                    return Functions.checkCitation(this._msg, citationName, this._self.citation, this.me.id)
                 }
                 return null;
             }
@@ -143,8 +143,8 @@ class Ctx {
         return Functions.getId(jid);
     }
 
-    async getLidUser(jid) {
-        return await Functions.getLidUser(altUser.alt, this._client.onWhatsApp);
+    async getLidUser(jid = this._sender.jid) {
+        return await Functions.getLidUser(jid, this._client.onWhatsApp);
     }
 
     getDb(collection, jid = this._sender.jid) {
@@ -197,7 +197,7 @@ class Ctx {
             key: {
                 remoteJid: chat,
                 participant: Baileys.isJidGroup(chat) ? sender : null,
-                fromMe: Baileys.isLidUser(sender) ? Baileys.areJidsSameUser(sender, this.me.lid) : Baileys.areJidsSameUser(sender, this.me.id),
+                fromMe: Baileys.areJidsSameUser(sender, this.me.id),
                 id: msgContext.stanzaId
             },
             id: chat,

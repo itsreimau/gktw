@@ -1,4 +1,4 @@
-const { jidNormalizedUser } = require("baileys");
+const Baileys = require("baileys");
 
 class GroupData {
     constructor(ctx, jid) {
@@ -126,17 +126,20 @@ class GroupData {
 
     async isMemberExist(jid) {
         const members = await this.members();
-        return members.some(member => [jidNormalizedUser(member.id), jidNormalizedUser(member.lid)].includes(jidNormalizedUser(jid)));
+        const normalizedJid = Baileys.jidNormalizedUser(jid);
+        return members.some(member => Baileys.areJidsSameUser(member.jid, normalizedJid));
     }
 
     async isAdmin(jid) {
         const members = await this.members();
-        return members.some(member => [jidNormalizedUser(member.id), jidNormalizedUser(member.lid)].includes(jidNormalizedUser(jid)) && !!member.admin);
+        const normalizedJid = Baileys.jidNormalizedUser(jid);
+        return members.some(member => Baileys.areJidsSameUser(member.jid, normalizedJid) && !!member.admin);
     }
 
     async isOwner(jid) {
         const members = await this.members();
-        return members.some(member => [jidNormalizedUser(member.id), jidNormalizedUser(member.lid)].includes(jidNormalizedUser(jid)) && member.admin === "superadmin");
+        const normalizedJid = Baileys.jidNormalizedUser(jid);
+        return members.some(member => Baileys.areJidsSameUser(member.jid, normalizedJid) && member.admin === "superadmin");
     }
 
     async isSenderAdmin() {
@@ -148,7 +151,7 @@ class GroupData {
     }
 
     async isBotAdmin() {
-        return await this.isAdmin(this.ctx.me.lid || this.ctx.me.id);
+        return await this.isAdmin(this.ctx.me.id);
     }
 }
 
