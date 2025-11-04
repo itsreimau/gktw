@@ -86,12 +86,7 @@ const MessageType = {
     questionMessage: "questionMessage",
     messageHistoryNotice: "messageHistoryNotice",
     groupStatusMessageV2: "groupStatusMessageV2",
-    botForwardedMessage: "botForwardedMessage",
-    statusQuestionAnswerMessage: "statusQuestionAnswerMessage",
-    questionReplyMessage: "questionReplyMessage",
-    questionResponseMessage: "questionResponseMessage",
-    newsletterFollowerInviteMessage: "newsletterFollowerInviteMessage",
-    statusQuotedMessage: "statusQuotedMessage"
+    botForwardedMessage: "botForwardedMessage"
 };
 
 module.exports = MessageType;

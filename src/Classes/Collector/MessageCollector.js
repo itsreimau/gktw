@@ -21,18 +21,18 @@ class MessageCollector extends Collector {
 
     async _collect(m) {
         const content = Functions.getContentFromMsg(m);
-        if (!content) return null;
+        if (!content) return false;
 
         const id = Baileys.jidNormalizedUser(m.key.remoteJid);
         const idAlt = m.key.remoteJidAlt ? Baileys.jidNormalizedUser(m.key.remoteJidAlt) : null;
 
         const allIds = [id, idAlt].filter(Boolean);
-        if (!allIds.includes(this.jid) && !this.hears.some(hear => allIds.includes(hear))) return null;
+        if (!allIds.includes(this.jid) && !this.hears.some(hear => allIds.includes(hear))) return false;
 
         return {
             ...m,
             content,
-            message: Baileys.extractMessageContent(m.message),
+            message: Baileys.normalizeMessageContent(m.message),
             contentType: Functions.getContentType(m.message),
             id,
             sender: Baileys.jidNormalizedUser(m.key.participant || m.key.remoteJid)

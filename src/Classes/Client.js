@@ -94,21 +94,13 @@ class Client {
 
         const registeredCitation = {};
         for (const [citationName, citationIds] of Object.entries(this.rawCitation)) {
-            if (!Array.isArray(citationIds)) {
-                registeredCitation[citationName] = citationIds;
-                continue;
-            }
-
+            if (!Array.isArray(citationIds)) registeredCitation[citationName] = citationIds;
             const registeredIds = [];
             for (const citationId of citationIds) {
-                if (citationId === "bot") {
-                    registeredIds.push("bot");
-                    continue;
-                }
-
-                const lidResult = await this.core.getLidUser(citationId + Baileys.S_WHATSAPP_NET);
-                if (lidResult?.[0]?.lid) {
-                    registeredIds.push(Functions.getId(lidResult[0].lid));
+                if (citationId === "bot") registeredIds.push("bot");
+                const lidResult = await Functions.getLidUser(citationId + Baileys.S_WHATSAPP_NET, this.core.onWhatsApp);
+                if (lidResult) {
+                    registeredIds.push(Functions.getId(lidResult));
                     registeredIds.push(citationId);
                 } else {
                     registeredIds.push(citationId);
@@ -237,6 +229,10 @@ class Client {
         return Functions.getId(jid);
     }
 
+    async getLidUser(jid) {
+        return await Functions.getLidUser(altUser.alt, this.core.onWhatsApp);
+    }
+
     getDb(collection, jid) {
         return Functions.getDb(this.db.getCollection(collection) || this.db.createCollection(collection), jid);
     }
@@ -251,10 +247,10 @@ class Client {
         for (const altUser of altUsers) {
             if (!Baileys.isJidUser(altUser.alt)) return;
 
-            const lidResult = await this.core.getLidUser(altUser.alt);
-            if (!lidResult?.[0]) return;
+            const lidResult = await Functions.getLidUser(altUser.alt, this.core.onWhatsApp);
+            if (!lidResult) return;
 
-            const lidJid = Baileys.jidNormalizedUser(lidResult[0].lid);
+            const lidJid = Baileys.jidNormalizedUser(lidResult);
             let lidUser = lidMap.get(lidJid);
 
             if (lidUser) {
@@ -347,6 +343,7 @@ class Client {
             return;
         }
 
+        const PHONENUMBER_MCC = (await fetch("https://raw.githubusercontent.com/Itsukichann/Baileys/refs/heads/master/lib/Defaults/phonenumber-mcc.json")).json();
         if (!Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
             this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code)");
             this.consolefy.resetTag();

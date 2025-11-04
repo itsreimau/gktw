@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.5.0+gaxtawu",
+  "version": "1.5.1-rc.1",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -22,7 +22,7 @@
     "@cacheable/node-cache": "^1.7.4",
     "@mengkodingan/consolefy": "^1.0.1",
     "@neoxr/helper": "^2.3.5",
-    "baileys": "github:Itsukichann/Baileys",
+    "baileys": "npm:@binarycrafterss/baileys",
     "didyoumean": "^1.2.2",
     "glob": "^11.0.3",
     "mime-types": "^2.1.35",

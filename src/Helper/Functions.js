@@ -1,7 +1,7 @@
 const Baileys = require("baileys");
 
 function getContentType(message) {
-    const messageContent = Baileys.extractMessageContent(message);
+    const messageContent = Baileys.normalizeMessageContent(message);
     return Baileys.getContentType(messageContent);
 }
 
@@ -31,8 +31,9 @@ const CONTENT_HANDLERS = {
 };
 
 function getContentFromMsg(msg) {
-    const contentType = getContentType(msg.message) ?? "";
-    return CONTENT_HANDLERS[contentType]?.(msg.message) || "";
+    const normalized = Baileys.normalizeMessageContent(msg.message);
+    const contentType = getContentType(normalized) ?? "";
+    return CONTENT_HANDLERS[contentType]?.(normalized) || "";
 }
 
 function getDb(collection, jid) {
@@ -57,6 +58,10 @@ function getId(jid) {
     return Baileys.jidDecode(jid)?.user || jid;
 }
 
+async function getLidUser(jid, onWhatsAppFunc) {
+    return (await onWhatsAppFunc(jid))[0].lid || jid;
+}
+
 function checkCitation(msg, citationName, citation, core) {
     if (!msg || !citationName || !citation[citationName]) return false;
 
@@ -73,7 +78,7 @@ function checkCitation(msg, citationName, citation, core) {
         senderJid = Baileys.jidNormalizedUser(msg.key.participant || msg.key.remoteJid);
         senderId = getId(senderJid);
         isFromBot = msg.key.fromMe;
-        isFromBaileys = msg.key.id && msg.key.id.startsWith("SUKI");
+        isFromBaileys = msg.key.id && msg.key.id.startsWith("3EB0");
     }
 
     const botIds = [];

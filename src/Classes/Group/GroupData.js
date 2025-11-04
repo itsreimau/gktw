@@ -4,10 +4,11 @@ class GroupData {
     constructor(ctx, jid) {
         this.ctx = ctx;
         this.jid = jid;
+        this.groupCache = ctx._self.groupCache;
     }
 
     async metadata() {
-        return await this.ctx._client.groupMetadata(this.jid);
+        return this.groupCache.get(this.jid) || await this.ctx._client.groupMetadata(this.jid);
     }
 
     async getMetadata(key) {

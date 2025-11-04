@@ -10,7 +10,6 @@ const { Consolefy } = require("@mengkodingan/consolefy");
 const { analyzeMessage } = require("safety-safe");
 const didYouMean = require("didyoumean");
 const mime = require("mime-types");
-const { tmpfiles } = require("@neoxr/helper");
 
 module.exports = {
     Baileys,
@@ -26,7 +25,6 @@ module.exports = {
         analyzeBug: analyzeMessage,
         didYouMean,
         mime,
-        uploadFile: tmpfiles,
         G_US: "@g.us",
         LID: "@lid",
         WHATSAPP_JID: "0@s.whatsapp.net",

@@ -143,6 +143,10 @@ class Ctx {
         return Functions.getId(jid);
     }
 
+    async getLidUser(jid) {
+        return await Functions.getLidUser(altUser.alt, this._client.onWhatsApp);
+    }
+
     getDb(collection, jid = this._sender.jid) {
         return Functions.getDb(this._db.getCollection(collection) || this._db.createCollection(collection), jid);
     }
@@ -159,7 +163,7 @@ class Ctx {
     }
 
     get msg() {
-        const message = Baileys.extractMessageContent(this._msg.message);
+        const message = Baileys.normalizeMessageContent(this._msg.message);
         return {
             ...this._msg,
             contentType: Functions.getContentType(this._msg.message),
@@ -179,7 +183,7 @@ class Ctx {
         if (!msgContext?.quotedMessage) return null;
 
         const quotedMessage = msgContext.quotedMessage;
-        const message = Baileys.extractMessageContent(quotedMessage) ?? {};
+        const message = Baileys.normalizeMessageContent(quotedMessage) ?? {};
         const chat = Baileys.jidNormalizedUser(msgContext.remoteJid || this.id);
         const sender = Baileys.jidNormalizedUser(msgContext.participant || chat);
 
