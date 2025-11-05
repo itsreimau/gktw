@@ -2,7 +2,7 @@ const Baileys = require("baileys");
 
 function getMessageType(message) {
     const messageContent = Baileys.extractMessageContent(message);
-    return Baileys.getMessageType(messageContent);
+    return Baileys.getContentType(messageContent);
 }
 
 const CONTENT_HANDLERS = {
