@@ -39,7 +39,7 @@ const CONTENT_HANDLERS = {
 function getContentFromMsg(msg) {
     const extracted = Baileys.extractMessageContent(msg.message);
     const messageType = getMessageType(extracted) ?? "";
-    return CONTENT_HANDLERS[messageType]?.(normalized) || "";
+    return CONTENT_HANDLERS[messageType]?.(extracted) || "";
 }
 
 function getDb(collection, jid) {
