@@ -120,11 +120,7 @@ class Ctx {
     }
 
     getMessageType() {
-        return this._msg.messageType;
-    }
-
-    getContentType() {
-        return Baileys.getContentType(this._msg.message);
+        return this.msg.messageType;
     }
 
     getMentioned() {
@@ -151,9 +147,9 @@ class Ctx {
         return Functions.getDb(this._db.getCollection(collection) || this._db.createCollection(collection), jid);
     }
 
-    async _getMediaMessage(msg, type) {
+    async _downloadMediaMessage(msg) {
         try {
-            return await Baileys.downloadMediaMessage(msg, type, {}, {
+            return await Baileys.downloadMediaMessage(msg, "buffer", {}, {
                 logger: this._self.logger,
                 reuploadRequest: this._client.updateMediaMessage
             });
@@ -163,18 +159,13 @@ class Ctx {
     }
 
     get msg() {
-        const message = Baileys.normalizeMessageContent(this._msg.message);
+        const message = Baileys.extractMessageContent(this._msg.message);
         return {
             ...this._msg,
-            contentType: Functions.getContentType(this._msg.message),
-            media: {
-                toBuffer: async () => await this._getMediaMessage({
-                    message
-                }, "buffer"),
-                toStream: async () => await this._getMediaMessage({
-                    message
-                }, "stream")
-            }
+            messageType: Functions.getMessageType(message),
+            download: async () => await this._downloadMediaMessage({
+                message
+            })
         };
     }
 
@@ -182,18 +173,16 @@ class Ctx {
         const msgContext = this._msg.message?.[this.getMessageType()]?.contextInfo ?? {};
         if (!msgContext?.quotedMessage) return null;
 
-        const quotedMessage = msgContext.quotedMessage;
-        const message = Baileys.normalizeMessageContent(quotedMessage) ?? {};
+        const message = Baileys.extractMessageContent(msgContext.quotedMessage) ?? {};
         const chat = Baileys.jidNormalizedUser(msgContext.remoteJid || this.id);
         const sender = Baileys.jidNormalizedUser(msgContext.participant || chat);
 
         return {
             content: Functions.getContentFromMsg({
-                message: quotedMessage
+                message
             }),
-            message: quotedMessage,
-            messageType: Baileys.getContentType(quotedMessage) ?? "",
-            contentType: Functions.getContentType(quotedMessage),
+            message,
+            messageType: Functions.getMessageType(message),
             key: {
                 remoteJid: chat,
                 participant: Baileys.isJidGroup(chat) ? sender : null,
@@ -203,14 +192,9 @@ class Ctx {
             id: chat,
             sender,
             pushName: Functions.getPushName(sender, this._self.pushNames),
-            media: {
-                toBuffer: async () => await this._getMediaMessage({
-                    message
-                }, "buffer"),
-                toStream: async () => await this._getMediaMessage({
-                    message
-                }, "stream")
-            }
+            download: async () => await this._downloadMediaMessage({
+                message
+            })
         };
     }
 

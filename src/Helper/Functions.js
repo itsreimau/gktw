@@ -1,8 +1,8 @@
 const Baileys = require("baileys");
 
-function getContentType(message) {
-    const messageContent = Baileys.normalizeMessageContent(message);
-    return Baileys.getContentType(messageContent);
+function getMessageType(message) {
+    const messageContent = Baileys.extractMessageContent(message);
+    return Baileys.getMessageType(messageContent);
 }
 
 const CONTENT_HANDLERS = {
@@ -13,6 +13,12 @@ const CONTENT_HANDLERS = {
     documentMessageWithCaption: msg => msg.documentMessageWithCaption?.caption || "",
     protocolMessage: msg => getContentFromMsg({
         message: msg.protocolMessage?.editedMessage
+    }),
+    viewOnceMessage: msg => getContentFromMsg({
+        message: msg.viewOnceMessage?.message
+    }),
+    viewOnceMessageV2: msg => getContentFromMsg({
+        message: msg.viewOnceMessageV2?.message
     }),
     buttonsMessage: msg => msg.buttonsMessage?.contentText || "",
     interactiveMessage: msg => msg.interactiveMessage?.body?.text || "",
@@ -31,9 +37,9 @@ const CONTENT_HANDLERS = {
 };
 
 function getContentFromMsg(msg) {
-    const normalized = Baileys.normalizeMessageContent(msg.message);
-    const contentType = getContentType(normalized) ?? "";
-    return CONTENT_HANDLERS[contentType]?.(normalized) || "";
+    const extracted = Baileys.extractMessageContent(msg.message);
+    const messageType = getMessageType(extracted) ?? "";
+    return CONTENT_HANDLERS[messageType]?.(normalized) || "";
 }
 
 function getDb(collection, jid) {
@@ -76,7 +82,7 @@ function checkCitation(msg, citationName, citation, botJid) {
 }
 
 module.exports = {
-    getContentType,
+    getMessageType,
     getContentFromMsg,
     getDb,
     getPushName,

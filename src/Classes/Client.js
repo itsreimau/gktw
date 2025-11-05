@@ -150,19 +150,16 @@ class Client {
 
                 if (Baileys.isJidGroup(message.key.remoteJid)) await this._setGroupCache(message.key.remoteJid);
 
-                const messageType = Baileys.getContentType(message.message) ?? "";
-                const text = Functions.getContentFromMsg(message) ?? "";
                 const sender = Baileys.jidNormalizedUser(message.key.participant || message.key.remoteJid);
-
                 if (message.pushName && this.pushNames[sender] !== message.pushName) {
                     this.pushNames[sender] = message.pushName;
                     this._savePushnames();
                 }
 
+                const text = Functions.getContentFromMsg(message) ?? "";
                 const msg = {
                     ...message,
-                    content: text,
-                    messageType
+                    content: text
                 };
                 const self = {
                     ...this,
