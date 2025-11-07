@@ -126,20 +126,17 @@ class GroupData {
 
     async isMemberExist(jid) {
         const members = await this.members();
-        const normalizedJid = Baileys.jidNormalizedUser(jid);
-        return members.some(member => Baileys.areJidsSameUser(member.jid, normalizedJid));
+        return members.some(member => Baileys.areJidsSameUser(member.jid, Baileys.jidNormalizedUser(jid)));
     }
 
     async isAdmin(jid) {
         const members = await this.members();
-        const normalizedJid = Baileys.jidNormalizedUser(jid);
-        return members.some(member => Baileys.areJidsSameUser(member.jid, normalizedJid) && !!member.admin);
+        return members.some(member => Baileys.areJidsSameUser(member.jid, Baileys.jidNormalizedUser(jid)) && !!member.admin);
     }
 
     async isOwner(jid) {
         const members = await this.members();
-        const normalizedJid = Baileys.jidNormalizedUser(jid);
-        return members.some(member => Baileys.areJidsSameUser(member.jid, normalizedJid) && member.admin === "superadmin");
+        return members.some(member => Baileys.areJidsSameUser(member.jid, Baileys.jidNormalizedUser(jid)) && member.admin === "superadmin");
     }
 
     async isSenderAdmin() {

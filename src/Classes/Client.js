@@ -33,7 +33,7 @@ class Client {
         this.rawCitation = opts.citation ?? {};
         this.citation = {};
 
-        this.fallbackWAVersion = [2, 3000, 1027934701];
+        this.fallbackWAVersion = [2, 3000, 1029030078];
         this.ev = new EventEmitter();
         this.cmd = new Map();
         this.cooldown = new Map();
@@ -113,6 +113,42 @@ class Client {
         this.citation = registeredCitation;
     }
 
+    async _fixUsersDb() {
+        if (!this.core.authState.creds.registered) return;
+
+        const users = this.db.getCollection("users") || this.db.createCollection("users");
+        const altUsers = users.getMany(user => user.alt);
+        const lidMap = new Map(users.getMany(user => !user.alt).map(user => [user.jid, user]));
+        for (const altUser of altUsers) {
+            if (!Baileys.isJidUser(altUser.alt)) return;
+            const citationLid = await Functions.getLidUser(altUser.alt, this.core.onWhatsApp);
+            if (!citationLid) return;
+            const lidJid = Baileys.jidNormalizedUser(citationLid);
+            let lidUser = lidMap.get(lidJid);
+            if (lidUser) {
+                Object.entries(altUser).forEach(([key, value]) => {
+                    if (key === "alt" || key === "jid") return;
+                    if (typeof value === "number" && typeof lidUser[key] === "number") {
+                        lidUser[key] = Math.max(lidUser[key], value);
+                    } else if (lidUser[key] === undefined) {
+                        lidUser[key] = value;
+                    }
+                });
+                users.update(user => Object.assign(user, lidUser), user => user.jid === lidJid);
+            } else {
+                const {
+                    alt,
+                    ...newUser
+                } = {
+                    ...altUser,
+                    jid: lidJid
+                };
+                users.create(newUser);
+                lidMap.set(lidJid, newUser);
+            }
+        }
+    }
+
     _loadPushNames() {
         try {
             this.pushNames = JSON.parse(fs.readFileSync(this.pushnamesPath, "utf8"));
@@ -136,6 +172,7 @@ class Client {
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
                 await this._registerCitation();
+                setTimeout(() => this._fixUsersDb(), 10000);
             }
         });
 
@@ -230,42 +267,6 @@ class Client {
         return Functions.getDb(this.db.getCollection(collection) || this.db.createCollection(collection), jid);
     }
 
-    async _fixUsersDb() {
-        if (!this.core.authState.creds.registered) return;
-
-        const users = this.db.getCollection("users") || this.db.createCollection("users");
-        const altUsers = users.getMany(user => user.alt);
-        const lidMap = new Map(users.getMany(user => !user.alt).map(user => [user.jid, user]));
-        for (const altUser of altUsers) {
-            if (!Baileys.isJidUser(altUser.alt)) return;
-            const citationLid = await Functions.getLidUser(altUser.alt, this.core.onWhatsApp);
-            if (!citationLid) return;
-            const lidJid = Baileys.jidNormalizedUser(citationLid);
-            let lidUser = lidMap.get(lidJid);
-            if (lidUser) {
-                Object.entries(altUser).forEach(([key, value]) => {
-                    if (key === "alt" || key === "jid") return;
-                    if (typeof value === "number" && typeof lidUser[key] === "number") {
-                        lidUser[key] = Math.max(lidUser[key], value);
-                    } else if (lidUser[key] === undefined) {
-                        lidUser[key] = value;
-                    }
-                });
-                users.update(user => Object.assign(user, lidUser), user => user.jid === lidJid);
-            } else {
-                const {
-                    alt,
-                    ...newUser
-                } = {
-                    ...altUser,
-                    jid: lidJid
-                };
-                users.create(newUser);
-                lidMap.set(lidJid, newUser);
-            }
-        }
-    }
-
     async launch() {
         const {
             state,
@@ -297,7 +298,6 @@ class Client {
             recursive: true
         });
 
-        setTimeout(() => this._fixUsersDb(), 10000);
         this._onEvents();
     }
 
