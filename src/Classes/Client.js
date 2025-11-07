@@ -95,19 +95,19 @@ class Client {
         const registeredCitation = {};
         for (const [citationName, citationIds] of Object.entries(this.rawCitation)) {
             if (!Array.isArray(citationIds)) registeredCitation[citationName] = citationIds;
-            const registeredIds = [];
+            const registeredJids = [];
             for (const citationId of citationIds) {
-                if (citationId === "bot") registeredIds.push("bot");
+                if (citationId === "bot") registeredJids.push("bot");
                 const citationJid = citationId + Baileys.S_WHATSAPP_NET;
                 const citationLid = await Functions.getLidUser(citationJid, this.core.onWhatsApp);
                 if (citationLid) {
-                    registeredIds.push(Baileys.jidNormalizedUser(citationLid));
-                    registeredIds.push(citationJid);
+                    registeredJids.push(Baileys.jidNormalizedUser(citationLid));
+                    registeredJids.push(citationJid);
                 } else {
-                    registeredIds.push(citationJid);
+                    registeredJids.push(citationJid);
                 }
             }
-            registeredCitation[citationName] = [...registeredIds];
+            registeredCitation[citationName] = [...registeredJids];
         }
 
         this.citation = registeredCitation;
@@ -332,8 +332,8 @@ class Client {
             return;
         }
 
-        const PHONENUMBER_MCC = (await fetch("https://raw.githubusercontent.com/Itsukichann/Baileys/refs/heads/master/lib/Defaults/phonenumber-mcc.json")).json();
-        if (!Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
+        const PHONENUMBER_MCC = (await (await fetch("https://raw.githubusercontent.com/Itsukichann/Baileys/refs/heads/master/lib/Defaults/phonenumber-mcc.json")).json());
+        if (!Object.keys(PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
             this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code)");
             this.consolefy.resetTag();
             return;

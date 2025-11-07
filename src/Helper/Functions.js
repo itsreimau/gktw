@@ -14,12 +14,6 @@ const CONTENT_HANDLERS = {
     protocolMessage: msg => getContentFromMsg({
         message: msg.protocolMessage?.editedMessage
     }),
-    viewOnceMessage: msg => getContentFromMsg({
-        message: msg.viewOnceMessage?.message
-    }),
-    viewOnceMessageV2: msg => getContentFromMsg({
-        message: msg.viewOnceMessageV2?.message
-    }),
     buttonsMessage: msg => msg.buttonsMessage?.contentText || "",
     interactiveMessage: msg => msg.interactiveMessage?.body?.text || "",
     buttonsResponseMessage: msg => msg.buttonsResponseMessage?.selectedButtonId || "",
