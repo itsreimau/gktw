@@ -15,7 +15,7 @@ class Client {
     constructor(opts) {
         this.authDir = opts.authDir;
         this.browser = opts.browser ?? Baileys.Browsers.ubuntu("CHROME");
-        this.WAVersion = opts.WAVersion;
+        this.WAVersion = opts.WAVersion ?? null;
         this.printQRInTerminal = opts.printQRInTerminal ?? true;
         this.qrTimeout = opts.qrTimeout ?? 60000;
         this.phoneNumber = opts.phoneNumber;
@@ -33,7 +33,6 @@ class Client {
         this.rawCitation = opts.citation ?? {};
         this.citation = {};
 
-        this.fallbackWAVersion = [2, 3000, 1029030078];
         this.ev = new EventEmitter();
         this.cmd = new Map();
         this.cooldown = new Map();
@@ -181,6 +180,8 @@ class Client {
         this._loadPushNames();
 
         this.core.ev.on("messages.upsert", async (event) => {
+            if (event.type == "notify") return;
+
             for (const message of event.messages) {
                 if (this.messageIdCache.get(message.key.id)) return;
                 this.messageIdCache.set(message.key.id, true);
@@ -277,9 +278,8 @@ class Client {
 
         if (this.useStore) this._initStore();
 
-        const version = this.WAVersion ?? this.fallbackWAVersion;
         this.core = Baileys.default({
-            version,
+            version: this.WAVersion,
             browser: this.browser,
             logger: this.logger,
             printQRInTerminal: this.printQRInTerminal,

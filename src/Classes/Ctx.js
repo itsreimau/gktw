@@ -162,10 +162,15 @@ class Ctx {
         const message = Baileys.extractMessageContent(this._msg.message);
         return {
             ...this._msg,
+            message,
             messageType: Functions.getMessageType(message),
             download: async () => await this._downloadMediaMessage({
                 message
-            })
+            }),
+            upload: async () => {
+                const buffer = this.msg.download();
+                return Baileys.uploadFile(buffer);
+            }
         };
     }
 
@@ -194,7 +199,11 @@ class Ctx {
             pushName: Functions.getPushName(sender, this._self.pushNames),
             download: async () => await this._downloadMediaMessage({
                 message
-            })
+            }),
+            upload: async () => {
+                const buffer = this.quoted.download();
+                return Baileys.uploadFile(buffer);
+            }
         };
     }
 
