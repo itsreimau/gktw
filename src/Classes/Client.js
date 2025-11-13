@@ -15,7 +15,7 @@ class Client {
     constructor(opts) {
         this.authDir = opts.authDir;
         this.browser = opts.browser ?? Baileys.Browsers.ubuntu("CHROME");
-        this.WAVersion = opts.WAVersion ?? null;
+        this.WAVersion = opts.WAVersion ?? [2, 3000, 1023888953];
         this.printQRInTerminal = opts.printQRInTerminal ?? true;
         this.qrTimeout = opts.qrTimeout ?? 60000;
         this.phoneNumber = opts.phoneNumber;
