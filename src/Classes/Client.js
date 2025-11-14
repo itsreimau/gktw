@@ -15,7 +15,7 @@ class Client {
     constructor(opts) {
         this.authDir = opts.authDir;
         this.browser = opts.browser ?? Baileys.Browsers.ubuntu("CHROME");
-        this.WAVersion = opts.WAVersion ?? [2, 3000, 1023888953];
+        this.WAVersion = opts.WAVersion ?? false;
         this.printQRInTerminal = opts.printQRInTerminal ?? true;
         this.qrTimeout = opts.qrTimeout ?? 60000;
         this.phoneNumber = opts.phoneNumber;
@@ -264,6 +264,12 @@ class Client {
         return await Functions.getLidUser(jid, this.core.onWhatsApp);
     }
 
+    getPnUser(jid) {
+        const users = this._db.getCollection("users") || this._db.createCollection("users");
+        const user = Functions.getDb(users, jid);
+        return Functions.getPnUser(jid, user, this.pushNames);
+    }
+
     getDb(collection, jid) {
         return Functions.getDb(this.db.getCollection(collection) || this.db.createCollection(collection), jid);
     }
@@ -278,8 +284,7 @@ class Client {
 
         if (this.useStore) this._initStore();
 
-        this.core = Baileys.default({
-            version: this.WAVersion,
+        const opts = {
             browser: this.browser,
             logger: this.logger,
             printQRInTerminal: this.printQRInTerminal,
@@ -288,7 +293,9 @@ class Client {
             markOnlineOnConnect: this.markOnlineOnConnect,
             cachedGroupMetadata: async (jid) => this.groupCache.get(jid),
             qrTimeout: this.qrTimeout
-        });
+        };
+        if (!!this.WAVersion) opts.version = this.WAVersion;
+        this.core = Baileys.default(opts);
 
         if (this.useStore) this.store.bind(this.core.ev);
 

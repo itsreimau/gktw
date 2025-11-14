@@ -62,6 +62,17 @@ async function getLidUser(jid, onWhatsAppFunc) {
     return (await onWhatsAppFunc(jid))[0]?.lid || jid;
 }
 
+function getPnUser(jid, user, pushNames) {
+    if (user.alt) return user.alt;
+    let targetName = getPushName(jid);
+    if (targetName) {
+        for (let pushName in pushNames) {
+            if (pushNames[key] === targetName && Baileys.isJidUser(pushName)) return pushName;
+        }
+    }
+    return jid;
+}
+
 function checkCitation(msg, citationName, citation, botJid) {
     if (!msg || !citationName || !citation[citationName]) return false;
 

@@ -143,6 +143,10 @@ class Ctx {
         return await Functions.getLidUser(jid, this._client.onWhatsApp);
     }
 
+    getPnUser(jid) {
+        return Functions.getPnUser(jid, ctx.db.user, this._self.pushNames);
+    }
+
     getDb(collection, jid = this._sender.jid) {
         return Functions.getDb(this._db.getCollection(collection) || this._db.createCollection(collection), jid);
     }
