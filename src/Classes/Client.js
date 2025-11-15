@@ -338,7 +338,8 @@ class Client {
             return;
         }
 
-        if (!Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
+        const PHONENUMBER_MCC = (await (await fetch("https://raw.githubusercontent.com/Itsukichann/Baileys/refs/heads/master/lib/Defaults/phonenumber-mcc.json")).json());
+        if (!Object.keys(PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
             this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code)");
             this.consolefy.resetTag();
             return;
