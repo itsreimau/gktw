@@ -13,12 +13,12 @@ const SimplDB = require("simpl.db");
 
 class Client {
     constructor(opts) {
-        this.authDir = opts.authDir;
+        this.authDir = opts.authDir ?? null;
         this.browser = opts.browser ?? Baileys.Browsers.ubuntu("CHROME");
-        this.WAVersion = opts.WAVersion ?? false;
+        this.WAVersion = opts.WAVersion ?? null;
         this.printQRInTerminal = opts.printQRInTerminal ?? true;
         this.qrTimeout = opts.qrTimeout ?? 60000;
-        this.phoneNumber = opts.phoneNumber;
+        this.phoneNumber = opts.phoneNumbe ?? null;
         this.usePairingCode = opts.usePairingCode ?? false;
         this.customPairingCode = opts.customPairingCode ?? false;
         this.logger = opts.logger ?? pino({
@@ -27,9 +27,9 @@ class Client {
         this.useStore = opts.useStore ?? false;
         this.readIncomingMsg = opts.readIncomingMsg ?? false;
         this.markOnlineOnConnect = opts.markOnlineOnConnect ?? true;
-        this.prefix = opts.prefix;
+        this.prefix = opts.prefix ?? null;
         this.selfReply = opts.selfReply ?? false;
-        this.databaseDir = opts.databaseDir;
+        this.databaseDir = opts.databaseDir ?? null;
         this.rawCitation = opts.citation ?? {};
         this.citation = {};
 
@@ -284,7 +284,8 @@ class Client {
 
         if (this.useStore) this._initStore();
 
-        const opts = {
+        this.core = Baileys.default({
+            ...(this.WAVersion ? { version: WAVersion } : {}),
             browser: this.browser,
             logger: this.logger,
             printQRInTerminal: this.printQRInTerminal,
@@ -293,9 +294,7 @@ class Client {
             markOnlineOnConnect: this.markOnlineOnConnect,
             cachedGroupMetadata: async (jid) => this.groupCache.get(jid),
             qrTimeout: this.qrTimeout
-        };
-        if (!!this.WAVersion) opts.version = this.WAVersion;
-        this.core = Baileys.default(opts);
+        });
 
         if (this.useStore) this.store.bind(this.core.ev);
 
@@ -339,8 +338,7 @@ class Client {
             return;
         }
 
-        const PHONENUMBER_MCC = (await (await fetch("https://raw.githubusercontent.com/Itsukichann/Baileys/refs/heads/master/lib/Defaults/phonenumber-mcc.json")).json());
-        if (!Object.keys(PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
+        if (!Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
             this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code)");
             this.consolefy.resetTag();
             return;

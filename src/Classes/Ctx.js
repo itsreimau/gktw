@@ -2,6 +2,7 @@ const Baileys = require("baileys");
 const Functions = require("../Helper/Functions.js");
 const Group = require("./Group/Group.js");
 const GroupData = require("./Group/GroupData.js");
+const { tmpfiles } = require("@neoxr/helper");
 const MessageCollector = require("./Collector/MessageCollector.js");
 
 class Ctx {
@@ -173,7 +174,7 @@ class Ctx {
             }),
             upload: async () => {
                 const buffer = this.msg.download();
-                return Baileys.uploadFile(buffer);
+                return tmpfiles(buffer);
             }
         };
     }
@@ -206,7 +207,7 @@ class Ctx {
             }),
             upload: async () => {
                 const buffer = this.quoted.download();
-                return Baileys.uploadFile(buffer);
+                return tmpfiles(buffer);
             }
         };
     }
