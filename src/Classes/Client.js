@@ -18,7 +18,7 @@ class Client {
         this.WAVersion = opts.WAVersion ?? null;
         this.printQRInTerminal = opts.printQRInTerminal ?? true;
         this.qrTimeout = opts.qrTimeout ?? 60000;
-        this.phoneNumber = opts.phoneNumbe ?? null;
+        this.phoneNumber = opts.phoneNumber ?? null;
         this.usePairingCode = opts.usePairingCode ?? false;
         this.customPairingCode = opts.customPairingCode ?? false;
         this.logger = opts.logger ?? pino({
