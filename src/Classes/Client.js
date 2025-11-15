@@ -14,7 +14,7 @@ const SimplDB = require("simpl.db");
 class Client {
     constructor(opts) {
         this.authDir = opts.authDir ?? null;
-        this.browser = opts.browser ?? Baileys.Browsers("Chrome");
+        this.browser = opts.browser ?? Baileys.Browsers.ubuntu("Chrome");
         this.WAVersion = opts.WAVersion ?? null;
         this.printQRInTerminal = opts.printQRInTerminal ?? true;
         this.qrTimeout = opts.qrTimeout ?? 60000;
