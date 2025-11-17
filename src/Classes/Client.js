@@ -16,22 +16,15 @@ class Client {
         this.authDir = opts.authDir ?? null;
         this.browser = opts.browser ?? Baileys.Browsers.ubuntu("Chrome");
         this.WAVersion = opts.WAVersion ?? null;
-        this.printQRInTerminal = opts.printQRInTerminal ?? true;
-        this.qrTimeout = opts.qrTimeout ?? 60000;
         this.phoneNumber = opts.phoneNumber ?? null;
         this.usePairingCode = opts.usePairingCode ?? false;
         this.customPairingCode = opts.customPairingCode ?? false;
-        this.logger = opts.logger ?? pino({
-            level: "fatal"
-        });
         this.useStore = opts.useStore ?? false;
-        this.readIncomingMsg = opts.readIncomingMsg ?? false;
-        this.markOnlineOnConnect = opts.markOnlineOnConnect ?? true;
-        this.prefix = opts.prefix ?? null;
+        this.autoRead = opts.autoRead ?? false;
+        this.alwaysOnline = opts.alwaysOnline ?? true;
         this.selfReply = opts.selfReply ?? false;
         this.databaseDir = opts.databaseDir ?? null;
         this.rawCitation = opts.citation ?? {};
-        this.citation = {};
 
         this.ev = new EventEmitter();
         this.cmd = new Map();
@@ -39,6 +32,11 @@ class Client {
         this.hearsMap = new Map();
         this.middlewares = new Map();
         this.consolefy = new Consolefy();
+        this.citation = {};
+        this.prefix = /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i;
+        this.logger = pino({
+            level: "fatal"
+        });
         this.store = Baileys.makeInMemoryStore({});
         this.storePath = path.resolve(this.authDir, "gktw_store.json");
         this.groupCache = new NodeCache({
@@ -213,7 +211,7 @@ class Client {
                 });
 
                 this.ev.emit(Events.MessagesUpsert, msg, ctx);
-                if (this.readIncomingMsg) await this.core.readMessages([message.key]);
+                if (this.autoRead) await this.core.readMessages([message.key]);
                 await Commands(self, this._runMiddlewares.bind(this));
             }
         });
@@ -285,15 +283,16 @@ class Client {
         if (this.useStore) this._initStore();
 
         this.core = Baileys.default({
-            ...(this.WAVersion ? { version: WAVersion } : {}),
+            ...(this.WAVersion ? {
+                version: WAVersion
+            } : {}),
             browser: this.browser,
             logger: this.logger,
-            printQRInTerminal: this.printQRInTerminal,
+            printQRInTerminal: !this.usePairingCode,
             emitOwnEvents: this.selfReply,
             auth: this.state,
-            markOnlineOnConnect: this.markOnlineOnConnect,
-            cachedGroupMetadata: async (jid) => this.groupCache.get(jid),
-            qrTimeout: this.qrTimeout
+            markOnlineOnConnect: this.alwaysOnline,
+            cachedGroupMetadata: async (jid) => this.groupCache.get(jid)
         });
 
         if (this.useStore) this.store.bind(this.core.ev);

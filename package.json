@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.5.3",
+  "version": "1.5.4-rc.1",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -19,9 +19,9 @@
   "author": "Ikbal Maulana (ItsReimau)",
   "license": "MIT",
   "dependencies": {
-    "@cacheable/node-cache": "^1.7.4",
+    "@cacheable/node-cache": "^1.7.5",
     "@mengkodingan/consolefy": "^1.0.1",
-    "baileys": "npm:@rexxhayanasi/elaina-bail@1.5.0-rc.7",
+    "baileys": "github:dcodemaxz/baileys",
     "didyoumean": "^1.2.2",
     "glob": "^11.0.3",
     "mime-types": "^2.1.35",

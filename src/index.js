@@ -1,6 +1,7 @@
 const Baileys = require("baileys");
 const Client = require("./Classes/Client.js");
 const CommandHandler = require("./Classes/CommandHandler.js");
+const Config = require("./Classes/Config.js");
 const Cooldown = require("./Classes/Cooldown.js");
 const VCardBuilder = require("./Classes/Builder/VCard.js");
 const Events = require("./Constant/Events.js");
@@ -15,6 +16,7 @@ module.exports = {
     Baileys,
     Client,
     CommandHandler,
+    Config,
     Cooldown,
     VCardBuilder,
     Events,
