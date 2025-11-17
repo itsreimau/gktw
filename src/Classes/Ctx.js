@@ -57,7 +57,6 @@ class Ctx {
     }
 
     get db() {
-        const bot = this._db.getCollection("bot") || this._db.createCollection("bot");
         const users = this._db.getCollection("users") || this._db.createCollection("users");
         const groups = this._db.getCollection("groups") || this._db.createCollection("groups");
 
@@ -65,7 +64,6 @@ class Ctx {
             core: this._db,
             users,
             groups,
-            bot: Functions.getDb(bot, this.me.lid),
             user: Functions.getDb(users, this._sender.jid),
             group: this.isGroup() ? Functions.getDb(groups, this.id) : null
         };
