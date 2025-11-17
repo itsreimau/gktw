@@ -178,8 +178,6 @@ class Client {
         this._loadPushNames();
 
         this.core.ev.on("messages.upsert", async (event) => {
-            if (event.type == "notify") return;
-
             for (const message of event.messages) {
                 if (this.messageIdCache.get(message.key.id)) return;
                 this.messageIdCache.set(message.key.id, true);
