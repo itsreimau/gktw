@@ -171,7 +171,7 @@ class Ctx {
             }),
             upload: async () => {
                 const buffer = await this.msg.download();
-                return await Baileys.uploadFile(buffer);
+                return Buffer.isBuffer(buffer) ? await Baileys.uploadFile(buffer) : null;
             }
         };
     }
@@ -204,7 +204,7 @@ class Ctx {
             }),
             upload: async () => {
                 const buffer = await this.quoted.download();
-                return await Baileys.uploadFile(buffer);
+                return Buffer.isBuffer(buffer) ? await Baileys.uploadFile(buffer) : null;
             }
         };
     }
