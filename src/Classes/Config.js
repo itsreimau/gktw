@@ -12,28 +12,40 @@ class Config {
             const configContent = fs.readFileSync(this.configPath, "utf8");
             const loadedConfig = JSON.parse(configContent);
 
-            this._replaceTemplateString(loadedConfig);
+            this._replaceTemplateString(loadedConfig, loadedConfig);
             Object.assign(this, loadedConfig);
         }
     }
 
-    _replaceTemplateString(obj) {
+    _replaceTemplateString(obj, rootObj) {
         for (const key in obj) {
-            if (typeof obj[key] === 'string') {
-                obj[key] = obj[key].replace(/%([^%]+)%/g, (match, k) => {
-                    const keys = k.split("_");
-                    let value = obj;
-                    for (const key of keys) {
-                        if (value && typeof value === "object" && key in value) {
-                            value = value[key];
-                        } else {
-                            return match;
+            if (typeof obj[key] === "string") {
+                let value = obj[key];
+                let previousValue;
+
+                do {
+                    previousValue = value;
+                    value = value.replace(/%([^%]+)%/g, (match, templateKey) => {
+                        const keys = templateKey.split("_");
+                        let templateValue = rootObj;
+
+                        for (const k of keys) {
+                            if (templateValue && typeof templateValue === "object" && k in templateValue) {
+                                templateValue = templateValue[k];
+                            } else {
+                                return match;
+                            }
                         }
-                    }
-                    return value;
-                });
-            } else if (typeof obj[key] === "object") {
-                this._replaceTemplateString(obj[key]);
+
+                        if (templateValue !== null && templateValue !== undefined) return String(templateValue);
+
+                        return match;
+                    });
+                } while (value !== previousValue);
+
+                obj[key] = value;
+            } else if (typeof obj[key] === "object" && obj[key] !== null) {
+                this._replaceTemplateString(obj[key], rootObj);
             }
         }
     }
@@ -48,7 +60,7 @@ class Config {
             const content = JSON.stringify(configToSave, null, 2);
             fs.writeFileSync(this.configPath, content, "utf8");
             return true;
-        } catch (error) {
+        } catch {
             return false;
         }
     }

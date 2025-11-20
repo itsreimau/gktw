@@ -25,7 +25,7 @@ class MessageCollector extends Collector {
         const id = Baileys.jidNormalizedUser(m.key.remoteJid);
         if (!Baileys.areJidsSameUser(id, this.jid)) return false;
 
-        const message = Baileys.extractMessageContent(m.message);
+        const message = Baileys.normalizeMessageContent(m.message);
         return {
             ...m,
             content,

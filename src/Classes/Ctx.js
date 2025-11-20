@@ -161,7 +161,7 @@ class Ctx {
     }
 
     get msg() {
-        const message = Baileys.extractMessageContent(this._msg.message);
+        const message = Baileys.normalizeMessageContent(this._msg.message);
         return {
             ...this._msg,
             message,
@@ -180,7 +180,7 @@ class Ctx {
         const msgContext = this._msg.message?.[this.getMessageType()]?.contextInfo ?? {};
         if (!msgContext?.quotedMessage) return null;
 
-        const message = Baileys.extractMessageContent(msgContext.quotedMessage) ?? {};
+        const message = Baileys.normalizeMessageContent(msgContext.quotedMessage) ?? {};
         const chat = Baileys.jidNormalizedUser(msgContext.remoteJid || this.id);
         const sender = Baileys.jidNormalizedUser(msgContext.participant || chat);
 
