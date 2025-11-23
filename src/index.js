@@ -28,12 +28,6 @@ module.exports = {
         didYouMean,
         mime,
         G_US: "@g.us",
-        LID: "@lid",
-        WHATSAPP_JID: "0@s.whatsapp.net",
-        META_JID: "13135550002@s.whatsapp.net",
-        CHATGPT_JID: "18002428478@s.whatsapp.net",
-        COPILOT_JID: "18772241042@s.whatsapp.net",
-        INSTAGRAM_JID: "447723442971@s.whatsapp.net",
-        TIKTOK_JID: "6285574670498@s.whatsapp.net"
+        LID: "@lid"
     }
 };

@@ -1,7 +1,6 @@
 const Baileys = require("baileys");
 const Collector = require("./Collector.js");
 const Events = require("../../Constant/Events.js");
-const Functions = require("../../Helper/Functions.js");
 
 class MessageCollector extends Collector {
     constructor(clientReq, opts = {}) {
@@ -9,7 +8,7 @@ class MessageCollector extends Collector {
         this.clientReq = clientReq;
         this.jid = Baileys.jidNormalizedUser(this.clientReq.msg.key.remoteJid);
 
-        this.handleCollect = this.collect.bind(this);
+        this.handleCollect = (ctx) => this.collect(ctx);
         this.clientReq.self.ev.on(Events.MessagesUpsert, this.handleCollect);
         this.once("end", () => {
             this.clientReq.self.ev.removeListener(Events.MessagesUpsert, this.handleCollect);
@@ -18,22 +17,9 @@ class MessageCollector extends Collector {
         return this;
     }
 
-    async _collect(m) {
-        const content = Functions.getContentFromMsg(m);
-        if (!content) return false;
-
-        const id = Baileys.jidNormalizedUser(m.key.remoteJid);
-        if (!Baileys.areJidsSameUser(id, this.jid)) return false;
-
-        const message = Baileys.normalizeMessageContent(m.message);
-        return {
-            ...m,
-            content,
-            message,
-            messageType: Functions.getMessageType(message),
-            id,
-            sender: Baileys.jidNormalizedUser(m.key.participant || m.key.remoteJid)
-        };
+    async _collect(ctx) {
+        if (!Baileys.areJidsSameUser(ctx.id, this.jid)) return false;
+        return ctx;
     }
 }
 

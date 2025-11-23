@@ -59,7 +59,6 @@ class Ctx {
     get db() {
         const users = this._db.getCollection("users") || this._db.createCollection("users");
         const groups = this._db.getCollection("groups") || this._db.createCollection("groups");
-
         return {
             core: this._db,
             users,
@@ -161,7 +160,7 @@ class Ctx {
     }
 
     get msg() {
-        const message = Baileys.normalizeMessageContent(this._msg.message);
+        const message = Functions.extractMessageContent(this._msg.message);
         return {
             ...this._msg,
             message,
@@ -180,12 +179,12 @@ class Ctx {
         const msgContext = this._msg.message?.[this.getMessageType()]?.contextInfo ?? {};
         if (!msgContext?.quotedMessage) return null;
 
-        const message = Baileys.normalizeMessageContent(msgContext.quotedMessage) ?? {};
+        const message = Functions.extractMessageContent(msgContext.quotedMessage) ?? {};
         const chat = Baileys.jidNormalizedUser(msgContext.remoteJid || this.id);
         const sender = Baileys.jidNormalizedUser(msgContext.participant || chat);
 
         return {
-            content: Functions.getContentFromMsg({
+            text: Functions.getTextFromMsg({
                 message
             }),
             message,

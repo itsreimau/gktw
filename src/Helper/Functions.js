@@ -1,17 +1,24 @@
+const MessageType = require("./Constant/MessageType.js");
 const Baileys = require("baileys");
 
-function getMessageType(message) {
+function extractMessageContent(message) {
+    if (getMessageType(message) === MessageType.groupStatusMentionMessage) return messsage;
     const messageContent = Baileys.extractMessageContent(message);
+    return messageContent;
+}
+
+function getMessageType(message) {
+    const messageContent = extractMessageContent(message);
     return Baileys.getContentType(messageContent);
 }
 
-const CONTENT_HANDLERS = {
+const TEXT_HANDLERS = {
     conversation: msg => msg.conversation,
     extendedTextMessage: msg => msg.extendedTextMessage?.text || "",
     imageMessage: msg => msg.imageMessage?.caption || "",
     videoMessage: msg => msg.videoMessage?.caption || "",
     documentMessageWithCaption: msg => msg.documentMessageWithCaption?.caption || "",
-    protocolMessage: msg => getContentFromMsg({
+    protocolMessage: msg => getTextFromMsg({
         message: msg.protocolMessage?.editedMessage
     }),
     buttonsMessage: msg => msg.buttonsMessage?.contentText || "",
@@ -30,10 +37,10 @@ const CONTENT_HANDLERS = {
     }
 };
 
-function getContentFromMsg(msg) {
-    const extracted = Baileys.extractMessageContent(msg.message);
+function getTextFromMsg(msg) {
+    const extracted = extractMessageContent(msg.message);
     const messageType = getMessageType(extracted) ?? "";
-    return CONTENT_HANDLERS[messageType]?.(extracted) || "";
+    return TEXT_HANDLERS[messageType]?.(extracted) || "";
 }
 
 function getDb(collection, jid) {
@@ -87,8 +94,9 @@ function checkCitation(msg, citationName, citation, botJid) {
 }
 
 module.exports = {
+    extractMessageContent,
     getMessageType,
-    getContentFromMsg,
+    getTextFromMsg,
     getDb,
     getPushName,
     getId,

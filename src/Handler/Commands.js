@@ -13,13 +13,11 @@ async function Commands(self, _runMiddlewares) {
 
 async function _handleHears(self, m) {
     const hearsEntries = Array.from(self.hearsMap.values());
-    const matches = hearsEntries.filter(hear => hear.name === m.content || hear.name === m.messageType || (hear.name instanceof RegExp && hear.name.test(m.content)) || (Array.isArray(hear.name) && hear.name.includes(m.content)));
+    const matches = hearsEntries.filter(hear => hear.name === m.text || hear.name === m.messageType || (hear.name instanceof RegExp && hear.name.test(m.text)) || (Array.isArray(hear.name) && hear.name.includes(m.text)));
     if (!matches.length) return;
 
     const ctx = new Ctx({
-        used: {
-            hears: m.content
-        },
+        used: {},
         args: [],
         self,
         client: self.core
@@ -28,13 +26,13 @@ async function _handleHears(self, m) {
 }
 
 async function _processCommands(self, m, _runMiddlewares) {
-    const selectedPrefix = _findMatchingPrefix(m.content, self.prefix);
+    const selectedPrefix = _findMatchingPrefix(m.text, self.prefix);
     if (!selectedPrefix) return;
 
     const {
         commandName,
         args
-    } = _parseCommand(m.content, selectedPrefix);
+    } = _parseCommand(m.text, selectedPrefix);
     if (!commandName) return;
 
     const matchedCommands = _findMatchingCommands(self.cmd, commandName);

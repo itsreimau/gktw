@@ -19,13 +19,13 @@ class Collector extends EventEmitter {
         if (this.time && this.time > 0) this.isRun = setTimeout(() => this.stop("timeout"), this.time);
     }
 
-    async collect(m) {
+    async collect(ctx) {
         if (!this.isRun) return;
 
-        const args = await this._collect(m);
-        if (!args) return;
+        const collCtx = await this._collect(ctx);
+        if (!collCtx) return;
 
-        const filtered = await this.filter(args, this.collector);
+        const filtered = await this.filter(collCtx, this.collector);
         if (!filtered) return;
 
         this.received++;
@@ -33,8 +33,8 @@ class Collector extends EventEmitter {
         if (this.maxProcessed && this.received >= this.maxProcessed) return this.stop("processedLimit");
         if (this.max && this.collector.size >= this.max) return this.stop("limit");
 
-        this.collector.set(args.id, args);
-        this.emit("collect", args);
+        this.collector.set(collCtx._msg.key.id, collCtx);
+        this.emit("collect", collCtx);
     }
 
     stop(reason = "timeout") {

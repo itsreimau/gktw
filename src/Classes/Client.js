@@ -190,25 +190,22 @@ class Client {
                     this._savePushnames();
                 }
 
-                const text = Functions.getContentFromMsg(message) ?? "";
-                const msg = {
-                    ...message,
-                    content: text
-                };
+                const text = Functions.getTextFromMsg(message) ?? "";
                 const self = {
                     ...this,
-                    m: msg
+                    m: {
+                        ...message,
+                        text
+                    }
                 };
                 const ctx = new Ctx({
-                    used: {
-                        upsert: text
-                    },
+                    used: {},
                     args: [],
                     self,
                     client: this.core
                 });
 
-                this.ev.emit(Events.MessagesUpsert, msg, ctx);
+                this.ev.emit(Events.MessagesUpsert, ctx);
                 if (this.autoRead) await this.core.readMessages([message.key]);
                 await Commands(self, this._runMiddlewares.bind(this));
             }
@@ -220,11 +217,19 @@ class Client {
 
         this.core.ev.on("group-participants.update", async (event) => {
             await this._setGroupCache(event.id);
-            this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, event);
+            event.participants.forEach(participant => {
+                const ctx = {
+                    id: event.id,
+                    participant
+                };
+                this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, ctx);
+            });
         });
 
         this.core.ev.on("call", (event) => {
-            this.ev.emit(Events.Call, event);
+            event.forEach(ctx => {
+                this.ev.emit(Events.Call, ctx);
+            });
         });
     }
 
@@ -282,7 +287,7 @@ class Client {
 
         this.core = Baileys.default({
             ...(this.WAVersion ? {
-                version: WAVersion
+                version: this.WAVersion
             } : {}),
             browser: this.browser,
             logger: this.logger,
