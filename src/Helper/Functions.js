@@ -1,4 +1,4 @@
-const MessageType = require("./Constant/MessageType.js");
+const MessageType = require("../Constant/MessageType.js");
 const Baileys = require("baileys");
 
 function extractMessageContent(message) {
