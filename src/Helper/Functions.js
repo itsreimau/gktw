@@ -1,13 +1,16 @@
 const MessageType = require("../Constant/MessageType.js");
 const Baileys = require("baileys");
 
+const isGroupStatusMentionMessage = (message) => Baileys.getContentType(message) === MessageType.groupStatusMentionMessage;
+
 function extractMessageContent(message) {
-    if (getMessageType(message) === MessageType.groupStatusMentionMessage) return messsage;
+    if (isGroupStatusMentionMessage(message)) return messsage;
     const messageContent = Baileys.extractMessageContent(message);
     return messageContent;
 }
 
 function getMessageType(message) {
+    if (isGroupStatusMentionMessage(message)) return messsage;
     const messageContent = extractMessageContent(message);
     return Baileys.getContentType(messageContent);
 }
