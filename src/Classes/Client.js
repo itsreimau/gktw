@@ -259,7 +259,7 @@ class Client {
     }
 
     getId(jid) {
-        return Baileys.jidDecode(jid)?.user || jid;
+        return Functions.getId(jid);
     }
 
     async getLidUser(jid) {

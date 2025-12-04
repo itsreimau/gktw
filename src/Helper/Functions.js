@@ -57,6 +57,10 @@ function getPushName(jid, pushNames) {
     return normalizedJid ? pushNames[normalizedJid] || normalizedJid : null;
 }
 
+function getId(jid) {
+    return Baileys.jidDecode(jid)?.user || jid;
+}
+
 async function getLidUser(jid, onWhatsAppFunc) {
     return (await onWhatsAppFunc(jid))[0]?.lid || jid;
 }
@@ -77,6 +81,7 @@ module.exports = {
     getTextFromMsg,
     getDb,
     getPushName,
+    getId,
     getLidUser,
     checkOwner
 };

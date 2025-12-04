@@ -116,7 +116,7 @@ class Ctx {
     }
 
     getId(jid = this._sender.jid) {
-        return this._self.getId(jid);
+        return Functions.getId(jid);
     }
 
     async getLidUser(jid = this._sender.jid) {
