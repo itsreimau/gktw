@@ -3,18 +3,16 @@ const fs = require("node:fs");
 class Config {
     constructor(configPath) {
         this.configPath = configPath;
-
         this._loadConfig();
     }
 
     _loadConfig() {
-        if (fs.existsSync(this.configPath)) {
-            const configContent = fs.readFileSync(this.configPath, "utf8");
-            const loadedConfig = JSON.parse(configContent);
+        if (!fs.existsSync(this.configPath)) return;
 
-            this._replaceTemplateString(loadedConfig, loadedConfig);
-            Object.assign(this, loadedConfig);
-        }
+        const configContent = fs.readFileSync(this.configPath, "utf8");
+        const loadedConfig = JSON.parse(configContent);
+        this._replaceTemplateString(loadedConfig, loadedConfig);
+        Object.assign(this, loadedConfig);
     }
 
     _replaceTemplateString(obj, rootObj) {
@@ -37,9 +35,7 @@ class Config {
                             }
                         }
 
-                        if (templateValue !== null && templateValue !== undefined) return String(templateValue);
-
-                        return match;
+                        return templateValue !== null && templateValue !== undefined ? String(templateValue) : match;
                     });
                 } while (value !== previousValue);
 

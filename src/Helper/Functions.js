@@ -1,18 +1,7 @@
-const MessageType = require("../Constant/MessageType.js");
 const Baileys = require("baileys");
 
-const isGroupStatusMentionMessage = (message) => Baileys.getContentType(message) === MessageType.groupStatusMentionMessage;
-
-function extractMessageContent(message) {
-    if (isGroupStatusMentionMessage(message)) return messsage;
-    const messageContent = Baileys.extractMessageContent(message);
-    return messageContent;
-}
-
 function getMessageType(message) {
-    if (isGroupStatusMentionMessage(message)) return messsage;
-    const messageContent = extractMessageContent(message);
-    return Baileys.getContentType(messageContent);
+    return Baileys.getContentType(Baileys.extractMessageContent(message));
 }
 
 const TEXT_HANDLERS = {
@@ -41,68 +30,53 @@ const TEXT_HANDLERS = {
 };
 
 function getTextFromMsg(msg) {
-    const extracted = extractMessageContent(msg.message);
-    const messageType = getMessageType(extracted) ?? "";
-    return TEXT_HANDLERS[messageType]?.(extracted) || "";
+    const extractedMessage = Baileys.extractMessageContent(msg.message);
+    const messageType = getMessageType(extractedMessage) ?? "";
+    return TEXT_HANDLERS[messageType]?.(extractedMessage) || "";
 }
 
 function getDb(collection, jid) {
-    const normalized = Baileys.jidNormalizedUser(jid);
-    if (collection.name === "users" && Baileys.isLidUser(normalized)) return collection.getOrCreate(user => user.jid === normalized, {
-        jid: normalized
-    });
-    if (collection.name === "users" && Baileys.isJidUser(normalized)) return collection.getOrCreate(user => user.alt === normalized, {
-        alt: normalized
-    });
-    if (collection.name === "groups" && Baileys.isJidGroup(normalized)) return collection.getOrCreate(group => group.jid === normalized, {
-        jid: normalized
+    const normalizedJid = Baileys.jidNormalizedUser(jid);
+
+    if (collection.name === "users") {
+        if (Baileys.isLidUser(normalizedJid)) return collection.getOrCreate(user => user.jid === normalizedJid, {
+            jid: normalizedJid
+        });
+        if (Baileys.isJidUser(normalizedJid)) return collection.getOrCreate(user => user.alt === normalizedJid, {
+            alt: normalizedJid
+        });
+    }
+
+    if (collection.name === "groups" && Baileys.isJidGroup(normalizedJid)) return collection.getOrCreate(group => group.jid === normalizedJid, {
+        jid: normalizedJid
     });
 }
 
 function getPushName(jid, pushNames) {
-    const normalized = Baileys.jidNormalizedUser(jid);
-    return normalized ? pushNames[normalized] || normalized : null;
-}
-
-function getId(jid) {
-    return Baileys.jidDecode(jid)?.user || jid;
+    const normalizedJid = Baileys.jidNormalizedUser(jid);
+    return normalizedJid ? pushNames[normalizedJid] || normalizedJid : null;
 }
 
 async function getLidUser(jid, onWhatsAppFunc) {
     return (await onWhatsAppFunc(jid))[0]?.lid || jid;
 }
 
-function getPnUser(jid, user, pushNames) {
-    if (user.alt) return user.alt;
-    let targetName = getPushName(jid);
-    if (targetName) {
-        for (let pushName in pushNames) {
-            if (pushNames[key] === targetName && Baileys.isJidUser(pushName)) return pushName;
-        }
-    }
-    return jid;
-}
+function checkOwner(key, ownerList, botJid) {
+    if (!key || !Array.isArray(ownerList) || !ownerList.length) return false;
 
-function checkCitation(msg, citationName, citation, botJid) {
-    if (!msg || !citationName || !citation[citationName]) return false;
-
-    const citationJids = citation[citationName];
-    const senderJid = Baileys.jidNormalizedUser(typeof msg === "string" ? msg : (msg.key.participant || msg.key.remoteJid));
-
-    return citationJids.some(citationJid => {
-        const isBotCitation = citationJid === "bot" || Baileys.areJidsSameUser(citationJid, botJid);
-        const isFromBot = msg.key?.fromMe && !msg.key.id?.startsWith("3EB0") && Baileys.areJidsSameUser(senderJid, botJid);
-        return Baileys.areJidsSameUser(citationJid, senderJid) || (isBotCitation && isFromBot);
+    const senderJid = Baileys.jidNormalizedUser(typeof key === "string" ? key : (key.participant || key.remoteJid));
+    return ownerList.some(ownerJid => {
+        const isBotOwner = ownerJid === "bot" || Baileys.areJidsSameUser(ownerJid, botJid);
+        const isFromBot = key?.fromMe && !key.id?.startsWith("3EB0") && Baileys.areJidsSameUser(senderJid, botJid);
+        return Baileys.areJidsSameUser(ownerJid, senderJid) || (isBotOwner && isFromBot);
     });
 }
 
 module.exports = {
-    extractMessageContent,
     getMessageType,
     getTextFromMsg,
     getDb,
     getPushName,
-    getId,
     getLidUser,
-    checkCitation
+    checkOwner
 };

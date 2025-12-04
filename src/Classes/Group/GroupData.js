@@ -19,15 +19,12 @@ class GroupData {
     async name() {
         return await this.getMetadata("subject");
     }
-
     async description() {
         return await this.getMetadata("desc");
     }
-
     async owner() {
         return await this.getMetadata("owner");
     }
-
     async members() {
         return await this.getMetadata("participants");
     }
@@ -51,35 +48,30 @@ class GroupData {
     async open() {
         await this.updateSetting("not_announcement");
     }
-
     async close() {
         await this.updateSetting("announcement");
     }
-
     async lock() {
         await this.updateSetting("locked");
     }
-
     async unlock() {
         await this.updateSetting("unlocked");
     }
 
     async membersUpdate(members, action) {
-        return await this.ctx._client.groupParticipantsUpdate(this.jid, Array.isArray(members) ? members : [members], action);
+        const membersArray = Array.isArray(members) ? members : [members];
+        return await this.ctx._client.groupParticipantsUpdate(this.jid, membersArray, action);
     }
 
     async kick(members) {
         return await this.membersUpdate(members, "remove");
     }
-
     async add(members) {
         return await this.membersUpdate(members, "add");
     }
-
     async promote(members) {
         return await this.membersUpdate(members, "promote");
     }
-
     async demote(members) {
         return await this.membersUpdate(members, "demote");
     }
@@ -87,11 +79,9 @@ class GroupData {
     async leave() {
         await this.ctx._client.groupLeave(this.jid);
     }
-
     async inviteCode() {
         return await this.ctx._client.groupInviteCode(this.jid);
     }
-
     async revokeInviteCode() {
         return await this.ctx._client.groupRevokeInvite(this.jid);
     }
@@ -101,13 +91,13 @@ class GroupData {
     }
 
     async pendingMembersUpdate(members, action) {
-        return await this.ctx._client.groupRequestParticipantsUpdate(this.jid, Array.isArray(members) ? members : [members], action);
+        const membersArray = Array.isArray(members) ? members : [members];
+        return await this.ctx._client.groupRequestParticipantsUpdate(this.jid, membersArray, action);
     }
 
     async approvePendingMembers(members) {
         return await this.pendingMembersUpdate(members, "approve");
     }
-
     async rejectPendingMembers(members) {
         return await this.pendingMembersUpdate(members, "reject");
     }
@@ -117,7 +107,8 @@ class GroupData {
     }
 
     async membersCanAddMemberMode(mode) {
-        return await this.ctx._client.groupMemberAddMode(this.jid, mode === "on" ? "all_member_add" : "admin_add");
+        const addMode = mode === "on" ? "all_member_add" : "admin_add";
+        return await this.ctx._client.groupMemberAddMode(this.jid, addMode);
     }
 
     async joinApproval(mode) {
@@ -126,27 +117,28 @@ class GroupData {
 
     async isMemberExist(jid) {
         const members = await this.members();
-        return members.some(member => Baileys.areJidsSameUser(member.jid, Baileys.jidNormalizedUser(jid)));
+        const normalizedJid = Baileys.jidNormalizedUser(jid);
+        return members.some(member => Baileys.areJidsSameUser(member.jid, normalizedJid));
     }
 
     async isAdmin(jid) {
         const members = await this.members();
-        return members.some(member => Baileys.areJidsSameUser(member.jid, Baileys.jidNormalizedUser(jid)) && !!member.admin);
+        const normalizedJid = Baileys.jidNormalizedUser(jid);
+        return await members.some(member => Baileys.areJidsSameUser(member.jid, normalizedJid) && !!member.admin);
     }
 
     async isOwner(jid) {
         const members = await this.members();
-        return members.some(member => Baileys.areJidsSameUser(member.jid, Baileys.jidNormalizedUser(jid)) && member.admin === "superadmin");
+        const normalizedJid = Baileys.jidNormalizedUser(jid);
+        return await members.some(member => Baileys.areJidsSameUser(member.jid, normalizedJid) && member.admin === "superadmin");
     }
 
     async isSenderAdmin() {
         return await this.isAdmin(this.ctx._sender.jid);
     }
-
     async isSenderOwner() {
         return await this.isOwner(this.ctx._sender.jid);
     }
-
     async isBotAdmin() {
         return await this.isAdmin(this.ctx.me.id);
     }

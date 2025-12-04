@@ -27,7 +27,7 @@ class VCardBuilder {
 
     build() {
         const cleanNumber = this.number.replace(/\s/g, "");
-        const card = {
+        return vCard.generate({
             version: [{
                 value: "3.0"
             }],
@@ -44,8 +44,7 @@ class VCardBuilder {
                     waid: [cleanNumber]
                 }
             }]
-        };
-        return vCard.generate(card);
+        });
     }
 }
 

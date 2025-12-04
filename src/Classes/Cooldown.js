@@ -26,7 +26,6 @@ class Cooldown extends EventEmitter {
     get onCooldown() {
         return Boolean(this.timeout);
     }
-
     get timeleft() {
         return this.timeout;
     }

@@ -1,4 +1,4 @@
-const MessageType = {
+module.exports = {
     conversation: "conversation",
     senderKeyDistributionMessage: "senderKeyDistributionMessage",
     imageMessage: "imageMessage",
@@ -88,5 +88,3 @@ const MessageType = {
     groupStatusMessageV2: "groupStatusMessageV2",
     botForwardedMessage: "botForwardedMessage"
 };
-
-module.exports = MessageType;

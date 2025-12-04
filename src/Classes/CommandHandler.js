@@ -19,7 +19,7 @@ class CommandHandler {
             absolute: true
         }).sort((a, b) => a.localeCompare(b));
 
-        files.forEach(file => {
+        for (const file of files) {
             const cmdObj = require(file);
             if (!cmdObj.type || cmdObj.type === "command") {
                 this._bot.cmd.set(cmdObj.name, cmdObj);
@@ -28,7 +28,7 @@ class CommandHandler {
                 this._bot.hearsMap.set(cmdObj.name, cmdObj);
                 if (isShowLog) this.consolefy.success(`Loaded Hears: ${cmdObj.name}`);
             }
-        });
+        }
 
         if (isShowLog) this.consolefy.groupEnd();
     }

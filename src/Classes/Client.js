@@ -24,7 +24,7 @@ class Client {
         this.alwaysOnline = opts.alwaysOnline ?? true;
         this.selfReply = opts.selfReply ?? false;
         this.databaseDir = opts.databaseDir ?? null;
-        this.rawCitation = opts.citation ?? {};
+        this.owner = opts.owner ?? [];
 
         this.ev = new EventEmitter();
         this.cmd = new Map();
@@ -32,7 +32,6 @@ class Client {
         this.hearsMap = new Map();
         this.middlewares = new Map();
         this.consolefy = new Consolefy();
-        this.citation = {};
         this.prefix = /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i;
         this.logger = pino({
             level: "fatal"
@@ -86,28 +85,23 @@ class Client {
         }
     }
 
-    async _registerCitation() {
-        if (!Object.keys(this.rawCitation).length) return;
+    async _registerOwner() {
+        if (!Array.isArray(this.owner) || !this.owner.length) return;
 
-        const registeredCitation = {};
-        for (const [citationName, citationIds] of Object.entries(this.rawCitation)) {
-            if (!Array.isArray(citationIds)) registeredCitation[citationName] = citationIds;
-            const registeredJids = [];
-            for (const citationId of citationIds) {
-                if (citationId === "bot") registeredJids.push("bot");
-                const citationJid = citationId + Baileys.S_WHATSAPP_NET;
-                const citationLid = await Functions.getLidUser(citationJid, this.core.onWhatsApp);
-                if (citationLid) {
-                    registeredJids.push(Baileys.jidNormalizedUser(citationLid));
-                    registeredJids.push(citationJid);
-                } else {
-                    registeredJids.push(citationJid);
-                }
+        const registeredOwner = [];
+        for (const ownerId of this.owner) {
+            if (ownerId === "bot") {
+                registeredOwner.push("bot");
+                continue;
             }
-            registeredCitation[citationName] = [...registeredJids];
+
+            const ownerJid = ownerId + Baileys.S_WHATSAPP_NET;
+            const ownerLid = await Functions.getLidUser(ownerJid, this.core.onWhatsApp);
+            registeredOwner.push(ownerJid);
+            if (ownerLid) registeredOwner.push(Baileys.jidNormalizedUser(ownerLid));
         }
 
-        this.citation = registeredCitation;
+        this.owner = registeredOwner;
     }
 
     async _fixUsersDb() {
@@ -115,23 +109,29 @@ class Client {
 
         const users = this.db.getCollection("users") || this.db.createCollection("users");
         const altUsers = users.getMany(user => user.alt);
-        const lidMap = new Map(users.getMany(user => !user.alt).map(user => [user.jid, user]));
+        if (!altUsers.length) return;
+
+        const primaryMap = new Map(users.getMany(user => !user.alt).map(user => [user.jid, user]));
+
         for (const altUser of altUsers) {
-            if (!Baileys.isJidUser(altUser.alt)) return;
-            const citationLid = await Functions.getLidUser(altUser.alt, this.core.onWhatsApp);
-            if (!citationLid) return;
-            const lidJid = Baileys.jidNormalizedUser(citationLid);
-            let lidUser = lidMap.get(lidJid);
-            if (lidUser) {
-                Object.entries(altUser).forEach(([key, value]) => {
-                    if (key === "alt" || key === "jid") return;
-                    if (typeof value === "number" && typeof lidUser[key] === "number") {
-                        lidUser[key] = Math.max(lidUser[key], value);
-                    } else if (lidUser[key] === undefined) {
-                        lidUser[key] = value;
+            if (!Baileys.isJidUser(altUser.alt)) continue;
+
+            const userLid = await Functions.getLidUser(altUser.alt, this.core.onWhatsApp);
+            if (!userLid) continue;
+
+            const lidJid = Baileys.jidNormalizedUser(userLid);
+            const primaryUser = primaryMap.get(lidJid);
+
+            if (primaryUser) {
+                for (const [key, value] of Object.entries(altUser)) {
+                    if (key === "alt" || key === "jid") continue;
+                    if (typeof value === "number" && typeof primaryUser[key] === "number") {
+                        primaryUser[key] = Math.max(primaryUser[key], value);
+                    } else if (primaryUser[key] === undefined) {
+                        primaryUser[key] = value;
                     }
-                });
-                users.update(user => Object.assign(user, lidUser), user => user.jid === lidJid);
+                }
+                users.update(user => Object.assign(user, primaryUser), user => user.jid === lidJid);
             } else {
                 const {
                     alt,
@@ -141,7 +141,7 @@ class Client {
                     jid: lidJid
                 };
                 users.create(newUser);
-                lidMap.set(lidJid, newUser);
+                primaryMap.set(lidJid, newUser);
             }
         }
     }
@@ -168,13 +168,12 @@ class Client {
             } else if (connection === "open") {
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
-                await this._registerCitation();
+                await this._registerOwner();
                 setTimeout(() => this._fixUsersDb(), 10000);
             }
         });
 
         this.core.ev.on("creds.update", this.saveCreds);
-
         this._loadPushNames();
 
         this.core.ev.on("messages.upsert", async (event) => {
@@ -199,7 +198,9 @@ class Client {
                     }
                 };
                 const ctx = new Ctx({
-                    used: {},
+                    used: {
+                        upsert: text
+                    },
                     args: [],
                     self,
                     client: this.core
@@ -217,19 +218,19 @@ class Client {
 
         this.core.ev.on("group-participants.update", async (event) => {
             await this._setGroupCache(event.id);
-            event.participants.forEach(participant => {
+            for (const participant of event.participants) {
                 const ctx = {
                     id: event.id,
                     participant
                 };
                 this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, ctx);
-            });
+            }
         });
 
-        this.core.ev.on("call", (event) => {
-            event.forEach(ctx => {
+        this.core.ev.on("call", (events) => {
+            for (const ctx of events) {
                 this.ev.emit(Events.Call, ctx);
-            });
+            }
         });
     }
 
@@ -249,8 +250,8 @@ class Client {
         });
     }
 
-    checkCitation(msg, citationName) {
-        return Functions.checkCitation(msg, citationName, this.citation, Baileys.jidNormalizedUser(this.core.user.id));
+    checkOwner(key) {
+        return Functions.checkOwner(key, this.owner, Baileys.jidNormalizedUser(this.core.user.id));
     }
 
     getPushName(jid) {
@@ -258,21 +259,16 @@ class Client {
     }
 
     getId(jid) {
-        return Functions.getId(jid);
+        return Baileys.jidDecode(jid)?.user || jid;
     }
 
     async getLidUser(jid) {
         return await Functions.getLidUser(jid, this.core.onWhatsApp);
     }
 
-    getPnUser(jid) {
-        const users = this._db.getCollection("users") || this._db.createCollection("users");
-        const user = Functions.getDb(users, jid);
-        return Functions.getPnUser(jid, user, this.pushNames);
-    }
-
     getDb(collection, jid) {
-        return Functions.getDb(this.db.getCollection(collection) || this.db.createCollection(collection), jid);
+        const coll = this.db.getCollection(collection) || this.db.createCollection(collection);
+        return Functions.getDb(coll, jid);
     }
 
     async launch() {
@@ -313,7 +309,11 @@ class Client {
         this.store.readFromFile(this.storePath);
         setInterval(() => this.store.writeToFile(this.storePath), 10000);
 
-        this.store.cleanupMessages = (cutoff) => Object.keys(this.store.messages).forEach(jid => this.store.messages[jid] = this.store.messages[jid].filter((msg) => msg.messageTimestamp * 1000 > cutoff));
+        this.store.cleanupMessages = (cutoff) => {
+            for (const jid of Object.keys(this.store.messages)) {
+                this.store.messages[jid] = this.store.messages[jid].filter(msg => msg.messageTimestamp * 1000 > cutoff);
+            }
+        };
 
         setInterval(() => this.store.cleanupMessages(Date.now() - (7 * 24 * 60 * 60 * 1000)), 24 * 60 * 60 * 1000);
     }
@@ -340,7 +340,7 @@ class Client {
             return;
         }
 
-        const PHONENUMBER_MCC = (await (await fetch("https://raw.githubusercontent.com/Itsukichann/Baileys/refs/heads/master/lib/Defaults/phonenumber-mcc.json")).json());
+        const PHONENUMBER_MCC = await (await fetch("https://raw.githubusercontent.com/Itsukichann/Baileys/refs/heads/master/lib/Defaults/phonenumber-mcc.json")).json();
         if (!Object.keys(PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
             this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code)");
             this.consolefy.resetTag();

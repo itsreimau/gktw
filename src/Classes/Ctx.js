@@ -21,17 +21,26 @@ class Ctx {
     get bot() {
         return this._self;
     }
-
     get core() {
         return this._client;
     }
-
     get id() {
         return Baileys.jidNormalizedUser(this._msg.key.remoteJid);
     }
-
     get sender() {
-        return this._sender;
+        return {
+            ...this._sender,
+            isOwner: () => Functions.checkOwner(this._msg.key, this._self.owner, this.me.id)
+        };
+    }
+    get store() {
+        return this._self.store;
+    }
+    get used() {
+        return this._used;
+    }
+    get args() {
+        return this._args;
     }
 
     get me() {
@@ -44,18 +53,6 @@ class Ctx {
         };
     }
 
-    get store() {
-        return this._self.store;
-    }
-
-    get used() {
-        return this._used;
-    }
-
-    get args() {
-        return this._args;
-    }
-
     get db() {
         const users = this._db.getCollection("users") || this._db.createCollection("users");
         const groups = this._db.getCollection("groups") || this._db.createCollection("groups");
@@ -66,18 +63,6 @@ class Ctx {
             user: Functions.getDb(users, this._sender.jid),
             group: this.isGroup() ? Functions.getDb(groups, this.id) : null
         };
-    }
-
-    get citation() {
-        return new Proxy({}, {
-            get: (target, prop) => {
-                if (typeof prop === "string" && prop.startsWith("is")) {
-                    const citationName = prop.substring(2).toLowerCase();
-                    return Functions.checkCitation(this._msg, citationName, this._self.citation, this.me.id);
-                }
-                return null;
-            }
-        });
     }
 
     async block(jid) {
@@ -104,14 +89,12 @@ class Ctx {
     }
 
     group(jid = this.id) {
-        if (!Baileys.isJidGroup(jid)) return null;
-        return new GroupData(this, jid);
+        return Baileys.isJidGroup(jid) ? new GroupData(this, jid) : null;
     }
 
     isGroup() {
         return Baileys.isJidGroup(this.id);
     }
-
     isPrivate() {
         return Baileys.isJidUser(this.id) || Baileys.isLidUser(this.id);
     }
@@ -133,19 +116,16 @@ class Ctx {
     }
 
     getId(jid = this._sender.jid) {
-        return Functions.getId(jid);
+        return this._self.getId(jid);
     }
 
     async getLidUser(jid = this._sender.jid) {
         return await Functions.getLidUser(jid, this._client.onWhatsApp);
     }
 
-    getPnUser(jid) {
-        return Functions.getPnUser(jid, ctx.db.user, this._self.pushNames);
-    }
-
     getDb(collection, jid = this._sender.jid) {
-        return Functions.getDb(this._db.getCollection(collection) || this._db.createCollection(collection), jid);
+        const coll = this._db.getCollection(collection) || this._db.createCollection(collection);
+        return Functions.getDb(coll, jid);
     }
 
     async _downloadMediaMessage(msg) {
@@ -160,7 +140,7 @@ class Ctx {
     }
 
     get msg() {
-        const message = Functions.extractMessageContent(this._msg.message);
+        const message = Baileys.extractMessageContent(this._msg.message);
         return {
             ...this._msg,
             message,
@@ -169,7 +149,9 @@ class Ctx {
                 message
             }),
             upload: async () => {
-                const buffer = await this.msg.download();
+                const buffer = await this._downloadMediaMessage({
+                    message
+                });
                 return Buffer.isBuffer(buffer) ? await Baileys.uploadFile(buffer) : null;
             }
         };
@@ -179,7 +161,7 @@ class Ctx {
         const msgContext = this._msg.message?.[this.getMessageType()]?.contextInfo ?? {};
         if (!msgContext?.quotedMessage) return null;
 
-        const message = Functions.extractMessageContent(msgContext.quotedMessage) ?? {};
+        const message = Baileys.extractMessageContent(msgContext.quotedMessage) ?? {};
         const chat = Baileys.jidNormalizedUser(msgContext.remoteJid || this.id);
         const sender = Baileys.jidNormalizedUser(msgContext.participant || chat);
 
@@ -202,7 +184,9 @@ class Ctx {
                 message
             }),
             upload: async () => {
-                const buffer = await this.quoted.download();
+                const buffer = await this._downloadMediaMessage({
+                    message
+                });
                 return Buffer.isBuffer(buffer) ? await Baileys.uploadFile(buffer) : null;
             }
         };
@@ -213,20 +197,20 @@ class Ctx {
     }
 
     async reply(content, options = {}) {
-        if (typeof content === "string") content = {
+        const messageContent = typeof content === "string" ? {
             text: content
-        };
-        return await this._client.sendMessage(this.id, content, {
+        } : content;
+        return await this._client.sendMessage(this.id, messageContent, {
             ...options,
             quoted: this._msg
         });
     }
 
     async replyWithJid(jid, content, options = {}) {
-        if (typeof content === "string") content = {
+        const messageContent = typeof content === "string" ? {
             text: content
-        };
-        return await this._client.sendMessage(jid, content, {
+        } : content;
+        return await this._client.sendMessage(jid, messageContent, {
             ...options,
             quoted: this._msg
         });
@@ -263,7 +247,6 @@ class Ctx {
     async simulateTyping() {
         await this._client.sendPresenceUpdate("composing", this.id);
     }
-
     async simulateRecording() {
         await this._client.sendPresenceUpdate("recording", this.id);
     }
@@ -276,11 +259,9 @@ class Ctx {
     }
 
     awaitMessages(args) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const collector = this.MessageCollector(args);
-            collector.once("end", (collected, reason) => {
-                resolve(collected);
-            });
+            collector.once("end", (collected) => resolve(collected));
         });
     }
 }
