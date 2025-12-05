@@ -24,6 +24,7 @@ class Client {
         this.alwaysOnline = opts.alwaysOnline ?? true;
         this.selfReply = opts.selfReply ?? false;
         this.databaseDir = opts.databaseDir ?? null;
+        this.prefix = opts.prefix ?? /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i;
         this.owner = opts.owner ?? [];
 
         this.ev = new EventEmitter();
@@ -32,7 +33,6 @@ class Client {
         this.hearsMap = new Map();
         this.middlewares = new Map();
         this.consolefy = new Consolefy();
-        this.prefix = /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i;
         this.logger = pino({
             level: "fatal"
         });
