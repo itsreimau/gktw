@@ -1,4 +1,5 @@
 const Baileys = require("baileys");
+const { Gktw } = require("../index.js");
 const Functions = require("../Helper/Functions.js");
 const Group = require("./Group/Group.js");
 const GroupData = require("./Group/GroupData.js");
@@ -9,12 +10,10 @@ class Ctx {
         this._self = opts.self;
         this._client = opts.client;
         this._msg = this._self.m;
-        this._sender = {
-            jid: Baileys.jidNormalizedUser(this._msg.key.participant || this._msg.key.remoteJid),
-            pushName: this._msg.pushName
-        };
+        this._sender = this._self.sender;
         this._used = opts.used;
         this._args = opts.args;
+        this.text = opts.text;
         this._db = this._self.db;
     }
 
@@ -25,12 +24,16 @@ class Ctx {
         return this._client;
     }
     get id() {
-        return Baileys.jidNormalizedUser(this._msg.key.remoteJid);
+        return this._msg.key.remoteJid;
     }
     get sender() {
         return {
             ...this._sender,
-            isOwner: () => Functions.checkOwner(this._msg.key, this._self.owner, this.me.id)
+            isOwner: () => Functions.checkOwner(this._sender.lid, this._self.owner, {
+                id: this._msg.key.id,
+                fromMe: this._msg.key.fromMe,
+                jid: this.me.lid
+            })
         };
     }
     get store() {
@@ -42,13 +45,57 @@ class Ctx {
     get args() {
         return this._args;
     }
+    get text() {
+        return this._text;
+    }
+    async target(priority = ["quoted", "mentioned", "text"]) {
+        let targetJid = null;
+        for (const source of priority) {
+            switch (source) {
+                case "quoted":
+                    if (this.quoted?.sender) {
+                        targetJid = this.quoted.sender;
+                        break;
+                    }
+                    continue;
+                case "mentioned":
+                    const mentioned = this.getMentioned();
+                    if (mentioned.length > 0) {
+                        targetJid = mentioned[0];
+                        break;
+                    }
+                    continue;
+                case "text":
+                    if (this.args.length > 0) {
+                        const extractedNumber = this.args[0].replace(/[^\d]/g, "");
+                        if (extractedNumber) {
+                            targetJid = extractedNumber + Baileys.S_WHATSAPP_NET;
+                            break;
+                        }
+                    }
+                    continue;
+                case "text_group":
+                    if (this.args.length > 0) {
+                        const extractedNumber = this.args[0].replace(/[^\d]/g, "");
+                        if (extractedNumber) {
+                            targetJid = extractedNumber + Gktw.G_US;
+                            break;
+                        }
+                    }
+                    continue;
+            }
+            if (targetJid) return await this.getLidUser(targetJid);
+        }
+
+        return null;
+    }
 
     get me() {
         const user = this._client.user;
         if (!user) return null;
         return {
-            id: Baileys.jidNormalizedUser(user.id),
-            lid: Baileys.jidNormalizedUser(user.lid),
+            id: user.id,
+            lid: user.lid,
             readyAt: this._self.readyAt
         };
     }
@@ -65,23 +112,20 @@ class Ctx {
         };
     }
 
-    async block(jid) {
-        const target = jid ? Baileys.jidNormalizedUser(jid) : this._sender.jid;
-        return this._client.updateBlockStatus(target, "block");
+    async block(jid = this._sender.jid) {
+        return this._client.updateBlockStatus(jid, "block");
     }
 
-    async unblock(jid) {
-        const target = jid ? Baileys.jidNormalizedUser(jid) : this._sender.jid;
-        return this._client.updateBlockStatus(target, "unblock");
+    async unblock(jid = this._sender.jid) {
+        return this._client.updateBlockStatus(jid, "unblock");
     }
 
     async bio(content) {
         await this._client.updateProfileStatus(content);
     }
 
-    async fetchBio(jid) {
-        const target = jid ? Baileys.jidNormalizedUser(jid) : this._sender.jid;
-        return await this._client.fetchStatus(target);
+    async fetchBio(jid = this._sender.jid) {
+        return await this._client.fetchStatus(jid);
     }
 
     get groups() {
@@ -162,8 +206,8 @@ class Ctx {
         if (!msgContext?.quotedMessage) return null;
 
         const message = Baileys.extractMessageContent(msgContext.quotedMessage) ?? {};
-        const chat = Baileys.jidNormalizedUser(msgContext.remoteJid || this.id);
-        const sender = Baileys.jidNormalizedUser(msgContext.participant || chat);
+        const chat = msgContext.remoteJid || this.id;
+        const sender = msgContext.participant || chat;
 
         return {
             text: Functions.getTextFromMsg({
@@ -256,13 +300,6 @@ class Ctx {
             self: this._self,
             msg: this._msg
         }, args);
-    }
-
-    awaitMessages(args) {
-        return new Promise((resolve) => {
-            const collector = this.MessageCollector(args);
-            collector.once("end", (collected) => resolve(collected));
-        });
     }
 }
 

@@ -36,25 +36,22 @@ function getTextFromMsg(msg) {
 }
 
 function getDb(collection, jid) {
-    const normalizedJid = Baileys.jidNormalizedUser(jid);
-
     if (collection.name === "users") {
-        if (Baileys.isLidUser(normalizedJid)) return collection.getOrCreate(user => user.jid === normalizedJid, {
-            jid: normalizedJid
+        if (Baileys.isLidUser(jid)) return collection.getOrCreate(user => user.jid === jid, {
+            jid: jid
         });
-        if (Baileys.isJidUser(normalizedJid)) return collection.getOrCreate(user => user.alt === normalizedJid, {
-            alt: normalizedJid
+        if (Baileys.isJidUser(jid)) return collection.getOrCreate(user => user.alt === jid, {
+            alt: jid
         });
     }
 
-    if (collection.name === "groups" && Baileys.isJidGroup(normalizedJid)) return collection.getOrCreate(group => group.jid === normalizedJid, {
-        jid: normalizedJid
+    if (collection.name === "groups" && Baileys.isJidGroup(jid)) return collection.getOrCreate(group => group.jid === jid, {
+        jid: jid
     });
 }
 
 function getPushName(jid, pushNames) {
-    const normalizedJid = Baileys.jidNormalizedUser(jid);
-    return normalizedJid ? pushNames[normalizedJid] || normalizedJid : null;
+    return pushNames[jid] || jid: null;
 }
 
 function getId(jid) {
@@ -62,17 +59,16 @@ function getId(jid) {
 }
 
 async function getLidUser(jid, onWhatsAppFunc) {
+    if (Baileys.isLidUser(jid)) return jid;
     return (await onWhatsAppFunc(jid))[0]?.lid || jid;
 }
 
-function checkOwner(key, ownerList, botJid) {
-    if (!key || !Array.isArray(ownerList) || !ownerList.length) return false;
-
-    const senderJid = Baileys.jidNormalizedUser(typeof key === "string" ? key : (key.participant || key.remoteJid));
+function checkOwner(jid, ownerList, self) {
+    if (!jid || !Array.isArray(ownerList) || !ownerList.length) return false;
     return ownerList.some(ownerJid => {
-        const isBotOwner = ownerJid === "bot" || Baileys.areJidsSameUser(ownerJid, botJid);
-        const isFromBot = key?.fromMe && !key.id?.startsWith("3EB0") && Baileys.areJidsSameUser(senderJid, botJid);
-        return Baileys.areJidsSameUser(ownerJid, senderJid) || (isBotOwner && isFromBot);
+        const isBotOwner = ownerJid === "bot" || Baileys.areJidsSameUser(ownerJid, self.jid);
+        const isFromBot = self?.fromMe && !self.id?.startsWith("3EB0") && Baileys.areJidsSameUser(senderJid, self.jid);
+        return Baileys.areJidsSameUser(ownerJid, jid) || (isBotOwner && isFromBot);
     });
 }
 

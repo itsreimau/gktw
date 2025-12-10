@@ -35,7 +35,8 @@ async function _processCommands(self, m, _runMiddlewares) {
 
     const {
         commandName,
-        args
+        args,
+        text
     } = _parseCommand(m.text, selectedPrefix);
     if (!commandName) return;
 
@@ -48,6 +49,7 @@ async function _processCommands(self, m, _runMiddlewares) {
             command: commandName
         },
         args,
+        text,
         self,
         client: self.core
     });
@@ -68,13 +70,15 @@ function _parseCommand(content, selectedPrefix) {
     const remaining = content.slice(selectedPrefix.length).trim();
     if (!remaining) return {
         commandName: null,
-        args: []
+        args: [],
+        text: ""
     };
 
     const parts = remaining.split(/\s+/);
     return {
         commandName: parts[0]?.toLowerCase(),
-        args: parts.slice(1)
+        args: parts.slice(1),
+        text: remaining
     };
 }
 

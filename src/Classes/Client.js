@@ -98,7 +98,7 @@ class Client {
             const ownerJid = ownerId + Baileys.S_WHATSAPP_NET;
             const ownerLid = await Functions.getLidUser(ownerJid, this.core.onWhatsApp);
             registeredOwner.push(ownerJid);
-            if (ownerLid) registeredOwner.push(Baileys.jidNormalizedUser(ownerLid));
+            if (ownerLid) registeredOwner.push(ownerLid);
         }
 
         this.owner = registeredOwner;
@@ -119,9 +119,7 @@ class Client {
             const userLid = await Functions.getLidUser(altUser.alt, this.core.onWhatsApp);
             if (!userLid) continue;
 
-            const lidJid = Baileys.jidNormalizedUser(userLid);
-            const primaryUser = primaryMap.get(lidJid);
-
+            const primaryUser = primaryMap.get(userLid);
             if (primaryUser) {
                 for (const [key, value] of Object.entries(altUser)) {
                     if (key === "alt" || key === "jid") continue;
@@ -183,7 +181,7 @@ class Client {
 
                 if (Baileys.isJidGroup(message.key.remoteJid)) await this._setGroupCache(message.key.remoteJid);
 
-                const sender = Baileys.jidNormalizedUser(message.key.participant || message.key.remoteJid);
+                const sender = message.key.participant || message.key.remoteJid;
                 if (message.pushName && this.pushNames[sender] !== message.pushName) {
                     this.pushNames[sender] = message.pushName;
                     this._savePushnames();
@@ -192,6 +190,11 @@ class Client {
                 const text = Functions.getTextFromMsg(message) ?? "";
                 const self = {
                     ...this,
+                    sender: {
+                        jid: sender,
+                        lid: await Functions.getLidUser(sender, this.core.onWhatsApp),
+                        pushName: message.pushName
+                    },
                     m: {
                         ...message,
                         text
@@ -250,8 +253,11 @@ class Client {
         });
     }
 
-    checkOwner(key) {
-        return Functions.checkOwner(key, this.owner, Baileys.jidNormalizedUser(this.core.user.id));
+    checkOwner(jid, self) {
+        return Functions.checkOwner(jid, this.owner, {
+            ...self,
+            jid: this.core.user.lid
+        });
     }
 
     getPushName(jid) {
@@ -340,8 +346,7 @@ class Client {
             return;
         }
 
-        const PHONENUMBER_MCC = await (await fetch("https://raw.githubusercontent.com/Itsukichann/Baileys/refs/heads/master/lib/Defaults/phonenumber-mcc.json")).json();
-        if (!Object.keys(PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
+        if (!Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
             this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code)");
             this.consolefy.resetTag();
             return;

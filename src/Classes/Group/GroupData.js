@@ -117,30 +117,27 @@ class GroupData {
 
     async isMemberExist(jid) {
         const members = await this.members();
-        const normalizedJid = Baileys.jidNormalizedUser(jid);
-        return members.some(member => Baileys.areJidsSameUser(member.jid, normalizedJid));
+        return members.some(member => Baileys.areJidsSameUser(member.lid, jid));
     }
 
     async isAdmin(jid) {
         const members = await this.members();
-        const normalizedJid = Baileys.jidNormalizedUser(jid);
-        return await members.some(member => Baileys.areJidsSameUser(member.jid, normalizedJid) && !!member.admin);
+        return await members.some(member => Baileys.areJidsSameUser(member.lid, jid) && !!member.admin);
     }
 
     async isOwner(jid) {
         const members = await this.members();
-        const normalizedJid = Baileys.jidNormalizedUser(jid);
-        return await members.some(member => Baileys.areJidsSameUser(member.jid, normalizedJid) && member.admin === "superadmin");
+        return await members.some(member => Baileys.areJidsSameUser(member.lid, jid) && member.admin === "superadmin");
     }
 
     async isSenderAdmin() {
-        return await this.isAdmin(this.ctx._sender.jid);
+        return await this.isAdmin(this.ctx._sender.lid);
     }
     async isSenderOwner() {
-        return await this.isOwner(this.ctx._sender.jid);
+        return await this.isOwner(this.ctx._sender.lid);
     }
     async isBotAdmin() {
-        return await this.isAdmin(this.ctx.me.id);
+        return await this.isAdmin(this.ctx.me.lid);
     }
 }
 

@@ -27,7 +27,6 @@ module.exports = {
         analyzeBug: analyzeMessage,
         didYouMean,
         mime,
-        G_US: "@g.us",
-        LID: "@lid"
+        G_US: "@g.us"
     }
 };

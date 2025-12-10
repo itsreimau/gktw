@@ -5,7 +5,7 @@ const Events = require("../../Constant/Events.js");
 class MessageCollector extends Collector {
     constructor(clientReq, opts = {}) {
         super(opts);
-        this.jid = Baileys.jidNormalizedUser(clientReq.msg.key.remoteJid);
+        this.jid = clientReq.msg.key.remoteJid;
 
         this.handleCollect = (ctx) => this.collect(ctx);
         clientReq.self.ev.on(Events.MessagesUpsert, this.handleCollect);
