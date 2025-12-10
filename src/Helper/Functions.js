@@ -51,7 +51,7 @@ function getDb(collection, jid) {
 }
 
 function getPushName(jid, pushNames) {
-    return pushNames[jid] || jid: null;
+    return pushNames[jid] || jid;
 }
 
 function getId(jid) {
