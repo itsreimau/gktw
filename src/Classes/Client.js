@@ -129,17 +129,17 @@ class Client {
                         primaryUser[key] = value;
                     }
                 }
-                users.update(user => Object.assign(user, primaryUser), user => user.jid === lidJid);
+                users.update(user => Object.assign(user, primaryUser), user => user.jid === primaryUser);
             } else {
                 const {
                     alt,
                     ...newUser
                 } = {
                     ...altUser,
-                    jid: lidJid
+                    jid: primaryUser
                 };
                 users.create(newUser);
-                primaryMap.set(lidJid, newUser);
+                primaryMap.set(primaryUser, newUser);
             }
         }
     }

@@ -1,5 +1,4 @@
 const Baileys = require("baileys");
-const { Gktw } = require("../index.js");
 const Functions = require("../Helper/Functions.js");
 const Group = require("./Group/Group.js");
 const GroupData = require("./Group/GroupData.js");
@@ -13,7 +12,7 @@ class Ctx {
         this._sender = this._self.sender;
         this._used = opts.used;
         this._args = opts.args;
-        this.text = opts.text;
+        this._text = opts.text;
         this._db = this._self.db;
     }
 
@@ -78,7 +77,7 @@ class Ctx {
                     if (this.args.length > 0) {
                         const extractedNumber = this.args[0].replace(/[^\d]/g, "");
                         if (extractedNumber) {
-                            targetJid = extractedNumber + Gktw.G_US;
+                            targetJid = `${extractedNumber}@g.us`;
                             break;
                         }
                     }

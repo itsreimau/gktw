@@ -26,7 +26,6 @@ module.exports = {
     Gktw: {
         analyzeBug: analyzeMessage,
         didYouMean,
-        mime,
-        G_US: "@g.us"
+        mime
     }
 };
