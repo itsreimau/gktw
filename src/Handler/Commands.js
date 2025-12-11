@@ -67,7 +67,7 @@ function _findMatchingPrefix(content, prefix) {
 }
 
 function _parseCommand(content, selectedPrefix) {
-    const remaining = content.slice(selectedPrefix.length).trim();
+    const remaining = content.slice(selectedPrefix.length);
     if (!remaining) return {
         commandName: null,
         args: [],
@@ -78,7 +78,7 @@ function _parseCommand(content, selectedPrefix) {
     return {
         commandName: parts[0]?.toLowerCase(),
         args: parts.slice(1),
-        text: remaining
+        text: remaining.slice(parts[0].length)
     };
 }
 

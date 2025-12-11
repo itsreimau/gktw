@@ -67,7 +67,7 @@ function checkOwner(jid, ownerList, self) {
     if (!jid || !Array.isArray(ownerList) || !ownerList.length) return false;
     return ownerList.some(ownerJid => {
         const isBotOwner = ownerJid === "bot" || Baileys.areJidsSameUser(ownerJid, self.jid);
-        const isFromBot = self?.fromMe && !self.id?.startsWith("3EB0") && Baileys.areJidsSameUser(senderJid, self.jid);
+        const isFromBot = self?.fromMe && !self.id?.startsWith("3EB0") && Baileys.areJidsSameUser(jid, self.jid);
         return Baileys.areJidsSameUser(ownerJid, jid) || (isBotOwner && isFromBot);
     });
 }

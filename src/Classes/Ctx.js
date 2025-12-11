@@ -47,20 +47,49 @@ class Ctx {
     get text() {
         return this._text;
     }
+    async flag(rules = {}) {
+        const flags = {
+            input: ""
+        };
+        const args = this._text.split(" ") || [];
+
+        for (let i = 0; i < args.length; i++) {
+            const arg = args[i];
+
+            if (arg.startsWith("-") && flagSchema[arg]) {
+                const flag = flagSchema[arg];
+
+                if (flag.type === "boolean") {
+                    flags[flag.key] = true;
+                } else if (flag.type === "value" && i + 1 < args.length) {
+                    const value = args[++i];
+                    if (flag.validator(value)) {
+                        flags[flag.key] = flag.parser ? flag.parser(value) : value;
+                    }
+                }
+            } else if (flags.input === "") {
+                flags.input = args.slice(i).join(" ");
+                break;
+            }
+        }
+
+        return flags;
+    }
+
     async target(priority = ["quoted", "mentioned", "text"]) {
-        let targetJid = null;
+        let target = null;
         for (const source of priority) {
             switch (source) {
                 case "quoted":
                     if (this.quoted?.sender) {
-                        targetJid = this.quoted.sender;
+                        target = this.quoted.sender;
                         break;
                     }
                     continue;
                 case "mentioned":
                     const mentioned = this.getMentioned();
                     if (mentioned.length > 0) {
-                        targetJid = mentioned[0];
+                        target = mentioned[0];
                         break;
                     }
                     continue;
@@ -68,7 +97,7 @@ class Ctx {
                     if (this.args.length > 0) {
                         const extractedNumber = this.args[0].replace(/[^\d]/g, "");
                         if (extractedNumber) {
-                            targetJid = extractedNumber + Baileys.S_WHATSAPP_NET;
+                            target = extractedNumber + Baileys.S_WHATSAPP_NET;
                             break;
                         }
                     }
@@ -77,16 +106,16 @@ class Ctx {
                     if (this.args.length > 0) {
                         const extractedNumber = this.args[0].replace(/[^\d]/g, "");
                         if (extractedNumber) {
-                            targetJid = `${extractedNumber}@g.us`;
+                            target = `${extractedNumber}@g.us`;
                             break;
                         }
                     }
                     continue;
             }
-            if (targetJid) return await this.getLidUser(targetJid);
+            if (target) return await this.getLidUser(target);
         }
 
-        return null;
+        return target;
     }
 
     get me() {
