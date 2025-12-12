@@ -74,11 +74,15 @@ function _parseCommand(content, selectedPrefix) {
         text: ""
     };
 
-    const parts = remaining.split(/\s+/);
+    const firstSpace = remaining.indexOf(" ");
+    const commandName = firstSpace === -1 ? remaining.toLowerCase() : remaining.slice(0, firstSpace).toLowerCase();
+    const text = firstSpace === -1 ? "" : remaining.slice(firstSpace + 1);
+    const args = text ? text.split(/\s+/) : [];
+
     return {
-        commandName: parts[0]?.toLowerCase(),
-        args: parts.slice(1),
-        text: remaining.slice(parts[0].length)
+        commandName,
+        args,
+        text
     };
 }
 

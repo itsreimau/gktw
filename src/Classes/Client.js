@@ -13,18 +13,26 @@ const SimplDB = require("simpl.db");
 
 class Client {
     constructor(opts) {
-        this.authDir = opts.authDir ?? null;
-        this.browser = opts.browser ?? Baileys.Browsers.ubuntu("Chrome");
-        this.WAVersion = opts.WAVersion ?? null;
-        this.phoneNumber = opts.phoneNumber ?? null;
-        this.usePairingCode = opts.usePairingCode ?? false;
-        this.customPairingCode = opts.customPairingCode ?? false;
-        this.useStore = opts.useStore ?? false;
-        this.autoRead = opts.autoRead ?? false;
-        this.alwaysOnline = opts.alwaysOnline ?? true;
-        this.selfReply = opts.selfReply ?? false;
-        this.databaseDir = opts.databaseDir ?? null;
-        this.prefix = opts.prefix ?? /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i;
+        const authOpts = opts.auth || {};
+        this.authDir = authOpts.dir ?? "./auth";
+        this.phoneNumber = authOpts.phoneNumber ?? null;
+        this.usePairingCode = authOpts.usePairingCode ?? false;
+        this.customPairingCode = authOpts.customPairingCode ?? false;
+        this.useStore = authOpts.useStore ?? false;
+
+        const connectionOpts = opts.connection || {};
+        this.browser = connectionOpts.browser ?? Baileys.Browsers.ubuntu("Chrome");
+        this.WAVersion = connectionOpts.version ?? null;
+        this.alwaysOnline = connectionOpts.alwaysOnline ?? true;
+        this.selfReply = connectionOpts.selfReply ?? false;
+
+        const messagingOpts = opts.messaging || {};
+        this.autoRead = messagingOpts.autoRead ?? false;
+        this.prefix = messagingOpts.prefix ?? /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i;
+
+        const databaseOpts = opts.database || {};
+        this.databaseDir = databaseOpts.dir ?? "./database";
+
         this.owner = opts.owner ?? [];
 
         this.ev = new EventEmitter();

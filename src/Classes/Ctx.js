@@ -47,7 +47,7 @@ class Ctx {
     get text() {
         return this._text;
     }
-    async flag(rules = {}) {
+    flag(rules = {}) {
         const flags = {
             input: ""
         };
@@ -75,7 +75,6 @@ class Ctx {
 
         return flags;
     }
-
     async target(priority = ["quoted", "mentioned", "text"]) {
         let target = null;
         for (const source of priority) {
@@ -112,7 +111,7 @@ class Ctx {
                     }
                     continue;
             }
-            if (target) return await this.getLidUser(target);
+            if (target) return await Functions.getLidUser(target, this._client.onWhatsApp);
         }
 
         return target;
