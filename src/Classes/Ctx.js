@@ -28,11 +28,7 @@ class Ctx {
     get sender() {
         return {
             ...this._sender,
-            isOwner: () => Functions.checkOwner(this._sender.lid, this._self.owner, {
-                id: this._msg.key.id,
-                fromMe: this._msg.key.fromMe,
-                jid: this.me.lid
-            })
+            isOwner: () => Functions.checkOwner(this._sender.lid, this._self.owner)
         };
     }
     get store() {

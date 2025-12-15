@@ -63,13 +63,9 @@ async function getLidUser(jid, onWhatsAppFunc) {
     return (await onWhatsAppFunc(jid))[0]?.lid || jid;
 }
 
-function checkOwner(jid, ownerList, self) {
+function checkOwner(jid, ownerList) {
     if (!jid || !Array.isArray(ownerList) || !ownerList.length) return false;
-    return ownerList.some(ownerJid => {
-        const isBotOwner = ownerJid === "bot" || Baileys.areJidsSameUser(ownerJid, self.jid);
-        const isFromBot = self?.fromMe && !self.id?.startsWith("3EB0") && Baileys.areJidsSameUser(jid, self.jid);
-        return Baileys.areJidsSameUser(ownerJid, jid) || (isBotOwner && isFromBot);
-    });
+    return ownerList.some(ownerJid => Baileys.areJidsSameUser(ownerJid, jid));
 }
 
 module.exports = {

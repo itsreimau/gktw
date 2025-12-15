@@ -98,15 +98,14 @@ class Client {
 
         const registeredOwner = [];
         for (const ownerId of this.owner) {
-            if (ownerId === "bot") {
-                registeredOwner.push("bot");
-                continue;
-            }
-
             const ownerJid = ownerId + Baileys.S_WHATSAPP_NET;
             const ownerLid = await Functions.getLidUser(ownerJid, this.core.onWhatsApp);
             registeredOwner.push(ownerJid);
             if (ownerLid) registeredOwner.push(ownerLid);
+        }
+        if (this.core.user) {
+            registeredOwner.push(this.core.user.id);
+            registeredOwner.push(this.core.user.lid);
         }
 
         this.owner = registeredOwner;
@@ -184,7 +183,9 @@ class Client {
 
         this.core.ev.on("messages.upsert", async (event) => {
             for (const message of event.messages) {
-                if (this.messageIdCache.get(message.key.id)) return;
+                if (message.key.fromMe && message.key.id.startsWith("3EB0")) continue;
+
+                if (this.messageIdCache.get(message.key.id)) continue;
                 this.messageIdCache.set(message.key.id, true);
 
                 if (Baileys.isJidGroup(message.key.remoteJid)) await this._setGroupCache(message.key.remoteJid);
@@ -261,11 +262,8 @@ class Client {
         });
     }
 
-    checkOwner(jid, self) {
-        return Functions.checkOwner(jid, this.owner, {
-            ...self,
-            jid: this.core.user.lid
-        });
+    checkOwner(jid) {
+        return Functions.checkOwner(jid, this.owner);
     }
 
     getPushName(jid) {
