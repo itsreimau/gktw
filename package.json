@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.5.4-rc.17",
+  "version": "1.5.4-rc.18",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -19,7 +19,7 @@
   "author": "Ikbal Maulana (ItsReimau)",
   "license": "MIT",
   "dependencies": {
-    "@cacheable/node-cache": "^1.7.5",
+    "@cacheable/node-cache": "^1.7.6",
     "@mengkodingan/consolefy": "^1.0.1",
     "baileys": "github:yemobyte/ye-bail",
     "didyoumean": "^1.2.2",

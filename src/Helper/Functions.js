@@ -37,17 +37,20 @@ function getTextFromMsg(msg) {
 
 function getDb(collection, jid) {
     if (collection.name === "users") {
-        if (Baileys.isLidUser(jid)) return collection.getOrCreate(user => user.jid === jid, {
-            jid: jid
-        });
-        if (Baileys.isJidUser(jid)) return collection.getOrCreate(user => user.alt === jid, {
-            alt: jid
-        });
+        if (Baileys.isLidUser(jid))
+            return collection.getOrCreate(user => user.jid === jid, {
+                jid: jid
+            });
+        if (Baileys.isJidUser(jid))
+            return collection.getOrCreate(user => user.alt === jid, {
+                alt: jid
+            });
     }
 
-    if (collection.name === "groups" && Baileys.isJidGroup(jid)) return collection.getOrCreate(group => group.jid === jid, {
-        jid: jid
-    });
+    if (collection.name === "groups" && Baileys.isJidGroup(jid))
+        return collection.getOrCreate(group => group.jid === jid, {
+            jid: jid
+        });
 }
 
 function getPushName(jid, pushNames) {

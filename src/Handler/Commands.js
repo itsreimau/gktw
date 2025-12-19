@@ -68,11 +68,12 @@ function _findMatchingPrefix(content, prefix) {
 
 function _parseCommand(content, selectedPrefix) {
     const remaining = content.slice(selectedPrefix.length);
-    if (!remaining) return {
-        commandName: null,
-        args: [],
-        text: ""
-    };
+    if (!remaining)
+        return {
+            commandName: null,
+            args: [],
+            text: ""
+        };
 
     const firstSpace = remaining.indexOf(" ");
     const commandName = firstSpace === -1 ? remaining.toLowerCase() : remaining.slice(0, firstSpace).toLowerCase();

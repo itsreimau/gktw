@@ -7,7 +7,7 @@ class MessageCollector extends Collector {
         super(opts);
         this.jid = clientReq.msg.key.remoteJid;
 
-        this.handleCollect = (ctx) => this.collect(ctx);
+        this.handleCollect = ctx => this.collect(ctx);
         clientReq.self.ev.on(Events.MessagesUpsert, this.handleCollect);
         this.once("end", () => {
             clientReq.self.ev.removeListener(Events.MessagesUpsert, this.handleCollect);

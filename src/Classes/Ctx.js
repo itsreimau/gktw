@@ -52,8 +52,8 @@ class Ctx {
         for (let i = 0; i < args.length; i++) {
             const arg = args[i];
 
-            if (arg.startsWith("-") && flagSchema[arg]) {
-                const flag = flagSchema[arg];
+            if (arg.startsWith("-") && rules[arg]) {
+                const flag = rules[arg];
 
                 if (flag.type === "boolean") {
                     flags[flag.key] = true;
@@ -212,9 +212,10 @@ class Ctx {
             ...this._msg,
             message,
             messageType: Functions.getMessageType(message),
-            download: async () => await this._downloadMediaMessage({
-                message
-            }),
+            download: async () =>
+                await this._downloadMediaMessage({
+                    message
+                }),
             upload: async () => {
                 const buffer = await this._downloadMediaMessage({
                     message
@@ -247,9 +248,10 @@ class Ctx {
             id: chat,
             sender,
             pushName: Functions.getPushName(sender, this._self.pushNames),
-            download: async () => await this._downloadMediaMessage({
-                message
-            }),
+            download: async () =>
+                await this._downloadMediaMessage({
+                    message
+                }),
             upload: async () => {
                 const buffer = await this._downloadMediaMessage({
                     message

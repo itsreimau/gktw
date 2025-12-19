@@ -247,10 +247,11 @@ class Client {
     }
 
     command(opts, code) {
-        if (typeof opts === "string") opts = {
-            name: opts,
-            code
-        };
+        if (typeof opts === "string")
+            opts = {
+                name: opts,
+                code
+            };
         if (!code) opts.code = () => null;
         this.cmd.set(this.cmd.size, opts);
     }
@@ -310,9 +311,10 @@ class Client {
 
         if (this.usePairingCode && !this.core.authState.creds.registered) await this._handlePairingCode();
 
-        if (!fs.existsSync(this.databaseDir)) fs.mkdirSync(this.databaseDir, {
-            recursive: true
-        });
+        if (!fs.existsSync(this.databaseDir))
+            fs.mkdirSync(this.databaseDir, {
+                recursive: true
+            });
 
         this._onEvents();
     }
@@ -321,7 +323,7 @@ class Client {
         this.store.readFromFile(this.storePath);
         setInterval(() => this.store.writeToFile(this.storePath), 10000);
 
-        this.store.cleanupMessages = (cutoff) => {
+        this.store.cleanupMessages = cutoff => {
             for (const jid of Object.keys(this.store.messages)) {
                 this.store.messages[jid] = this.store.messages[jid].filter(msg => msg.messageTimestamp * 1000 > cutoff);
             }
