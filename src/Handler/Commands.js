@@ -30,7 +30,7 @@ async function _handleHears(self, m) {
 }
 
 async function _processCommands(self, m, _runMiddlewares) {
-    const selectedPrefix = _findMatchingPrefix(m.text, self.prefix).trim();
+    const selectedPrefix = _findMatchingPrefix(m.text, self.prefix)?.trim();
     if (!selectedPrefix) return;
 
     const {
