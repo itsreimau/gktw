@@ -64,10 +64,6 @@ class Client {
         if (typeof this.prefix === "string") this.prefix = this.prefix.split("");
     }
 
-    _savePushnames() {
-        fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
-    }
-
     use(fn) {
         this.middlewares.set(this.middlewares.size, fn);
     }
@@ -84,13 +80,6 @@ class Client {
         });
 
         return nextCalled;
-    }
-
-    async _setGroupCache(id) {
-        if (!this.groupCache.get(id)) {
-            const metadata = await this.core.groupMetadata(id);
-            this.groupCache.set(id, metadata);
-        }
     }
 
     async _registerOwner() {
@@ -151,12 +140,21 @@ class Client {
         }
     }
 
+    _savePushnames() {
+        fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
+    }
+
     _loadPushNames() {
         try {
             this.pushNames = JSON.parse(fs.readFileSync(this.pushnamesPath, "utf8"));
         } catch {
             this._savePushnames();
         }
+    }
+
+    async _setGroupCache(id) {
+        const metadata = await this.core.groupMetadata(id);
+        this.groupCache.set(id, metadata);
     }
 
     _onEvents() {
@@ -187,8 +185,6 @@ class Client {
 
                 if (this.messageIdCache.get(message.key.id)) continue;
                 this.messageIdCache.set(message.key.id, true);
-
-                if (Baileys.isJidGroup(message.key.remoteJid)) await this._setGroupCache(message.key.remoteJid);
 
                 const sender = message.key.participant || message.key.remoteJid;
                 if (message.pushName && this.pushNames[sender] !== message.pushName) {
@@ -239,7 +235,7 @@ class Client {
             }
         });
 
-        this.core.ev.on("call", (events) => {
+        this.core.ev.on("call", events => {
             for (const ctx of events) {
                 this.ev.emit(Events.Call, ctx);
             }

@@ -117,8 +117,7 @@ class Ctx {
         const user = this._client.user;
         if (!user) return null;
         return {
-            id: user.id,
-            lid: user.lid,
+            ...user,
             readyAt: this._self.readyAt
         };
     }
