@@ -8,7 +8,7 @@ const Events = require("./Constant/Events.js");
 const MessageType = require("./Constant/MessageType.js");
 const Formatter = require("./Helper/Formatter.js");
 const { Consolefy } = require("@mengkodingan/consolefy");
-const { analyzeMessage } = require("safety-safe");
+const { analyzeMessage } = require("guaranteed_security");
 const didYouMean = require("didyoumean");
 const mime = require("mime-types");
 
