@@ -11,7 +11,7 @@ const TEXT_HANDLERS = {
     videoMessage: msg => msg.videoMessage?.caption || "",
     documentMessageWithCaption: msg => msg.documentMessageWithCaption?.caption || "",
     protocolMessage: msg => getTextFromMsg({
-        message: msg.protocolMessage?.editedMessage
+        message: msg.protocolMessage?.editedMessage || ""
     }),
     buttonsMessage: msg => msg.buttonsMessage?.contentText || "",
     interactiveMessage: msg => msg.interactiveMessage?.body?.text || "",
@@ -32,14 +32,14 @@ const TEXT_HANDLERS = {
 function getTextFromMsg(msg) {
     const extractedMessage = Baileys.extractMessageContent(msg.message);
     const messageType = getMessageType(extractedMessage) ?? "";
-    return TEXT_HANDLERS[messageType]?.(extractedMessage) || "";
+    return TEXT_HANDLERS[messageType]?.(extractedMessage);
 }
 
 function getDb(collection, jid) {
     if (collection.name === "users") {
         if (Baileys.isLidUser(jid))
             return collection.getOrCreate(user => user.jid === jid, {
-                jid: jid
+                jid
             });
         if (Baileys.isJidUser(jid))
             return collection.getOrCreate(user => user.alt === jid, {
@@ -49,7 +49,7 @@ function getDb(collection, jid) {
 
     if (collection.name === "groups" && Baileys.isJidGroup(jid))
         return collection.getOrCreate(group => group.jid === jid, {
-            jid: jid
+            jid
         });
 }
 
@@ -62,7 +62,7 @@ function getId(jid) {
 }
 
 async function getLidUser(jid, onWhatsAppFunc) {
-    if (Baileys.isLidUser(jid)) return jid;
+    if (!Baileys.isJidUser(jid)) return jid;
     return (await onWhatsAppFunc(jid))[0]?.lid || jid;
 }
 

@@ -7,40 +7,55 @@ async function Commands(self, _runMiddlewares) {
     } = self;
     if (!m.message || Baileys.isJidStatusBroadcast(m.key.remoteJid) || Baileys.isJidNewsletter(m.key.remoteJid)) return;
 
-    await _handleHears(self, m);
-    await _processCommands(self, m, _runMiddlewares);
-}
+    const hasHears = Array.from(self.hearsMap.values()).filter(hear => hear.name === m.text || hear.name === m.messageType || new RegExp(hear.name).test(m.text) || (Array.isArray(hear.name) && hear.name.includes(m.text)));
 
-async function _handleHears(self, m) {
-    const hearsEntries = Array.from(self.hearsMap.values());
-    const matches = hearsEntries.filter(hear => hear.name === m.text || hear.name === m.messageType || (hear.name instanceof RegExp && hear.name.test(m.text)) || (Array.isArray(hear.name) && hear.name.includes(m.text)));
+    if (hasHears.length) {
+        const ctx = new Ctx({
+            used: {
+                hears: m.text
+            },
+            args: [],
+            self,
+            client: self.core
+        });
+        hasHears.forEach(hear => hear.code(ctx));
+        return;
+    }
 
-    if (!matches.length) return;
+    let selectedPrefix;
+    const prefix = self.prefix;
 
-    const ctx = new Ctx({
-        used: {
-            hears: m.text
-        },
-        args: [],
-        self,
-        client: self.core
-    });
+    if (Array.isArray(prefix)) {
+        if (prefix[0] === "") {
+            const emptyIndex = prefix.findIndex(p => p === "");
+            if (emptyIndex !== -1) {
+                const newPrefix = [...prefix];
+                const [empty] = newPrefix.splice(emptyIndex, 1);
+                newPrefix.push(empty);
+                selectedPrefix = newPrefix.find(p => m.text?.startsWith(p));
+            } else {
+                selectedPrefix = prefix.find(p => m.text?.startsWith(p));
+            }
+        } else {
+            selectedPrefix = prefix.find(p => m.text?.startsWith(p));
+        }
+    } else if (prefix instanceof RegExp) {
+        const match = m.text?.match(prefix);
+        selectedPrefix = match ? match[0] : null;
+    } else if (typeof prefix === "string") {
+        selectedPrefix = m.text?.startsWith(prefix) ? prefix : null;
+    }
 
-    await Promise.allSettled(matches.map(hear => hear.code(ctx)));
-}
-
-async function _processCommands(self, m, _runMiddlewares) {
-    const selectedPrefix = _findMatchingPrefix(m.text, self.prefix)?.trim();
     if (!selectedPrefix) return;
 
-    const {
-        commandName,
-        args,
-        text
-    } = _parseCommand(m.text, selectedPrefix);
+    let args = m.text?.slice(selectedPrefix.length).trim().split(/\s+/) || [];
+    let commandName = args?.shift()?.toLowerCase();
+
     if (!commandName) return;
 
-    const matchedCommands = _findMatchingCommands(self.cmd, commandName);
+    const commandsList = Array.from(self.cmd?.values() ?? []);
+    const matchedCommands = commandsList.filter(command => command.name?.toLowerCase() === commandName || (Array.isArray(command.aliases) ? command.aliases.includes(commandName) : command.aliases === commandName));
+
     if (!matchedCommands.length) return;
 
     const ctx = new Ctx({
@@ -49,47 +64,14 @@ async function _processCommands(self, m, _runMiddlewares) {
             command: commandName
         },
         args,
-        text,
+        text: m.text,
         self,
         client: self.core
     });
 
-    const shouldContinue = await _runMiddlewares(ctx);
-    if (!shouldContinue) return;
+    if (!await _runMiddlewares(ctx)) return;
 
-    await Promise.allSettled(matchedCommands.map(command => command.code(ctx)));
-}
-
-function _findMatchingPrefix(content, prefix) {
-    if (Array.isArray(prefix)) return prefix.find(p => content.startsWith(p));
-    if (prefix instanceof RegExp) return content.match(prefix)?.[0];
-    return content.startsWith(prefix) ? prefix : null;
-}
-
-function _parseCommand(content, selectedPrefix) {
-    const remaining = content.slice(selectedPrefix.length);
-    if (!remaining)
-        return {
-            commandName: null,
-            args: [],
-            text: ""
-        };
-
-    const firstSpace = remaining.indexOf(" ");
-    const commandName = firstSpace === -1 ? remaining.toLowerCase() : remaining.slice(0, firstSpace).toLowerCase();
-    const text = firstSpace === -1 ? "" : remaining.slice(firstSpace + 1);
-    const args = text ? text.split(/\s+/) : [];
-
-    return {
-        commandName,
-        args,
-        text
-    };
-}
-
-function _findMatchingCommands(cmd, commandName) {
-    const commandsList = Array.from(cmd.values());
-    return commandsList.filter(command => command.name?.toLowerCase() === commandName || (Array.isArray(command.aliases) && command.aliases.includes(commandName)) || command.aliases === commandName);
+    matchedCommands.forEach(cmd => cmd.code(ctx));
 }
 
 module.exports = Commands;
