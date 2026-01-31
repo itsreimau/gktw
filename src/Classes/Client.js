@@ -202,7 +202,7 @@ class Client {
                     this._savePushnames();
                 }
 
-                const text = Functions.getTextFromMsg(message) || "";
+                const text = Functions.getTextFromMsg(message);
                 const self = {
                     ...this,
                     sender: {

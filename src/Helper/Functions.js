@@ -59,6 +59,7 @@ function getDb(collection, jid) {
 }
 
 function getPushName(jid, pushNames) {
+    if (!Baileys.isJidUser(jid) || !Baileys.isLidUser(jid)) return false;
     return pushNames[jid] || jid;
 }
 
@@ -72,7 +73,7 @@ async function getLidUser(jid, onWhatsAppFunc) {
 }
 
 function checkOwner(jid, ownerList) {
-    if (!jid || !Array.isArray(ownerList) || !ownerList.length) return false;
+    if (!Baileys.isJidUser(jid) || !Baileys.isLidUser(jid)) return false;
     return ownerList.some(ownerJid => Baileys.areJidsSameUser(ownerJid, jid));
 }
 

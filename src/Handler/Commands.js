@@ -49,9 +49,10 @@ async function Commands(self, _runMiddlewares) {
 
     if (!selectedPrefix) return;
 
-    let args = m.text?.slice(selectedPrefix.length).trim().split(/\s+/) || [];
+    const textWithoutPrefix = m.text?.slice(selectedPrefix.length).trim() || "";
+    let args = textWithoutPrefix.split(/\s+/) || [];
     let commandName = args?.shift()?.toLowerCase();
-    const text = (m.text?.slice(selectedPrefix.length) || "").slice(commandName.length);
+    const text = textWithoutPrefix.slice(commandName.length) || "";
 
     if (!commandName) return;
 
