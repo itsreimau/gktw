@@ -2,9 +2,9 @@ const vCard = require("vcard-parser");
 
 class VCardBuilder {
     constructor(opts = {}) {
-        this.fullName = opts.fullName ?? null;
-        this.org = opts.org ?? null;
-        this.number = opts.number ?? null;
+        this.fullName = opts.fullName || null;
+        this.org = opts.org || null;
+        this.number = opts.number || null;
     }
 
     setFullName(fullName) {

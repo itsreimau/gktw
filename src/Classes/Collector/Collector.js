@@ -4,10 +4,10 @@ class Collector extends EventEmitter {
     constructor(opts = {}) {
         super();
         this.isRun = false;
-        this.filter = opts.filter ?? (() => true);
-        this.time = opts.time ?? 0;
-        this.max = opts.max ?? 0;
-        this.maxProcessed = opts.maxProcessed ?? 0;
+        this.filter = opts.filter || (() => true);
+        this.time = opts.time || 0;
+        this.max = opts.max || 0;
+        this.maxProcessed = opts.maxProcessed || 0;
         this.collector = new Map();
         this.received = 0;
 

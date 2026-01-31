@@ -59,8 +59,8 @@ class GroupData {
     }
 
     async membersUpdate(members, action) {
-        const membersArray = Array.isArray(members) ? members : [members];
-        return await this.ctx._client.groupParticipantsUpdate(this.jid, membersArray, action);
+        members = Array.isArray(members) ? members : [members];
+        return await this.ctx._client.groupParticipantsUpdate(this.jid, members, action);
     }
 
     async kick(members) {
@@ -91,8 +91,8 @@ class GroupData {
     }
 
     async pendingMembersUpdate(members, action) {
-        const membersArray = Array.isArray(members) ? members : [members];
-        return await this.ctx._client.groupRequestParticipantsUpdate(this.jid, membersArray, action);
+        members = Array.isArray(members) ? members : [members];
+        return await this.ctx._client.groupRequestParticipantsUpdate(this.jid, members, action);
     }
 
     async approvePendingMembers(members) {

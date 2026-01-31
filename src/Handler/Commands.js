@@ -15,6 +15,7 @@ async function Commands(self, _runMiddlewares) {
                 hears: m.text
             },
             args: [],
+            text: "",
             self,
             client: self.core
         });
@@ -50,10 +51,11 @@ async function Commands(self, _runMiddlewares) {
 
     let args = m.text?.slice(selectedPrefix.length).trim().split(/\s+/) || [];
     let commandName = args?.shift()?.toLowerCase();
+    const text = (m.text?.slice(selectedPrefix.length) || "").slice(commandName.length);
 
     if (!commandName) return;
 
-    const commandsList = Array.from(self.cmd?.values() ?? []);
+    const commandsList = Array.from(self.cmd?.values() || []);
     const matchedCommands = commandsList.filter(command => command.name?.toLowerCase() === commandName || (Array.isArray(command.aliases) ? command.aliases.includes(commandName) : command.aliases === commandName));
 
     if (!matchedCommands.length) return;
@@ -64,7 +66,7 @@ async function Commands(self, _runMiddlewares) {
             command: commandName
         },
         args,
-        text: m.text,
+        text,
         self,
         client: self.core
     });

@@ -49,22 +49,22 @@ class Ctx {
         };
         const args = this._text.split(" ") || [];
 
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
+        for (let index = 0; index < args.length; index++) {
+            const arg = args[index];
 
             if (arg.startsWith("-") && rules[arg]) {
                 const flag = rules[arg];
 
                 if (flag.type === "boolean") {
                     flags[flag.key] = true;
-                } else if (flag.type === "value" && i + 1 < args.length) {
-                    const value = args[++i];
+                } else if (flag.type === "value" && index + 1 < args.length) {
+                    const value = args[++index];
                     if (flag.validator(value)) {
                         flags[flag.key] = flag.parser ? flag.parser(value) : value;
                     }
                 }
             } else if (flags.input === "") {
-                flags.input = args.slice(i).join(" ");
+                flags.input = args.slice(index).join(" ");
                 break;
             }
         }
@@ -123,12 +123,14 @@ class Ctx {
     }
 
     get db() {
-        const users = this._db.getCollection("users") || this._db.createCollection("users");
-        const groups = this._db.getCollection("groups") || this._db.createCollection("groups");
+        const bot = this._db.getCollection("bot");
+        const users = this._db.getCollection("users");
+        const groups = this._db.getCollection("groups");
         return {
             core: this._db,
             users,
             groups,
+            bot: Functions.getDb(bot),
             user: Functions.getDb(users, this._sender.jid),
             group: this.isGroup() ? Functions.getDb(groups, this.id) : null
         };
@@ -190,13 +192,13 @@ class Ctx {
     }
 
     getDb(collection, jid = this._sender.jid) {
-        const coll = this._db.getCollection(collection) || this._db.createCollection(collection);
+        const coll = this._db.getCollection(collection);
         return Functions.getDb(coll, jid);
     }
 
-    async _downloadMediaMessage(msg) {
+    async _downloadMediaMessage(message) {
         try {
-            return await Baileys.downloadMediaMessage(msg, "buffer", {}, {
+            return await Baileys.downloadMediaMessage(message, "buffer", {}, {
                 logger: this._self.logger,
                 reuploadRequest: this._client.updateMediaMessage
             });
@@ -225,12 +227,12 @@ class Ctx {
     }
 
     get quoted() {
-        const msgContext = this._msg.message?.[this.getMessageType()]?.contextInfo ?? {};
-        if (!msgContext?.quotedMessage) return null;
+        const context = this._msg.message?.[this.getMessageType()]?.contextInfo || {};
+        if (!context?.quotedMessage) return null;
 
-        const message = Baileys.extractMessageContent(msgContext.quotedMessage) ?? {};
-        const chat = msgContext.remoteJid || this.id;
-        const sender = msgContext.participant || chat;
+        const message = Baileys.extractMessageContent(context.quotedMessage) || {};
+        const chat = context.remoteJid || this.id;
+        const sender = context.participant || chat;
 
         return {
             text: Functions.getTextFromMsg({
@@ -242,7 +244,7 @@ class Ctx {
                 remoteJid: chat,
                 participant: Baileys.isJidGroup(chat) ? sender : null,
                 fromMe: Baileys.areJidsSameUser(sender, this.me.id),
-                id: msgContext.stanzaId
+                id: context.stanzaId
             },
             id: chat,
             sender,
@@ -265,20 +267,20 @@ class Ctx {
     }
 
     async reply(content, options = {}) {
-        const messageContent = typeof content === "string" ? {
+        content = typeof content === "string" ? {
             text: content
         } : content;
-        return await this._client.sendMessage(this.id, messageContent, {
+        return await this._client.sendMessage(this.id, content, {
             ...options,
             quoted: this._msg
         });
     }
 
     async replyWithJid(jid, content, options = {}) {
-        const messageContent = typeof content === "string" ? {
+        content = typeof content === "string" ? {
             text: content
         } : content;
-        return await this._client.sendMessage(jid, messageContent, {
+        return await this._client.sendMessage(jid, content, {
             ...options,
             quoted: this._msg
         });

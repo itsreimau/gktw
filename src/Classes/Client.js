@@ -14,26 +14,26 @@ const SimplDB = require("simpl.db");
 class Client {
     constructor(opts) {
         const authOpts = opts.auth || {};
-        this.authDir = authOpts.dir ?? "./auth";
-        this.phoneNumber = authOpts.phoneNumber ?? null;
-        this.usePairingCode = authOpts.usePairingCode ?? false;
-        this.customPairingCode = authOpts.customPairingCode ?? false;
-        this.useStore = authOpts.useStore ?? false;
+        this.authDir = authOpts.dir || "./auth";
+        this.phoneNumber = authOpts.phoneNumber || null;
+        this.usePairingCode = authOpts.usePairingCode || false;
+        this.customPairingCode = authOpts.customPairingCode || false;
+        this.useStore = authOpts.useStore || false;
 
         const connectionOpts = opts.connection || {};
-        this.browser = connectionOpts.browser ?? Baileys.Browsers.ubuntu("Chrome");
-        this.WAVersion = connectionOpts.version ?? null;
-        this.alwaysOnline = connectionOpts.alwaysOnline ?? true;
-        this.selfReply = connectionOpts.selfReply ?? false;
+        this.browser = connectionOpts.browser || Baileys.Browsers.ubuntu("Chrome");
+        this.WAVersion = connectionOpts.version || null;
+        this.alwaysOnline = connectionOpts.alwaysOnline || true;
+        this.selfReply = connectionOpts.selfReply || false;
 
         const messagingOpts = opts.messaging || {};
-        this.autoRead = messagingOpts.autoRead ?? false;
-        this.prefix = messagingOpts.prefix ?? /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i;
+        this.autoRead = messagingOpts.autoRead || false;
+        this.prefix = messagingOpts.prefix || /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i;
 
         const databaseOpts = opts.database || {};
-        this.databaseDir = databaseOpts.dir ?? "./database";
+        this.databaseDir = databaseOpts.dir || "./database";
 
-        this.owner = opts.owner ?? [];
+        this.owner = opts.owner || [];
 
         this.ev = new EventEmitter();
         this.cmd = new Map();
@@ -62,6 +62,8 @@ class Client {
 
         if (Array.isArray(this.prefix) && this.prefix.includes("")) this.prefix.sort((a, b) => a === "" ? 1 : b === "" ? -1 : 0);
         if (typeof this.prefix === "string") this.prefix = this.prefix.split("");
+        if (!this.db.getCollection("users")) this.db.createCollection("users");
+        if (!this.db.getCollection("groups")) this.db.createCollection("groups");
     }
 
     use(fn) {
@@ -101,41 +103,48 @@ class Client {
     }
 
     async _fixUsersDb() {
-        if (!this.core.authState.creds.registered) return;
+        if (!this.core.authState?.creds?.registered) return;
 
-        const users = this.db.getCollection("users") || this.db.createCollection("users");
-        const altUsers = users.getMany(user => user.alt);
-        if (!altUsers.length) return;
+        const users = this.db.getCollection("users");
+        const groups = this.db.getCollection("groups");
 
-        const primaryMap = new Map(users.getMany(user => !user.alt).map(user => [user.jid, user]));
+        if (!users || !groups) return;
 
-        for (const altUser of altUsers) {
-            if (!Baileys.isJidUser(altUser.alt)) continue;
+        groups.remove(group => !Baileys.isJidGroup(group.jid));
+        users.remove(user => {
+            if (!Baileys.isLidUser(user?.jid) || !Baileys.isJidUser(user?.alt)) return true;
+        });
 
-            const userLid = await Functions.getLidUser(altUser.alt, this.core.onWhatsApp);
-            if (!userLid) continue;
+        const usersAlt = users.getMany(user => user?.alt);
 
-            const primaryUser = primaryMap.get(userLid);
-            if (primaryUser) {
-                for (const [key, value] of Object.entries(altUser)) {
-                    if (key === "alt" || key === "jid") continue;
-                    if (typeof value === "number" && typeof primaryUser[key] === "number") {
-                        primaryUser[key] = Math.max(primaryUser[key], value);
-                    } else if (primaryUser[key] === undefined) {
-                        primaryUser[key] = value;
-                    }
-                }
-                users.update(user => Object.assign(user, primaryUser), user => user.jid === primaryUser);
+        for (const userAlt of usersAlt) {
+            const altJid = userAlt.alt;
+
+            if (!Baileys.isJidUser(altJid)) {
+                users.remove(user => user.jid === userAlt.jid);
+                continue;
+            }
+
+            const lid = await Functions.getLidUser(altJid, this.core.onWhatsApp);
+
+            if (!lid || !Baileys.isLidUser(lid)) {
+                users.remove(user => user.jid === userAlt.jid);
+                continue;
+            }
+
+            const duplicateUser = users.get(user => user.jid === lid);
+
+            if (duplicateUser) {
+                Object.assign(duplicateUser, userAlt);
+                duplicateUser.alt = altJid;
+
+                users.update(user => Object.assign(user, duplicateUser), user => user.jid === lid);
+                users.remove(user => user.jid === userAlt.jid && user.jid !== lid);
             } else {
-                const {
-                    alt,
-                    ...newUser
-                } = {
-                    ...altUser,
-                    jid: primaryUser
-                };
-                users.create(newUser);
-                primaryMap.set(primaryUser, newUser);
+                userAlt.jid = lid;
+                userAlt.alt = altJid;
+
+                users.update(user => Object.assign(user, userAlt), user => user.jid === userAlt.jid);
             }
         }
     }
@@ -192,7 +201,7 @@ class Client {
                     this._savePushnames();
                 }
 
-                const text = Functions.getTextFromMsg(message) ?? "";
+                const text = Functions.getTextFromMsg(message) || "";
                 const self = {
                     ...this,
                     sender: {
@@ -276,7 +285,7 @@ class Client {
     }
 
     getDb(collection, jid) {
-        const coll = this.db.getCollection(collection) || this.db.createCollection(collection);
+        const coll = this.db.getCollection(collection);
         return Functions.getDb(coll, jid);
     }
 
@@ -288,7 +297,18 @@ class Client {
         this.state = state;
         this.saveCreds = saveCreds;
 
-        if (this.useStore) this._initStore();
+        if (this.useStore) {
+            this.store.readFromFile(this.storePath);
+            setInterval(() => this.store.writeToFile(this.storePath), 10000);
+
+            this.store.cleanupMessages = cutoff => {
+                for (const jid of Object.keys(this.store.messages)) {
+                    this.store.messages[jid] = this.store.messages[jid].filter(message => message.messageTimestamp * 1000 > cutoff);
+                }
+            };
+
+            setInterval(() => this.store.cleanupMessages(Date.now() - (7 * 24 * 60 * 60 * 1000)), 24 * 60 * 60 * 1000);
+        }
 
         this.core = Baileys.default({
             ...(this.WAVersion ? {
@@ -305,7 +325,40 @@ class Client {
 
         if (this.useStore) this.store.bind(this.core.ev);
 
-        if (this.usePairingCode && !this.core.authState.creds.registered) await this._handlePairingCode();
+        if (this.usePairingCode && !this.core.authState.creds.registered) {
+            this.consolefy.setTag("pairing-code");
+
+            if (this.printQRInTerminal) {
+                this.consolefy.error("printQRInTerminal must be false for usePairingCode");
+                this.consolefy.resetTag();
+                return;
+            }
+
+            if (!this.phoneNumber) {
+                this.consolefy.error("phoneNumber is required for usePairingCode");
+                this.consolefy.resetTag();
+                return;
+            }
+
+            this.phoneNumber = this.phoneNumber.replace(/[^0-9]/g, "");
+            if (!this.phoneNumber.length) {
+                this.consolefy.error("Invalid phoneNumber");
+                this.consolefy.resetTag();
+                return;
+            }
+
+            if (!Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
+                this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code)");
+                this.consolefy.resetTag();
+                return;
+            }
+
+            setTimeout(async () => {
+                const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
+                this.consolefy.info(`Pairing Code: ${code}`);
+                this.consolefy.resetTag();
+            }, 3000);
+        }
 
         if (!fs.existsSync(this.databaseDir))
             fs.mkdirSync(this.databaseDir, {
@@ -313,54 +366,6 @@ class Client {
             });
 
         this._onEvents();
-    }
-
-    _initStore() {
-        this.store.readFromFile(this.storePath);
-        setInterval(() => this.store.writeToFile(this.storePath), 10000);
-
-        this.store.cleanupMessages = cutoff => {
-            for (const jid of Object.keys(this.store.messages)) {
-                this.store.messages[jid] = this.store.messages[jid].filter(msg => msg.messageTimestamp * 1000 > cutoff);
-            }
-        };
-
-        setInterval(() => this.store.cleanupMessages(Date.now() - (7 * 24 * 60 * 60 * 1000)), 24 * 60 * 60 * 1000);
-    }
-
-    async _handlePairingCode() {
-        this.consolefy.setTag("pairing-code");
-
-        if (this.printQRInTerminal) {
-            this.consolefy.error("printQRInTerminal must be false for usePairingCode");
-            this.consolefy.resetTag();
-            return;
-        }
-
-        if (!this.phoneNumber) {
-            this.consolefy.error("phoneNumber is required for usePairingCode");
-            this.consolefy.resetTag();
-            return;
-        }
-
-        this.phoneNumber = this.phoneNumber.replace(/[^0-9]/g, "");
-        if (!this.phoneNumber.length) {
-            this.consolefy.error("Invalid phoneNumber");
-            this.consolefy.resetTag();
-            return;
-        }
-
-        if (!Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
-            this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code)");
-            this.consolefy.resetTag();
-            return;
-        }
-
-        setTimeout(async () => {
-            const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
-            this.consolefy.info(`Pairing Code: ${code}`);
-            this.consolefy.resetTag();
-        }, 3000);
     }
 }
 

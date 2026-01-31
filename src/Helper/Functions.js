@@ -31,11 +31,16 @@ const TEXT_HANDLERS = {
 
 function getTextFromMsg(msg) {
     const extractedMessage = Baileys.extractMessageContent(msg.message);
-    const messageType = getMessageType(extractedMessage) ?? "";
+    const messageType = getMessageType(extractedMessage) || "";
     return TEXT_HANDLERS[messageType]?.(extractedMessage);
 }
 
 function getDb(collection, jid) {
+    if (collection.name === "bot")
+        return collection.getOrCreate(bot => bot.jid === "bot", {
+            jid: "bot"
+        });
+
     if (collection.name === "users") {
         if (Baileys.isLidUser(jid))
             return collection.getOrCreate(user => user.jid === jid, {
