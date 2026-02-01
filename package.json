@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.5.9",
+  "version": "1.5.10",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -21,7 +21,7 @@
   "dependencies": {
     "@cacheable/node-cache": "^2.0.1",
     "@mengkodingan/consolefy": "^1.0.1",
-    "baileys": "npm:baileyz",
+    "baileys": "npm:@rexxhayanasi/elaina-baileys",
     "didyoumean": "^1.2.2",
     "glob": "^13.0.0",
     "mime-types": "^2.1.35",
