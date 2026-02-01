@@ -18,35 +18,55 @@ class Config {
         Object.assign(this, loadedConfig);
     }
 
-    _replaceTemplateString(object, rootObject) {
-        for (const objectKey in object) {
-            if (typeof object[objectKey] === "string") {
-                let value = object[objectKey];
-                let previousValue;
+    _replaceTemplateString(object) {
+        const root = object;
 
-                do {
-                    previousValue = value;
-                    value = value.replace(/%([^%]+)%/g, (match, templateKey) => {
-                        const keys = templateKey.split("_");
-                        let templateValue = rootObject;
+        const replaceInObject = currentObj => {
+            for (const key in currentObj) {
+                const value = currentObj[key];
 
-                        for (const key of keys) {
-                            if (templateValue && typeof templateValue === "object" && key in templateValue) {
-                                templateValue = templateValue[key];
-                            } else {
-                                return match;
-                            }
-                        }
+                if (typeof value === "string") {
+                    currentObj[key] = this._resolveTemplate(value, root);
+                } else if (typeof value === "object" && value !== null) {
+                    replaceInObject(value);
+                }
+            }
+        };
 
-                        return templateValue !== null && templateValue !== undefined ? String(templateValue) : match;
-                    });
-                } while (value !== previousValue);
+        replaceInObject(object);
+    }
 
-                object[objectKey] = value;
-            } else if (typeof object[objectKey] === "object" && object[objectKey] !== null) {
-                this._replaceTemplateString(object[objectKey], rootObject);
+    _resolveTemplate(str, root) {
+        let result = str;
+        let changed;
+
+        do {
+            changed = false;
+            result = result.replace(/%([^%]+)%/g, (match, templateKey) => {
+                const value = this._getNestedValue(root, templateKey);
+                if (value !== undefined) {
+                    changed = true;
+                    return String(value);
+                }
+                return match;
+            });
+        } while (changed);
+
+        return result;
+    }
+
+    _getNestedValue(obj, keyPath) {
+        const keys = keyPath.split("_");
+        let current = obj;
+
+        for (const key of keys) {
+            if (current && typeof current === "object" && key in current) {
+                current = current[key];
+            } else {
+                return undefined;
             }
         }
+        return current;
     }
 
     get core() {
