@@ -73,7 +73,7 @@ async function getLidUser(jid, onWhatsAppFunc) {
 }
 
 function checkOwner(jid, ownerList) {
-    if (!Baileys.isJidUser(jid) || !Baileys.isLidUser(jid)) return false;
+    if (!Baileys.isJidUser(jid) && !Baileys.isLidUser(jid)) return false;
     return ownerList.some(ownerJid => Baileys.areJidsSameUser(ownerJid, jid));
 }
 
