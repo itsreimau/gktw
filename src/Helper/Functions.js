@@ -15,7 +15,7 @@ function getTextFromMsg(msg) {
         videoMessage: msg => msg.videoMessage?.caption || "",
         documentMessageWithCaption: msg => msg.documentMessageWithCaption?.caption || "",
         pollCreationMessage: msg => msg.pollCreationMessage.name,
-        pollUpdateMessage: msg => msg.pollUpdateMessage
+        pollUpdateMessage: msg => msg.pollUpdateMessage,
         protocolMessage: msg => getTextFromMsg({
             message: msg.protocolMessage?.editedMessage || ""
         }),
