@@ -28,7 +28,7 @@ class Ctx {
     get sender() {
         return {
             ...this._sender,
-            isOwner: () => Functions.checkOwner(this._sender.lid, this._self.owner)
+            isOwner: () => Functions.checkOwner(this._sender.jid, this._self.owner)
         };
     }
     get store() {
@@ -49,22 +49,22 @@ class Ctx {
         };
         const args = this._text.split(" ") || [];
 
-        for (let index = 0; index < args.length; index++) {
-            const arg = args[index];
+        for (let i = 0; i < args.length; i++) {
+            const arg = args[i];
 
             if (arg.startsWith("-") && rules[arg]) {
                 const flag = rules[arg];
 
                 if (flag.type === "boolean") {
                     flags[flag.key] = true;
-                } else if (flag.type === "value" && index + 1 < args.length) {
-                    const value = args[++index];
+                } else if (flag.type === "value" && i + 1 < args.length) {
+                    const value = args[++i];
                     if (flag.validator(value)) {
                         flags[flag.key] = flag.parser ? flag.parser(value) : value;
                     }
                 }
             } else if (flags.input === "") {
-                flags.input = args.slice(index).join(" ");
+                flags.input = args.slice(i).join(" ");
                 break;
             }
         }
@@ -109,8 +109,6 @@ class Ctx {
             }
             if (target) return await Functions.getLidUser(target, this._client.onWhatsApp);
         }
-
-        return target;
     }
 
     get me() {
@@ -131,7 +129,7 @@ class Ctx {
             users,
             groups,
             bot: Functions.getDb(bot),
-            user: Functions.getDb(users, this._sender.jid),
+            user: Functions.getDb(users, this._sender.lid),
             group: this.isGroup() ? Functions.getDb(groups, this.id) : null
         };
     }
@@ -156,8 +154,8 @@ class Ctx {
         return new Group(this);
     }
 
-    group(jid = this.id) {
-        return Baileys.isJidGroup(jid) ? new GroupData(this, jid) : null;
+    group(jid = this.id, useCache = true) {
+        return Baileys.isJidGroup(jid) ? new GroupData(this, jid, useCache) : null;
     }
 
     isGroup() {
@@ -180,7 +178,7 @@ class Ctx {
     }
 
     getPushName(jid = this._sender.jid) {
-        return Functions.getPushName(jid, this._self.pushNames);
+        return Functions.getUserData(jid, this._self.userStore, "pushName");
     }
 
     getId(jid = this._sender.jid) {
@@ -188,12 +186,16 @@ class Ctx {
     }
 
     async getLidUser(jid = this._sender.jid) {
-        return await Functions.getLidUser(jid, this._client.onWhatsApp);
+        return Functions.getUserData(jid, this._self.userStore, "lid") || await Functions.getLidUser(jid, this.core.onWhatsApp);
     }
 
-    getDb(collection, jid = this._sender.jid) {
+    getDb(collection, jid = this._sender.lid) {
         const coll = this._db.getCollection(collection);
         return Functions.getDb(coll, jid);
+    }
+
+    async getUserData(jid = this._sender.lid, data) {
+        return Functions.getUserData(jid, this._self.userStore, data);
     }
 
     async _downloadMediaMessage(message) {
@@ -248,7 +250,7 @@ class Ctx {
             },
             id: chat,
             sender,
-            pushName: Functions.getPushName(sender, this._self.pushNames),
+            pushName: Functions.getUserData(jid, this._self.userStore, "pushName"),
             download: async () =>
                 await this._downloadMediaMessage({
                     message

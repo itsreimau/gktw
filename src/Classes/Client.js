@@ -54,8 +54,8 @@ class Client {
             stdTTL: 30,
             useClones: false
         });
-        this.pushnamesPath = path.resolve(this.authDir, "pushnames.json");
-        this.pushNames = {};
+        this.userStorePath = path.resolve(this.authDir, "user_store.json");
+        this.userStore = {};
         this.db = new SimplDB({
             collectionsFolder: this.databaseDir
         });
@@ -103,63 +103,32 @@ class Client {
         this.owner = registeredOwner;
     }
 
-    async _fixUsersDb() {
-        if (!this.core.authState?.creds?.registered) return;
-
-        const users = this.db.getCollection("users");
-        const groups = this.db.getCollection("groups");
-
-        if (!users || !groups) return;
-
-        groups.remove(group => !Baileys.isJidGroup(group.jid));
-        users.remove(user => {
-            if (!Baileys.isLidUser(user?.jid) || !Baileys.isJidUser(user?.alt)) return true;
-        });
-
-        const usersAlt = users.getMany(user => user?.alt);
-
-        for (const userAlt of usersAlt) {
-            const altJid = userAlt.alt;
-
-            if (!Baileys.isJidUser(altJid)) {
-                users.remove(user => user.jid === userAlt.jid);
-                continue;
-            }
-
-            const lid = await Functions.getLidUser(altJid, this.core.onWhatsApp);
-
-            if (!lid || !Baileys.isLidUser(lid)) {
-                users.remove(user => user.jid === userAlt.jid);
-                continue;
-            }
-
-            const duplicateUser = users.get(user => user.jid === lid);
-
-            if (duplicateUser) {
-                Object.assign(duplicateUser, userAlt);
-                duplicateUser.alt = altJid;
-
-                users.update(user => Object.assign(user, duplicateUser), user => user.jid === lid);
-                users.remove(user => user.jid === userAlt.jid && user.jid !== lid);
-            } else {
-                userAlt.jid = lid;
-                userAlt.alt = altJid;
-
-                users.update(user => Object.assign(user, userAlt), user => user.jid === userAlt.jid);
-            }
-        }
+    _saveUserStore() {
+        fs.writeFileSync(this.userStorePath, JSON.stringify(this.userStore));
     }
 
-    _savePushnames() {
-        fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
-    }
-
-    _loadPushNames() {
+    _loadUserStore() {
         try {
-            this.pushNames = JSON.parse(fs.readFileSync(this.pushnamesPath, "utf8"));
+            this.userStore = JSON.parse(fs.readFileSync(this.userStorePath, "utf8"));
         } catch {
-            this._savePushnames();
+            this._saveUserStore();
         }
+    }
+
+    async _updateUserStore(jid, lid, pushName) {
+        if (!Baileys.isJidUser(jid) || !Baileys.isLidUser(lid) || !pushName) return;
+
+        if (!this.userStore[jid])
+            this.userStore[jid] = {
+                jid: jid,
+                lid: null,
+                pushName: null
+            };
+
+        if (Baileys.isLidUser(lid) && lid !== this.userStore[jid].lid) this.userStore[jid].lid = lid;
+        if (pushName !== this.userStore[jid].pushName) this.userStore[jid].pushName = pushName;
+
+        this._saveUserStore();
     }
 
     async _setGroupCache(id) {
@@ -182,12 +151,11 @@ class Client {
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
                 await this._registerOwner();
-                setTimeout(() => this._fixUsersDb(), 10000);
             }
         });
 
         this.core.ev.on("creds.update", this.saveCreds);
-        this._loadPushNames();
+        this._loadUserStore();
 
         this.core.ev.on("messages.upsert", async (event) => {
             for (const message of event.messages) {
@@ -197,17 +165,16 @@ class Client {
                 this.messageIdCache.set(message.key.id, true);
 
                 const sender = message.key.participant || message.key.remoteJid;
-                if (message.pushName && this.pushNames[sender] !== message.pushName) {
-                    this.pushNames[sender] = message.pushName;
-                    this._savePushnames();
-                }
+                const lid = await Functions.getLidUser(sender, this.core.onWhatsApp);
+
+                await this._updateUserStore(sender, lid, message.pushName);
 
                 const text = Functions.getTextFromMsg(message);
                 const self = {
                     ...this,
                     sender: {
                         jid: sender,
-                        lid: await Functions.getLidUser(sender, this.core.onWhatsApp),
+                        lid: lid,
                         pushName: message.pushName
                     },
                     m: {
@@ -239,14 +206,26 @@ class Client {
             for (const participant of event.participants) {
                 const ctx = {
                     id: event.id,
-                    participant
+                    participant: {
+                        jid: participant,
+                        lid: await Functions.getLidUser(participant, this.core.onWhatsApp),
+                        pushName: Functions.getUserData(participant, this.userStore, "pushName")
+                    }
                 };
                 this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, ctx);
             }
         });
 
-        this.core.ev.on("call", events => {
-            for (const ctx of events) {
+        this.core.ev.on("call", async (events) => {
+            for (const event of events) {
+                const ctx = {
+                    id: event.id,
+                    from: {
+                        jid: event.from,
+                        lid: await Functions.getLidUser(event.from, this.core.onWhatsApp),
+                        pushName: Functions.getUserData(participant, this.userStore, "pushName")
+                    }
+                };
                 this.ev.emit(Events.Call, ctx);
             }
         });
@@ -274,7 +253,7 @@ class Client {
     }
 
     getPushName(jid) {
-        return Functions.getPushName(jid, this.pushNames);
+        return Functions.getUserData(jid, this.userStore, "pushName");
     }
 
     getId(jid) {
@@ -282,12 +261,16 @@ class Client {
     }
 
     async getLidUser(jid) {
-        return await Functions.getLidUser(jid, this.core.onWhatsApp);
+        return Functions.getUserData(jid, this.userStore, "lid") || await Functions.getLidUser(jid, this.core.onWhatsApp);
     }
 
     getDb(collection, jid) {
         const coll = this.db.getCollection(collection);
         return Functions.getDb(coll, jid);
+    }
+
+    async getUserData(jid, data) {
+        return Functions.getUserData(jid, this.userStore, data);
     }
 
     async launch() {

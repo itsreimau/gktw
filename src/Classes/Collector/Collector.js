@@ -30,7 +30,7 @@ class Collector extends EventEmitter {
 
         this.received++;
 
-        if (this.maxProcessed && this.received >= this.maxProcessed) return this.stop("processedLimit");
+        if (this.maxProcessed && this.received > this.maxProcessed) return this.stop("processedLimit");
         if (this.max && this.collector.size >= this.max) return this.stop("limit");
 
         this.collector.set(collCtx._msg.key.id, collCtx);

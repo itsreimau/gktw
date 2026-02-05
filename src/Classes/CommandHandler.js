@@ -20,13 +20,17 @@ class CommandHandler {
         }).sort((a, b) => a.localeCompare(b));
 
         for (const file of files) {
-            const cmdObj = require(file);
-            if (!cmdObj.type || cmdObj.type === "command") {
-                this._bot.cmd.set(cmdObj.name, cmdObj);
-                if (isShowLog) this.consolefy.success(`Loaded Command: ${cmdObj.name}`);
-            } else if (cmdObj.type === "hears") {
-                this._bot.hearsMap.set(cmdObj.name, cmdObj);
-                if (isShowLog) this.consolefy.success(`Loaded Hears: ${cmdObj.name}`);
+            try {
+                const fileObj = require(file);
+                if (!fileObj.type || fileObj.type === "command") {
+                    this._bot.cmd.set(fileObj.name, fileObj);
+                    if (isShowLog) this.consolefy.success(`Loaded Command: ${fileObj.name}`);
+                } else if (fileObj.type === "hears") {
+                    this._bot.hearsMap.set(fileObj.name, fileObj);
+                    if (isShowLog) this.consolefy.success(`Loaded Hears: ${fileObj.name}`);
+                }
+            } catch (error) {
+                if (isShowLog) this.consolefy.error(`Failed to load ${file}: ${error}`);
             }
         }
 

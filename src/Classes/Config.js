@@ -13,9 +13,9 @@ class Config {
     _loadConfig() {
         if (!fs.existsSync(this.configPath)) return;
 
-        const loadedConfig = this.db.toJSON();
-        this._replaceTemplateString(loadedConfig, loadedConfig);
-        Object.assign(this, loadedConfig);
+        const config = this.db.toJSON();
+        this._replaceTemplateString(config);
+        Object.assign(this, config);
     }
 
     _replaceTemplateString(object) {
@@ -36,8 +36,8 @@ class Config {
         replaceInObject(object);
     }
 
-    _resolveTemplate(str, root) {
-        let result = str;
+    _resolveTemplate(string, root) {
+        let result = string;
         let changed;
 
         do {
@@ -55,9 +55,9 @@ class Config {
         return result;
     }
 
-    _getNestedValue(obj, keyPath) {
+    _getNestedValue(object, keyPath) {
         const keys = keyPath.split("_");
-        let current = obj;
+        let current = object;
 
         for (const key of keys) {
             if (current && typeof current === "object" && key in current) {

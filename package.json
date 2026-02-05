@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.5.11",
+  "version": "1.5.12",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -23,7 +23,7 @@
     "@mengkodingan/consolefy": "^1.0.1",
     "baileys": "npm:@rexxhayanasi/elaina-baileys",
     "didyoumean": "^1.2.2",
-    "glob": "^13.0.0",
+    "glob": "^13.0.1",
     "mime-types": "^2.1.35",
     "pino": "^10.3.0",
     "safety-safe": "^3.0.0",

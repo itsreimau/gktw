@@ -3,14 +3,16 @@ const Ctx = require("../Classes/Ctx.js");
 
 async function Commands(self, _runMiddlewares) {
     const {
-        m
+        m,
+        prefix,
+        cmd
     } = self;
     if (!m.message || Baileys.isJidStatusBroadcast(m.key.remoteJid) || Baileys.isJidNewsletter(m.key.remoteJid)) return;
 
     const hasHears = Array.from(self.hearsMap.values()).filter(hear => hear.name === m.text || hear.name === m.messageType || new RegExp(hear.name).test(m.text) || (Array.isArray(hear.name) && hear.name.includes(m.text)));
 
-    if (hasHears.length) {
-        const ctx = new Ctx({
+    if (hasHears.length)
+        return hasHears.forEach(hear => hear.code(new Ctx({
             used: {
                 hears: m.text
             },
@@ -18,27 +20,23 @@ async function Commands(self, _runMiddlewares) {
             text: "",
             self,
             client: self.core
-        });
-        hasHears.forEach(hear => hear.code(ctx));
-        return;
-    }
+        })));
 
     let selectedPrefix;
-    const prefix = self.prefix;
 
     if (Array.isArray(prefix)) {
         if (prefix[0] === "") {
-            const emptyIndex = prefix.findIndex(p => p === "");
+            const emptyIndex = prefix.findIndex(pref => pref === "");
             if (emptyIndex !== -1) {
                 const newPrefix = [...prefix];
                 const [empty] = newPrefix.splice(emptyIndex, 1);
                 newPrefix.push(empty);
-                selectedPrefix = newPrefix.find(p => m.text?.startsWith(p));
+                selectedPrefix = newPrefix.find(pref => m.text?.startsWith(pref));
             } else {
-                selectedPrefix = prefix.find(p => m.text?.startsWith(p));
+                selectedPrefix = prefix.find(pref => m.text?.startsWith(pref));
             }
         } else {
-            selectedPrefix = prefix.find(p => m.text?.startsWith(p));
+            selectedPrefix = prefix.find(pref => m.text?.startsWith(pref));
         }
     } else if (prefix instanceof RegExp) {
         const match = m.text?.match(prefix);
@@ -49,14 +47,14 @@ async function Commands(self, _runMiddlewares) {
 
     if (!selectedPrefix) return;
 
-    const textWithoutPrefix = m.text?.slice(selectedPrefix.length).trim() || "";
-    let args = textWithoutPrefix.split(/\s+/) || [];
+    const command = m.text?.slice(selectedPrefix.length).trim() || "";
+    let args = command.split(/\s+/) || [];
     let commandName = args?.shift()?.toLowerCase();
-    const text = textWithoutPrefix.slice(commandName.length) || "";
+    const text = command.slice(commandName.length) || "";
 
     if (!commandName) return;
 
-    const commandsList = Array.from(self.cmd?.values() || []);
+    const commandsList = Array.from(cmd?.values() || []);
     const matchedCommands = commandsList.filter(command => command.name?.toLowerCase() === commandName || (Array.isArray(command.aliases) ? command.aliases.includes(commandName) : command.aliases === commandName));
 
     if (!matchedCommands.length) return;
