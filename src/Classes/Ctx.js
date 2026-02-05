@@ -250,7 +250,7 @@ class Ctx {
             },
             id: chat,
             sender,
-            pushName: Functions.getUserData(jid, this._self.userStore, "pushName"),
+            pushName: Functions.getUserData(sender, this._self.userStore, "pushName"),
             download: async () =>
                 await this._downloadMediaMessage({
                     message
