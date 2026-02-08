@@ -116,7 +116,7 @@ class Client {
     }
 
     async _updateUserStore(jid, lid, pushName) {
-        if (!Baileys.isJidUser(jid) || !Baileys.isLidUser(lid) || !pushName) return;
+        if (!Baileys.isPnUser(jid) || !Baileys.isLidUser(lid) || !pushName) return;
 
         if (!this.userStore[jid])
             this.userStore[jid] = {

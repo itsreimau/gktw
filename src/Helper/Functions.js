@@ -42,12 +42,12 @@ function getId(jid) {
 }
 
 async function getLidUser(jid, onWhatsAppFunc) {
-    if (!Baileys.isJidUser(jid)) return jid;
+    if (!Baileys.isPnUser(jid)) return jid;
     return (await onWhatsAppFunc(jid))[0]?.lid || jid;
 }
 
 function getUserData(jid, userStore, data) {
-    if (!Baileys.isJidUser(jid)) return jid;
+    if (!Baileys.isPnUser(jid)) return jid;
     return (data ? userStore[jid][data] : userStore) || {};
 }
 
@@ -71,7 +71,7 @@ function getDb(collection, jid) {
 }
 
 function checkOwner(jid, ownerList) {
-    if (!Baileys.isJidUser(jid) && !Baileys.isLidUser(jid)) return false;
+    if (!Baileys.isPnUser(jid) && !Baileys.isLidUser(jid)) return false;
     return ownerList.some(ownerJid => Baileys.areJidsSameUser(ownerJid, jid));
 }
 

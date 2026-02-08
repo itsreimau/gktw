@@ -162,7 +162,7 @@ class Ctx {
         return Baileys.isJidGroup(this.id);
     }
     isPrivate() {
-        return Baileys.isJidUser(this.id) || Baileys.isLidUser(this.id);
+        return Baileys.isPnUser(this.id) || Baileys.isLidUser(this.id);
     }
 
     getMessageType() {
