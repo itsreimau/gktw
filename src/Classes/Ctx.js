@@ -2,6 +2,7 @@ const Baileys = require("baileys");
 const Functions = require("../Helper/Functions.js");
 const Group = require("./Group/Group.js");
 const GroupData = require("./Group/GroupData.js");
+const { tmpfiles } = require("@neoxr/helper");
 const MessageCollector = require("./Collector/MessageCollector.js");
 
 class Ctx {
@@ -107,7 +108,7 @@ class Ctx {
                     }
                     continue;
             }
-            if (target) return await Functions.getLidUser(target, this._client.onWhatsApp);
+            if (target) return (await this._client.getLidUser(target))?.[0]?.lid;
         }
     }
 
@@ -177,25 +178,17 @@ class Ctx {
         return Baileys.getDevice(id);
     }
 
-    getPushName(jid = this._sender.jid) {
-        return Functions.getUserData(jid, this._self.userStore, "pushName");
+    getPushName(jid = this._sender.lid) {
+        return Functions.getPushName(jid, this._self.pushNames);
     }
 
     getId(jid = this._sender.jid) {
         return Functions.getId(jid);
     }
 
-    async getLidUser(jid = this._sender.jid) {
-        return Functions.getUserData(jid, this._self.userStore, "lid") || await Functions.getLidUser(jid, this.core.onWhatsApp);
-    }
-
     getDb(collection, jid = this._sender.lid) {
         const coll = this._db.getCollection(collection);
         return Functions.getDb(coll, jid);
-    }
-
-    async getUserData(jid = this._sender.lid, data) {
-        return Functions.getUserData(jid, this._self.userStore, data);
     }
 
     async _downloadMediaMessage(message) {
@@ -223,7 +216,7 @@ class Ctx {
                 const buffer = await this._downloadMediaMessage({
                     message
                 });
-                return Buffer.isBuffer(buffer) ? await Baileys.uploadFile(buffer) : null;
+                return Buffer.isBuffer(buffer) ? (await tmpfiles(buffer)).data.url : null;
             }
         };
     }
@@ -250,7 +243,7 @@ class Ctx {
             },
             id: chat,
             sender,
-            pushName: Functions.getUserData(sender, this._self.userStore, "pushName"),
+            pushName: Functions.getPushName(sender, this._self.pushNames),
             download: async () =>
                 await this._downloadMediaMessage({
                     message
@@ -259,7 +252,7 @@ class Ctx {
                 const buffer = await this._downloadMediaMessage({
                     message
                 });
-                return Buffer.isBuffer(buffer) ? await Baileys.uploadFile(buffer) : null;
+                return Buffer.isBuffer(buffer) ? (await tmpfiles(buffer)).data.url : null;
             }
         };
     }

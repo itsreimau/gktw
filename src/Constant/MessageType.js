@@ -56,7 +56,7 @@ module.exports = {
     scheduledCallEditMessage: "scheduledCallEditMessage",
     ptvMessage: "ptvMessage",
     botInvokeMessage: "botInvokeMessage",
-    callLogMesssage: "callLogMesssage",
+    callLogMessage: "callLogMessage",
     messageHistoryBundle: "messageHistoryBundle",
     encCommentMessage: "encCommentMessage",
     bcallMessage: "bcallMessage",
@@ -76,7 +76,6 @@ module.exports = {
     associatedChildMessage: "associatedChildMessage",
     groupStatusMentionMessage: "groupStatusMentionMessage",
     pollCreationMessageV4: "pollCreationMessageV4",
-    pollCreationMessageV5: "pollCreationMessageV5",
     statusAddYours: "statusAddYours",
     groupStatusMessage: "groupStatusMessage",
     richResponseMessage: "richResponseMessage",
@@ -86,5 +85,13 @@ module.exports = {
     questionMessage: "questionMessage",
     messageHistoryNotice: "messageHistoryNotice",
     groupStatusMessageV2: "groupStatusMessageV2",
-    botForwardedMessage: "botForwardedMessage"
+    botForwardedMessage: "botForwardedMessage",
+    statusQuestionAnswerMessage: "statusQuestionAnswerMessage",
+    questionReplyMessage: "questionReplyMessage",
+    questionResponseMessage: "questionResponseMessage",
+    statusQuotedMessage: "statusQuotedMessage",
+    statusStickerInteractionMessage: "statusStickerInteractionMessage",
+    pollCreationMessageV5: "pollCreationMessageV5",
+    newsletterFollowerInviteMessageV2: "newsletterFollowerInviteMessageV2",
+    pollResultSnapshotMessageV3: "pollResultSnapshotMessageV3"
 };

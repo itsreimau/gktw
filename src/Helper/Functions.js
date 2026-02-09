@@ -41,14 +41,9 @@ function getId(jid) {
     return Baileys.jidDecode(jid)?.user || jid;
 }
 
-async function getLidUser(jid, onWhatsAppFunc) {
-    if (!Baileys.isPnUser(jid)) return jid;
-    return (await onWhatsAppFunc(jid))[0]?.lid || jid;
-}
-
-function getUserData(jid, userStore, data) {
-    if (!Baileys.isPnUser(jid)) return jid;
-    return (data ? userStore[jid][data] : userStore) || {};
+function getPushName(jid, pushNames) {
+    if (!Baileys.isLidUser(jid)) return false;
+    return pushNames[jid] || jid;
 }
 
 function getDb(collection, jid) {
@@ -79,8 +74,7 @@ module.exports = {
     getMessageType,
     getTextFromMsg,
     getId,
-    getLidUser,
-    getUserData,
+    getPushName,
     getDb,
     checkOwner
 };

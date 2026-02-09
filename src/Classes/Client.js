@@ -54,8 +54,8 @@ class Client {
             stdTTL: 30,
             useClones: false
         });
-        this.userStorePath = path.resolve(this.authDir, "user_store.json");
-        this.userStore = {};
+        this.pushnamesPath = path.resolve(this.authDir, "pushnames.json");
+        this.pushNames = {};
         this.db = new SimplDB({
             collectionsFolder: this.databaseDir
         });
@@ -91,7 +91,7 @@ class Client {
         const registeredOwner = [];
         for (const ownerId of this.owner) {
             const ownerJid = ownerId + Baileys.S_WHATSAPP_NET;
-            const ownerLid = await Functions.getLidUser(ownerJid, this.core.onWhatsApp);
+            const ownerLid = (await this.core.getLidUser(ownerJid))?.[0]?.lid;
             registeredOwner.push(ownerJid);
             if (ownerLid) registeredOwner.push(ownerLid);
         }
@@ -103,32 +103,16 @@ class Client {
         this.owner = registeredOwner;
     }
 
-    _saveUserStore() {
-        fs.writeFileSync(this.userStorePath, JSON.stringify(this.userStore));
+    _savePushnames() {
+        fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
     }
 
-    _loadUserStore() {
+    _loadPushNames() {
         try {
-            this.userStore = JSON.parse(fs.readFileSync(this.userStorePath, "utf8"));
+            this.pushNames = JSON.parse(fs.readFileSync(this.pushnamesPath, "utf8"));
         } catch {
-            this._saveUserStore();
+            this._savePushnames();
         }
-    }
-
-    async _updateUserStore(jid, lid, pushName) {
-        if (!Baileys.isPnUser(jid) || !Baileys.isLidUser(lid) || !pushName) return;
-
-        if (!this.userStore[jid])
-            this.userStore[jid] = {
-                jid: jid,
-                lid: null,
-                pushName: null
-            };
-
-        if (Baileys.isLidUser(lid) && lid !== this.userStore[jid].lid) this.userStore[jid].lid = lid;
-        if (pushName !== this.userStore[jid].pushName) this.userStore[jid].pushName = pushName;
-
-        this._saveUserStore();
     }
 
     async _setGroupCache(id) {
@@ -155,8 +139,8 @@ class Client {
         });
 
         this.core.ev.on("creds.update", this.saveCreds);
-        this._loadUserStore();
 
+        this._loadPushNames();
         this.core.ev.on("messages.upsert", async (event) => {
             for (const message of event.messages) {
                 if (message.key.fromMe && message.key.id.startsWith("3EB0")) continue;
@@ -164,17 +148,21 @@ class Client {
                 if (this.messageIdCache.get(message.key.id)) continue;
                 this.messageIdCache.set(message.key.id, true);
 
-                const sender = message.key.participant || message.key.remoteJid;
-                const lid = await Functions.getLidUser(sender, this.core.onWhatsApp);
+                const senderIds = [message.key.participant, message.key.participantAlt, message.key.remoteJid, message.key.remoteJidAlt];
+                const senderId = senderIds.find(id => Baileys.isPnUser(id));
+                const senderLid = senderIds.find(id => Baileys.isLidUser(id));
 
-                await this._updateUserStore(sender, lid, message.pushName);
+                if (message.pushName && this.pushNames[senderLid] !== message.pushName) {
+                    this.pushNames[senderLid] = message.pushName;
+                    this._savePushnames();
+                }
 
                 const text = Functions.getTextFromMsg(message);
                 const self = {
                     ...this,
                     sender: {
-                        jid: sender,
-                        lid: lid,
+                        jid: senderId,
+                        lid: senderLid,
                         pushName: message.pushName
                     },
                     m: {
@@ -206,26 +194,15 @@ class Client {
             for (const participant of event.participants) {
                 const ctx = {
                     id: event.id,
-                    participant: {
-                        jid: participant,
-                        lid: await Functions.getLidUser(participant, this.core.onWhatsApp),
-                        pushName: Functions.getUserData(participant, this.userStore, "pushName")
-                    }
+                    participant,
+                    ...event
                 };
                 this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, ctx);
             }
         });
 
-        this.core.ev.on("call", async (events) => {
-            for (const event of events) {
-                const ctx = {
-                    id: event.id,
-                    from: {
-                        jid: event.from,
-                        lid: await Functions.getLidUser(event.from, this.core.onWhatsApp),
-                        pushName: Functions.getUserData(participant, this.userStore, "pushName")
-                    }
-                };
+        this.core.ev.on("call", events => {
+            for (const ctx of events) {
                 this.ev.emit(Events.Call, ctx);
             }
         });
@@ -253,24 +230,16 @@ class Client {
     }
 
     getPushName(jid) {
-        return Functions.getUserData(jid, this.userStore, "pushName");
+        return Functions.getPushName(jid, this.pushNames);
     }
 
     getId(jid) {
         return Functions.getId(jid);
     }
 
-    async getLidUser(jid) {
-        return Functions.getUserData(jid, this.userStore, "lid") || await Functions.getLidUser(jid, this.core.onWhatsApp);
-    }
-
     getDb(collection, jid) {
         const coll = this.db.getCollection(collection);
         return Functions.getDb(coll, jid);
-    }
-
-    async getUserData(jid, data) {
-        return Functions.getUserData(jid, this.userStore, data);
     }
 
     async launch() {
