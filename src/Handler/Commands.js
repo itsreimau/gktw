@@ -1,7 +1,7 @@
 const Baileys = require("baileys");
-const Ctx = require("../Classes/Ctx.js");
 
 async function Commands(self, _runMiddlewares) {
+    const Ctx = require("../Classes/Ctx.js");
     const {
         m,
         prefix,
