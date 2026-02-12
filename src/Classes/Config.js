@@ -5,7 +5,8 @@ class Config {
     constructor(configPath) {
         this.configPath = configPath;
         this.db = new SimplDB({
-            dataFile: this.configPath
+            dataFile: this.configPath,
+            tabSize: 2
         });
         this._loadConfig();
     }
