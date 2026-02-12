@@ -110,7 +110,7 @@ class Ctx {
                     }
                     continue;
             }
-            if (Baileys.isPnUser(target))(await this._client.getLidUser(target))?.[0]?.lid;
+            if (Baileys.isPnUser(target)) target = (await this._client.getLidUser(target))?.[0]?.lid;
         }
         return target;
     }
