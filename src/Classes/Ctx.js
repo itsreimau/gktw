@@ -3,6 +3,7 @@ const Functions = require("../Helper/Functions.js");
 const Group = require("./Group/Group.js");
 const GroupData = require("./Group/GroupData.js");
 const { parseCommand } = require("../Handler/Commands.js");
+const didYouMean = require("didyoumean");
 const { tmpfiles } = require("@neoxr/helper");
 const MessageCollector = require("./Collector/MessageCollector.js");
 
