@@ -148,9 +148,11 @@ class Client {
                 if (this.messageIdCache.get(message.key.id)) continue;
                 this.messageIdCache.set(message.key.id, true);
 
-                const senderIds = [message.key.participant, message.key.participantAlt, message.key.remoteJid, message.key.remoteJidAlt];
-                const senderId = senderIds.find(id => Baileys.isPnUser(id));
-                const senderLid = senderIds.find(id => Baileys.isLidUser(id));
+                const senderJids = [message.key.participant, message.key.participantAlt, message.key.remoteJid, message.key.remoteJidAlt];
+                const senderPn = senderJids.find(id => Baileys.isPnUser(id));
+                const senderLid = senderJids.find(id => Baileys.isLidUser(id));
+
+                if (!senderPn || !senderLid) return;
 
                 if (message.pushName && this.pushNames[senderLid] !== message.pushName) {
                     this.pushNames[senderLid] = message.pushName;
@@ -161,7 +163,7 @@ class Client {
                 const self = {
                     ...this,
                     sender: {
-                        jid: senderId,
+                        jid: senderPn,
                         lid: senderLid,
                         pushName: message.pushName
                     },
@@ -225,19 +227,19 @@ class Client {
         });
     }
 
-    checkOwner(jid) {
+    checkOwner(jid = Baileys.PSA_WID) {
         return Functions.checkOwner(jid, this.owner);
     }
 
-    getPushName(jid) {
+    getPushName(jid = Baileys.PSA_WID) {
         return Functions.getPushName(jid, this.pushNames);
     }
 
-    getId(jid) {
+    getId(jid = Baileys.PSA_WID) {
         return Functions.getId(jid);
     }
 
-    getDb(collection, jid) {
+    getDb(collection, jid = Baileys.PSA_WID) {
         const coll = this.db.getCollection(collection);
         return Functions.getDb(coll, jid);
     }

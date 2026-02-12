@@ -110,8 +110,9 @@ class Ctx {
                     }
                     continue;
             }
-            if (target) return (await this._client.getLidUser(target))?.[0]?.lid;
+            if (Baileys.isPnUser(target))(await this._client.getLidUser(target))?.[0]?.lid;
         }
+        return target;
     }
 
     get me() {

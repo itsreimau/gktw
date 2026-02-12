@@ -43,7 +43,7 @@ function getId(jid) {
 
 function getPushName(jid, pushNames) {
     if (!Baileys.isLidUser(jid)) return false;
-    return pushNames[jid] || jid;
+    return pushNames[jid];
 }
 
 function getDb(collection, jid) {
