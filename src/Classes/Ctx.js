@@ -2,6 +2,7 @@ const Baileys = require("baileys");
 const Functions = require("../Helper/Functions.js");
 const Group = require("./Group/Group.js");
 const GroupData = require("./Group/GroupData.js");
+const { parseCommand } = require("../Handler/Commands.js");
 const { tmpfiles } = require("@neoxr/helper");
 const MessageCollector = require("./Collector/MessageCollector.js");
 
@@ -164,6 +165,37 @@ class Ctx {
     }
     isPrivate() {
         return Baileys.isPnUser(this.id) || Baileys.isLidUser(this.id);
+    }
+
+    isCmd() {
+        const {
+            command,
+            args,
+            commandName,
+            text,
+            selectedPrefix
+        } = parseCommand(this._self.prefix, this._msg.text);
+
+        if (!commandName) return null;
+
+        const commandsList = Array.from(this._self.cmd?.values() || []);
+        const matchedCommands = commandsList.filter(command => command.name?.toLowerCase() === commandName || (Array.isArray(command.aliases) ? command.aliases.includes(commandName) : command.aliases === commandName));
+
+        if (matchedCommands.length > 0)
+            return {
+                msg: text,
+                prefix: selectedPrefix,
+                name: commandName,
+                input: text
+            };
+
+        const mean = didYouMean(commandName, commandsList.flatMap(cmd => [cmd.name, ...(cmd.aliases || [])]));
+        return mean ? {
+            msg: text,
+            prefix: selectedPrefix,
+            didyoumean: mean,
+            input: text
+        } : null;
     }
 
     getMessageType() {

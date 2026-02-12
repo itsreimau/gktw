@@ -44,7 +44,7 @@ class Config {
             changed = false;
             result = result.replace(/%([^%]+)%/g, (match, templateKey) => {
                 const value = this._getNestedValue(root, templateKey);
-                if (value !== undefined) {
+                if (value !== null) {
                     changed = true;
                     return String(value);
                 }
@@ -63,7 +63,7 @@ class Config {
             if (current && typeof current === "object" && key in current) {
                 current = current[key];
             } else {
-                return undefined;
+                return null;
             }
         }
         return current;

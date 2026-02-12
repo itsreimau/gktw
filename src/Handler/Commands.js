@@ -22,35 +22,13 @@ async function Commands(self, _runMiddlewares) {
             client: self.core
         })));
 
-    let selectedPrefix;
-
-    if (Array.isArray(prefix)) {
-        if (prefix[0] === "") {
-            const emptyIndex = prefix.findIndex(pref => pref === "");
-            if (emptyIndex !== -1) {
-                const newPrefix = [...prefix];
-                const [empty] = newPrefix.splice(emptyIndex, 1);
-                newPrefix.push(empty);
-                selectedPrefix = newPrefix.find(pref => m.text?.startsWith(pref));
-            } else {
-                selectedPrefix = prefix.find(pref => m.text?.startsWith(pref));
-            }
-        } else {
-            selectedPrefix = prefix.find(pref => m.text?.startsWith(pref));
-        }
-    } else if (prefix instanceof RegExp) {
-        const match = m.text?.match(prefix);
-        selectedPrefix = match ? match[0] : null;
-    } else if (typeof prefix === "string") {
-        selectedPrefix = m.text?.startsWith(prefix) ? prefix : null;
-    }
-
-    if (!selectedPrefix) return;
-
-    const command = m.text?.slice(selectedPrefix.length).trim() || "";
-    let args = command.split(/\s+/) || [];
-    let commandName = args?.shift()?.toLowerCase();
-    const text = command.slice(commandName.length) || "";
+    const {
+        command,
+        args,
+        commandName,
+        text,
+        selectedPrefix
+    } = parseCommand(prefix, m.text);
 
     if (!commandName) return;
 
@@ -75,4 +53,52 @@ async function Commands(self, _runMiddlewares) {
     matchedCommands.forEach(cmd => cmd.code(ctx));
 }
 
+function parseCommand(prefix, text) {
+    let selectedPrefix;
+
+    if (Array.isArray(prefix)) {
+        if (prefix[0] === "") {
+            const emptyIndex = prefix.findIndex(pref => pref === "");
+            if (emptyIndex !== -1) {
+                const newPrefix = [...prefix];
+                const [empty] = newPrefix.splice(emptyIndex, 1);
+                newPrefix.push(empty);
+                selectedPrefix = newPrefix.find(pref => text?.startsWith(pref));
+            } else {
+                selectedPrefix = prefix.find(pref => text?.startsWith(pref));
+            }
+        } else {
+            selectedPrefix = prefix.find(pref => text?.startsWith(pref));
+        }
+    } else if (prefix instanceof RegExp) {
+        const match = text?.match(prefix);
+        selectedPrefix = match ? match[0] : null;
+    } else if (typeof prefix === "string") {
+        selectedPrefix = text?.startsWith(prefix) ? prefix : null;
+    }
+
+    if (!selectedPrefix)
+        return {
+            command: null,
+            args: [],
+            commandName: null,
+            text: null,
+            selectedPrefix: null
+        };
+
+    const command = text?.slice(selectedPrefix.length).trim() || "";
+    let args = command.split(/\s+/) || [];
+    let commandName = args?.shift()?.toLowerCase();
+    const textCommand = command.slice(commandName.length).trim() || "";
+
+    return {
+        command,
+        args,
+        commandName,
+        text: textCommand,
+        selectedPrefix
+    };
+}
+
 module.exports = Commands;
+module.exports.parseCommand = parseCommand;

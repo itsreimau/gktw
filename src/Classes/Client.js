@@ -143,7 +143,7 @@ class Client {
         this._loadPushNames();
         this.core.ev.on("messages.upsert", async (event) => {
             for (const message of event.messages) {
-                if (message.key.fromMe && message.key.id.startsWith("3EB0")) continue;
+                if (message.key.fromMe && message.key.id.startsWith("SUKI")) continue;
 
                 if (this.messageIdCache.get(message.key.id)) continue;
                 this.messageIdCache.set(message.key.id, true);
