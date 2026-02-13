@@ -1,20 +1,13 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.5.17",
+  "version": "1.5.18",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
     "src": "src"
   },
   "keywords": [
-    "whatsapp",
-    "whatsapp-bot",
-    "bot",
-    "baileys",
-    "baileys-md",
-    "whatsapp-web",
-    "whatsapp-api",
-    "md"
+    "baileys-wrapper"
   ],
   "author": "Reimau von Lilitz",
   "license": "MIT",
@@ -24,7 +17,7 @@
     "@neoxr/helper": "^2.3.9",
     "baileys": "github:Itsukichann/Baileys",
     "didyoumean": "^1.2.2",
-    "glob": "^13.0.2",
+    "glob": "^13.0.3",
     "mime-types": "^2.1.35",
     "pino": "^10.3.1",
     "safety-safe": "^3.0.0",
