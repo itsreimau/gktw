@@ -296,7 +296,25 @@ class Ctx {
     }
 
     async sendMessage(jid, content, options = {}) {
-        return await this._self.sendMessage(jid, content, options);
+        if (content?.groupStatus) {
+            const groupStatusMessage = await Baileys.generateWAMessageContent(content.groupStatus, {
+                upload: this._client.waUploadToServer
+            });
+            return await this._client.relayMessage(jid, {
+                message: {
+                    groupStatusMessageV2: {
+                        ...groupStatusMessage
+                    }
+                }
+            }, {
+                messageId: Baileys.generateMessageID()
+            });
+        }
+
+        content = typeof content === "string" ? {
+            text: content
+        } : content;
+        return this._client.sendMessage(jid, content, options);
     }
 
     async reply(content, options = {}) {

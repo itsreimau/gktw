@@ -195,17 +195,16 @@ class Client {
         this.core.ev.on("group-participants.update", async (event) => {
             await this._setGroupCache(event.id);
             for (const participant of event.participants) {
-                const ctx = {
+                this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, {
                     ...event,
                     participant
-                };
-                this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, ctx);
+                });
             }
         });
 
-        this.core.ev.on("call", events => {
-            for (const ctx of events) {
-                this.ev.emit(Events.Call, ctx);
+        this.core.ev.on("call", calls => {
+            for (const call of calls) {
+                this.ev.emit(Events.Call, call);
             }
         });
     }
@@ -242,28 +241,6 @@ class Client {
     getDb(collection, jid = Baileys.PSA_WID) {
         const coll = this.db.getCollection(collection);
         return Functions.getDb(coll, jid);
-    }
-
-    async sendMessage(jid, content, options = {}) {
-        if (content?.groupStatus) {
-            const groupStatusMessage = await Baileys.generateWAMessageContent(content.groupStatus, {
-                upload: this.core.waUploadToServer
-            });
-            return await this.core.relayMessage(jid, {
-                message: {
-                    groupStatusMessageV2: {
-                        ...groupStatusMessage
-                    }
-                }
-            }, {
-                messageId: Baileys.generateMessageID()
-            });
-        }
-
-        content = typeof content === "string" ? {
-            text: content
-        } : content;
-        return this.core.sendMessage(jid, content, options);
     }
 
     async launch() {
@@ -304,12 +281,6 @@ class Client {
 
         if (this.usePairingCode && !this.core.authState.creds.registered) {
             this.consolefy.setTag("pairing-code");
-
-            if (this.printQRInTerminal) {
-                this.consolefy.error("printQRInTerminal must be false for usePairingCode");
-                this.consolefy.resetTag();
-                return;
-            }
 
             if (!this.phoneNumber) {
                 this.consolefy.error("phoneNumber is required for usePairingCode");

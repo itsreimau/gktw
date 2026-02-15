@@ -6,15 +6,13 @@ function getMessageType(message) {
 
 function getTextFromMsg(msg) {
     const extractedMessage = Baileys.extractMessageContent(msg.message);
-    const messageType = getMessageType(extractedMessage) || "";
     const TEXT_HANDLERS = {
         conversation: msg => msg.conversation || "",
         extendedTextMessage: msg => msg.extendedTextMessage?.text || "",
         imageMessage: msg => msg.imageMessage?.caption || "",
         videoMessage: msg => msg.videoMessage?.caption || "",
         documentMessageWithCaption: msg => msg.documentMessageWithCaption?.caption || "",
-        pollCreationMessage: msg => msg.pollCreationMessage?.name,
-        pollUpdateMessage: msg => msg.pollUpdateMessage,
+        reactionMessage: msg => msg.reactionMessage?.text || "",
         protocolMessage: msg => getTextFromMsg({
             message: msg.protocolMessage?.editedMessage || ""
         }),
@@ -33,7 +31,7 @@ function getTextFromMsg(msg) {
             return text;
         }
     };
-    return TEXT_HANDLERS[messageType]?.(extractedMessage);
+    return TEXT_HANDLERS[getMessageType(extractedMessage)]?.(extractedMessage);
 }
 
 function getId(jid) {
