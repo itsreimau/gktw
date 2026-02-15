@@ -295,28 +295,26 @@ class Ctx {
         await this._client.readMessages([this._msg.key]);
     }
 
+    async sendMessage(jid, content, options = {}) {
+        return await this._self.sendMessage(jid, content, options);
+    }
+
     async reply(content, options = {}) {
-        content = typeof content === "string" ? {
-            text: content
-        } : content;
-        return await this._client.sendMessage(this.id, content, {
+        return await this.sendMessage(this.id, content, {
             ...options,
             quoted: this._msg
         });
     }
 
     async replyWithJid(jid, content, options = {}) {
-        content = typeof content === "string" ? {
-            text: content
-        } : content;
-        return await this._client.sendMessage(jid, content, {
+        return await this.sendMessage(jid, content, {
             ...options,
             quoted: this._msg
         });
     }
 
     async replyReact(emoji, key) {
-        return await this._client.sendMessage(this.id, {
+        return await this.sendMessage(this.id, {
             react: {
                 text: emoji,
                 key: key || this._msg.key
@@ -325,20 +323,20 @@ class Ctx {
     }
 
     async deleteMessage(key, jid = this.id) {
-        return await this._client.sendMessage(jid, {
+        return await this.sendMessage(jid, {
             delete: key
         });
     }
 
     async editMessage(key, newText, jid = this.id) {
-        return await this._client.sendMessage(jid, {
+        return await this.sendMessage(jid, {
             text: newText,
             edit: key
         });
     }
 
     async forwardMessage(jid, msg) {
-        return await this._client.sendMessage(jid, {
+        return await this.sendMessage(jid, {
             forward: msg
         });
     }

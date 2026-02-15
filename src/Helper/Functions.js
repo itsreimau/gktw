@@ -7,14 +7,13 @@ function getMessageType(message) {
 function getTextFromMsg(msg) {
     const extractedMessage = Baileys.extractMessageContent(msg.message);
     const messageType = getMessageType(extractedMessage) || "";
-
     const TEXT_HANDLERS = {
-        conversation: msg => msg.conversation,
+        conversation: msg => msg.conversation || "",
         extendedTextMessage: msg => msg.extendedTextMessage?.text || "",
         imageMessage: msg => msg.imageMessage?.caption || "",
         videoMessage: msg => msg.videoMessage?.caption || "",
         documentMessageWithCaption: msg => msg.documentMessageWithCaption?.caption || "",
-        pollCreationMessage: msg => msg.pollCreationMessage.name,
+        pollCreationMessage: msg => msg.pollCreationMessage?.name,
         pollUpdateMessage: msg => msg.pollUpdateMessage,
         protocolMessage: msg => getTextFromMsg({
             message: msg.protocolMessage?.editedMessage || ""
@@ -42,8 +41,8 @@ function getId(jid) {
 }
 
 function getPushName(jid, pushNames) {
-    if (!Baileys.isLidUser(jid)) return false;
-    return pushNames[jid];
+    if (!Baileys.isLidUser(jid)) return "Unknown";
+    return pushNames[jid] || "Unknown";
 }
 
 function getDb(collection, jid) {

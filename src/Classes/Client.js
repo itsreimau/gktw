@@ -57,7 +57,8 @@ class Client {
         this.pushnamesPath = path.resolve(this.authDir, "pushnames.json");
         this.pushNames = {};
         this.db = new SimplDB({
-            collectionsFolder: this.databaseDir
+            collectionsFolder: this.databaseDir,
+            tabSize: 2
         });
 
         if (Array.isArray(this.prefix) && this.prefix.includes("")) this.prefix.sort((a, b) => a === "" ? 1 : b === "" ? -1 : 0);
@@ -149,10 +150,10 @@ class Client {
                 this.messageIdCache.set(message.key.id, true);
 
                 const senderJids = [message.key.participant, message.key.participantAlt, message.key.remoteJid, message.key.remoteJidAlt];
-                const senderPn = senderJids.find(id => Baileys.isPnUser(id));
-                const senderLid = senderJids.find(id => Baileys.isLidUser(id));
+                const senderPn = message.key.fromMe ? this.core.user.id : senderJids.find(id => Baileys.isPnUser(id));
+                const senderLid = message.key.fromMe ? this.core.user.lid : senderJids.find(id => Baileys.isLidUser(id));
 
-                if (!senderPn || !senderLid) return;
+                if (!senderPn || !senderLid) continue;
 
                 if (message.pushName && this.pushNames[senderLid] !== message.pushName) {
                     this.pushNames[senderLid] = message.pushName;
@@ -195,9 +196,8 @@ class Client {
             await this._setGroupCache(event.id);
             for (const participant of event.participants) {
                 const ctx = {
-                    id: event.id,
-                    participant,
-                    ...event
+                    ...event,
+                    participant
                 };
                 this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, ctx);
             }
@@ -242,6 +242,28 @@ class Client {
     getDb(collection, jid = Baileys.PSA_WID) {
         const coll = this.db.getCollection(collection);
         return Functions.getDb(coll, jid);
+    }
+
+    async sendMessage(jid, content, options = {}) {
+        if (content?.groupStatus) {
+            const groupStatusMessage = await Baileys.generateWAMessageContent(content.groupStatus, {
+                upload: this.core.waUploadToServer
+            });
+            return await this.core.relayMessage(jid, {
+                message: {
+                    groupStatusMessageV2: {
+                        ...groupStatusMessage
+                    }
+                }
+            }, {
+                messageId: Baileys.generateMessageID()
+            });
+        }
+
+        content = typeof content === "string" ? {
+            text: content
+        } : content;
+        return this.core.sendMessage(jid, content, options);
     }
 
     async launch() {
