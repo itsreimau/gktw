@@ -297,17 +297,18 @@ class Ctx {
 
     async sendMessage(jid, content, options = {}) {
         if (content?.groupStatus) {
-            const groupStatusMessage = await Baileys.generateWAMessageContent(content.groupStatus, {
+            const groupStatusContent = await Baileys.generateWAMessageContent(content.groupStatus, {
                 upload: this._client.waUploadToServer
             });
-            return await this._client.relayMessage(jid, {
-                message: {
-                    groupStatusMessageV2: {
-                        ...groupStatusMessage
+            const groupStatusMessage = Baileys.generateWAMessageFromContent(jid, {
+                groupStatusMessageV2: {
+                    message: {
+                        ...groupStatusContent
                     }
                 }
-            }, {
-                messageId: Baileys.generateMessageID()
+            }, {});
+            return await this._client.relayMessage(jid, groupStatusMessage.message, {
+                messageId: groupStatusMessage.key.id
             });
         }
 
