@@ -12,7 +12,6 @@ function getTextFromMsg(msg) {
         imageMessage: msg => msg.imageMessage?.caption || "",
         videoMessage: msg => msg.videoMessage?.caption || "",
         documentMessageWithCaption: msg => msg.documentMessageWithCaption?.caption || "",
-        reactionMessage: msg => msg.reactionMessage?.text || "",
         protocolMessage: msg => getTextFromMsg({
             message: msg.protocolMessage?.editedMessage || ""
         }),

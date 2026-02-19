@@ -1,15 +1,15 @@
 const Baileys = require("baileys");
-const path = require("node:path");
-const pino = require("pino");
 const EventEmitter = require("node:events");
 const { Consolefy } = require("@mengkodingan/consolefy");
+const pino = require("pino");
+const path = require("node:path");
 const { NodeCache } = require("@cacheable/node-cache");
-const Events = require("../Constant/Events.js");
+const SimplDB = require("simpl.db");
 const fs = require("node:fs");
+const Events = require("../Constant/Events.js");
 const Functions = require("../Helper/Functions.js");
 const Ctx = require("./Ctx.js");
 const Commands = require("../Handler/Commands.js");
-const SimplDB = require("simpl.db");
 
 class Client {
     constructor(opts) {
@@ -196,8 +196,8 @@ class Client {
             await this._setGroupCache(event.id);
             for (const participant of event.participants) {
                 this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, {
-                    ...event,
-                    participant
+                    participant,
+                    ...event
                 });
             }
         });

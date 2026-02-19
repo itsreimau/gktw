@@ -1,5 +1,6 @@
 const Baileys = require("baileys");
 const Functions = require("../Helper/Functions.js");
+const { parseArgs } = require("node:util");
 const Group = require("./Group/Group.js");
 const GroupData = require("./Group/GroupData.js");
 const { parseCommand } = require("../Handler/Commands.js");
@@ -47,32 +48,16 @@ class Ctx {
         return this._text;
     }
     flag(rules = {}) {
-        const flags = {
-            input: ""
+        const parsed = parseArgs({
+            args: this._text.split(" "),
+            options: rules,
+            strict: false,
+            allowPositionals: true
+        });
+        return {
+            input: parsed.positionals.join(" "),
+            ...parsed.values
         };
-        const args = this._text.split(" ") || [];
-
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
-
-            if (arg.startsWith("-") && rules[arg]) {
-                const flag = rules[arg];
-
-                if (flag.type === "boolean") {
-                    flags[flag.key] = true;
-                } else if (flag.type === "value" && i + 1 < args.length) {
-                    const value = args[++i];
-                    if (flag.validator(value)) {
-                        flags[flag.key] = flag.parser ? flag.parser(value) : value;
-                    }
-                }
-            } else if (flags.input === "") {
-                flags.input = args.slice(i).join(" ");
-                break;
-            }
-        }
-
-        return flags;
     }
     async target(priority = ["quoted", "mentioned", "text"]) {
         let target = null;

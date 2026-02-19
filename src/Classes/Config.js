@@ -1,5 +1,5 @@
-const fs = require("node:fs");
 const SimplDB = require("simpl.db");
+const fs = require("node:fs");
 
 class Config {
     constructor(configPath) {
