@@ -22,7 +22,7 @@ class Config {
     _replaceTemplateString(object) {
         const root = object;
 
-        const replaceInObject = currentObj => {
+        const replaceInObject = (currentObj) => {
             for (const key in currentObj) {
                 const value = currentObj[key];
 

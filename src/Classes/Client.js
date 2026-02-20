@@ -196,13 +196,13 @@ class Client {
             await this._setGroupCache(event.id);
             for (const participant of event.participants) {
                 this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, {
-                    participant,
-                    ...event
+                    ...event,
+                    participant
                 });
             }
         });
 
-        this.core.ev.on("call", calls => {
+        this.core.ev.on("call", (calls) => {
             for (const call of calls) {
                 this.ev.emit(Events.Call, call);
             }
@@ -255,7 +255,7 @@ class Client {
             this.store.readFromFile(this.storePath);
             setInterval(() => this.store.writeToFile(this.storePath), 10000);
 
-            this.store.cleanupMessages = cutoff => {
+            this.store.cleanupMessages = (cutoff) => {
                 for (const jid of Object.keys(this.store.messages)) {
                     this.store.messages[jid] = this.store.messages[jid].filter(message => message.messageTimestamp * 1000 > cutoff);
                 }

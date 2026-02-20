@@ -7,20 +7,21 @@ function getMessageType(message) {
 function getTextFromMsg(msg) {
     const extractedMessage = Baileys.extractMessageContent(msg.message);
     const TEXT_HANDLERS = {
-        conversation: msg => msg.conversation || "",
-        extendedTextMessage: msg => msg.extendedTextMessage?.text || "",
-        imageMessage: msg => msg.imageMessage?.caption || "",
-        videoMessage: msg => msg.videoMessage?.caption || "",
-        documentMessageWithCaption: msg => msg.documentMessageWithCaption?.caption || "",
-        protocolMessage: msg => getTextFromMsg({
-            message: msg.protocolMessage?.editedMessage || ""
-        }),
-        buttonsMessage: msg => msg.buttonsMessage?.contentText || "",
-        interactiveMessage: msg => msg.interactiveMessage?.body?.text || "",
-        buttonsResponseMessage: msg => msg.buttonsResponseMessage?.selectedButtonId || "",
-        listResponseMessage: msg => msg.listResponseMessage?.singleSelectReply?.selectedRowId || "",
-        templateButtonReplyMessage: msg => msg.templateButtonReplyMessage?.selectedId || "",
-        interactiveResponseMessage: msg => {
+        conversation: (msg) => msg.conversation || "",
+        extendedTextMessage: (msg) => msg.extendedTextMessage?.text || "",
+        imageMessage: (msg) => msg.imageMessage?.caption || "",
+        videoMessage: (msg) => msg.videoMessage?.caption || "",
+        documentMessageWithCaption: (msg) => msg.documentMessageWithCaption?.caption || "",
+        protocolMessage: (msg) =>
+            getTextFromMsg({
+                message: msg.protocolMessage?.editedMessage || "",
+            }),
+        buttonsMessage: (msg) => msg.buttonsMessage?.contentText || "",
+        interactiveMessage: (msg) => msg.interactiveMessage?.body?.text || "",
+        buttonsResponseMessage: (msg) => msg.buttonsResponseMessage?.selectedButtonId || "",
+        listResponseMessage: (msg) => msg.listResponseMessage?.singleSelectReply?.selectedRowId || "",
+        templateButtonReplyMessage: (msg) => msg.templateButtonReplyMessage?.selectedId || "",
+        interactiveResponseMessage: (msg) => {
             const interactiveMsg = msg.interactiveResponseMessage;
             let text = interactiveMsg?.selectedButtonId || "";
             if (!text && interactiveMsg?.nativeFlowResponseMessage) {
