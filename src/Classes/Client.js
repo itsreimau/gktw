@@ -196,8 +196,8 @@ class Client {
             await this._setGroupCache(event.id);
             for (const participant of event.participants) {
                 this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, {
-                    ...event,
-                    participant
+                    participant,
+                    ...event
                 });
             }
         });
