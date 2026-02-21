@@ -195,9 +195,12 @@ class Client {
         this.core.ev.on("group-participants.update", async (event) => {
             await this._setGroupCache(event.id);
             for (const participant of event.participants) {
+                delete event.participants;
+                delete event.action;
                 this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, {
-                    participant,
-                    ...event
+                    ...event,
+                    participant: participant.id,
+                    participantPn: participant.phoneNumber
                 });
             }
         });
