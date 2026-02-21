@@ -196,7 +196,6 @@ class Client {
             await this._setGroupCache(event.id);
             for (const participant of event.participants) {
                 delete event.participants;
-                delete event.action;
                 this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, {
                     ...event,
                     participant: participant.id,
