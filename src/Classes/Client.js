@@ -150,10 +150,10 @@ class Client {
                 this.messageIdCache.set(message.key.id, true);
 
                 const senderJids = [message.key.participant, message.key.participantAlt, message.key.remoteJid, message.key.remoteJidAlt];
-                const senderPn = message.key.fromMe ? this.core.user.id : senderJids.find(id => Baileys.isPnUser(id));
-                const senderLid = message.key.fromMe ? this.core.user.lid : senderJids.find(id => Baileys.isLidUser(id));
+                const senderJid = message.key.fromMe ? this.core.user.id : senderJids.find(jid => Baileys.isPnUser(jid));
+                const senderLid = message.key.fromMe ? this.core.user.lid : senderJids.find(jid => Baileys.isLidUser(jid));
 
-                if (!senderPn || !senderLid) continue;
+                if (!senderJid || !senderLid) continue;
 
                 if (message.pushName && this.pushNames[senderLid] !== message.pushName) {
                     this.pushNames[senderLid] = message.pushName;
@@ -164,7 +164,7 @@ class Client {
                 const self = {
                     ...this,
                     sender: {
-                        jid: senderPn,
+                        jid: senderJid,
                         lid: senderLid,
                         pushName: message.pushName
                     },

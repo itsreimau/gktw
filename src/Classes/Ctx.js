@@ -51,7 +51,6 @@ class Ctx {
         const parsed = parseArgs({
             args: this._text.split(" "),
             options: rules,
-            strict: false,
             allowPositionals: true
         });
         return {
@@ -256,9 +255,9 @@ class Ctx {
             messageType: Functions.getMessageType(message),
             key: {
                 remoteJid: chat,
-                participant: Baileys.isJidGroup(chat) ? sender : null,
+                id: context.stanzaId,
                 fromMe: Baileys.areJidsSameUser(sender, this.me.id),
-                id: context.stanzaId
+                participant: Baileys.isJidGroup(chat) ? sender : null
             },
             id: chat,
             sender,
@@ -339,10 +338,11 @@ class Ctx {
         });
     }
 
-    async forwardMessage(jid, msg) {
+    async forwardMessage(jid, msg, force = false, options = {}) {
         return await this.sendMessage(jid, {
-            forward: msg
-        });
+            forward: msg,
+            force
+        }, options);
     }
 
     async simulateTyping() {

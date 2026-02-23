@@ -28,7 +28,7 @@ class Config {
 
                 if (typeof value === "string") {
                     currentObj[key] = this._resolveTemplate(value, root);
-                } else if (typeof value === "object" && value !== null) {
+                } else if (typeof value === "object" && value !== undefined) {
                     replaceInObject(value);
                 }
             }
