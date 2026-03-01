@@ -296,6 +296,21 @@ class Ctx {
             });
         }
 
+        if (content?.album && Array.isArray(content.album)) {
+            const album = [...content.album];
+            if (album.every(item => !item.caption) && content.caption) {
+                if (album.length > 0)
+                    album[0] = {
+                        ...album[0],
+                        caption: content.caption
+                    };
+            }
+            delete content.caption;
+            content = {
+                album
+            };
+        }
+
         content = typeof content === "string" ? {
             text: content
         } : content;

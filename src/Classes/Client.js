@@ -21,7 +21,7 @@ class Client {
         this.useStore = authOpts.useStore || false;
 
         const connectionOpts = opts.connection || {};
-        this.browser = connectionOpts.browser || Baileys.Browsers.ubuntu("Chrome");
+        this.browser = connectionOpts.browser || Baileys.Browsers.appropriate("Chrome");
         this.WAVersion = connectionOpts.version || null;
         this.alwaysOnline = connectionOpts.alwaysOnline || true;
         this.selfReply = connectionOpts.selfReply || false;
@@ -68,24 +68,6 @@ class Client {
         if (!this.db.getCollection("groups")) this.db.createCollection("groups");
     }
 
-    use(fn) {
-        this.middlewares.set(this.middlewares.size, fn);
-    }
-
-    async _runMiddlewares(ctx, index = 0) {
-        const middlewareFn = this.middlewares.get(index);
-        if (!middlewareFn) return true;
-
-        let nextCalled = false;
-        await middlewareFn(ctx, async () => {
-            if (nextCalled) throw new Error("next() called multiple times in middleware");
-            nextCalled = true;
-            return await this._runMiddlewares(ctx, index + 1);
-        });
-
-        return nextCalled;
-    }
-
     async _registerOwner() {
         if (!Array.isArray(this.owner) || !this.owner.length) return;
 
@@ -102,6 +84,13 @@ class Client {
         }
 
         this.owner = registeredOwner;
+    }
+
+    async _setAllGroupCache() {
+        const allGroups = await this.core.groupFetchAllParticipating();
+        for (const [id, metadata] of Object.entries(allGroups)) {
+            this.groupCache.set(id, metadata);
+        }
     }
 
     _savePushnames() {
@@ -136,6 +125,7 @@ class Client {
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
                 await this._registerOwner();
+                await this._setAllGroupCache();
             }
         });
 
@@ -194,9 +184,13 @@ class Client {
 
         this.core.ev.on("group-participants.update", async (event) => {
             await this._setGroupCache(event.id);
+
+            const action = event.action;
+            if (!["add", "leave"].includes(action)) return;
+            delete event.action;
             for (const participant of event.participants) {
                 delete event.participants;
-                this.ev.emit(event.action === "add" ? Events.UserJoin : Events.UserLeave, {
+                this.ev.emit(action === "add" ? Events.UserJoin : Events.UserLeave, {
                     ...event,
                     participant: participant.id,
                     participantPn: participant.phoneNumber
@@ -209,6 +203,24 @@ class Client {
                 this.ev.emit(Events.Call, call);
             }
         });
+    }
+
+    use(fn) {
+        this.middlewares.set(this.middlewares.size, fn);
+    }
+
+    async _runMiddlewares(ctx, index = 0) {
+        const middlewareFn = this.middlewares.get(index);
+        if (!middlewareFn) return true;
+
+        let nextCalled = false;
+        await middlewareFn(ctx, async () => {
+            if (nextCalled) throw new Error("next() called multiple times in middleware");
+            nextCalled = true;
+            return await this._runMiddlewares(ctx, index + 1);
+        });
+
+        return nextCalled;
     }
 
     command(opts, code) {

@@ -9,7 +9,7 @@ class GroupData {
     }
 
     async metadata() {
-        return this.useCache ? (this.groupCache.get(this.jid) || await this.ctx._client.groupMetadata(this.jid)) : await this.ctx._client.groupMetadata(this.jid);
+        return this.useCache ? this.groupCache.get(this.jid) : await this.ctx._client.groupMetadata(this.jid);
     }
 
     async getMetadata(key) {

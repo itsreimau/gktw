@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "1.5.27",
+  "version": "1.5.28",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -12,7 +12,7 @@
   "author": "Reimau von Lilitz",
   "license": "MIT",
   "dependencies": {
-    "@cacheable/node-cache": "^2.0.1",
+    "@cacheable/node-cache": "^2.0.2",
     "@mengkodingan/consolefy": "^1.0.1",
     "@neoxr/helper": "^2.3.9",
     "baileys": "github:Itsukichann/Baileys",

@@ -14,7 +14,7 @@ function getTextFromMsg(msg) {
         documentMessageWithCaption: (msg) => msg.documentMessageWithCaption?.caption || "",
         protocolMessage: (msg) =>
             getTextFromMsg({
-                message: msg.protocolMessage?.editedMessage || "",
+                message: msg.protocolMessage?.editedMessage || ""
             }),
         buttonsMessage: (msg) => msg.buttonsMessage?.contentText || "",
         interactiveMessage: (msg) => msg.interactiveMessage?.body?.text || "",
