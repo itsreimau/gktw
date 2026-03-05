@@ -133,7 +133,7 @@ class Client {
 
         this._loadPushNames();
         this.core.ev.on("messages.upsert", async (event) => {
-            if (event.type === "append") continue;
+            if (event.type === "append") return;
 
             for (const message of event.messages) {
                 if (message.key.fromMe && message.key.id.startsWith("SUKI")) continue;
