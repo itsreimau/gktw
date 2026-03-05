@@ -21,7 +21,7 @@ class Client {
         this.useStore = authOpts.useStore || false;
 
         const connectionOpts = opts.connection || {};
-        this.browser = connectionOpts.browser || Baileys.Browsers.appropriate("Chrome");
+        this.browser = connectionOpts.browser || Baileys.Browsers.macOS("Safari");
         this.WAVersion = connectionOpts.version || null;
         this.alwaysOnline = connectionOpts.alwaysOnline || true;
         this.selfReply = connectionOpts.selfReply || false;
@@ -133,6 +133,8 @@ class Client {
 
         this._loadPushNames();
         this.core.ev.on("messages.upsert", async (event) => {
+            if (event.type === "append") continue;
+
             for (const message of event.messages) {
                 if (message.key.fromMe && message.key.id.startsWith("SUKI")) continue;
 
