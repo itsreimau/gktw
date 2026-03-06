@@ -69,8 +69,6 @@ class Client {
     }
 
     async _registerOwner() {
-        if (!Array.isArray(this.owner) || !this.owner.length) return;
-
         const registeredOwner = [];
         for (const ownerId of this.owner) {
             const ownerJid = ownerId + Baileys.S_WHATSAPP_NET;
@@ -82,7 +80,6 @@ class Client {
             registeredOwner.push(this.core.user.id);
             registeredOwner.push(this.core.user.lid);
         }
-
         this.owner = registeredOwner;
     }
 
@@ -124,8 +121,10 @@ class Client {
             } else if (connection === "open") {
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
-                await this._registerOwner();
-                await this._setAllGroupCache();
+                if (this.core.authState.creds.registered) {
+                    await this._registerOwner();
+                    await this._setAllGroupCache();
+                }
             }
         });
 

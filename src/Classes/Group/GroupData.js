@@ -9,12 +9,12 @@ class GroupData {
     }
 
     async metadata() {
-        return this.useCache ? this.groupCache.get(this.jid) : await this.ctx._client.groupMetadata(this.jid);
+        return this.useCache ? this.groupCache.get(this.jid) || {} : await this.ctx._client.groupMetadata(this.jid).catch(() => ({}));
     }
 
     async getMetadata(key) {
         const metadata = await this.metadata();
-        return metadata[key];
+        return metadata?.[key] || null;
     }
 
     async name() {
@@ -119,19 +119,19 @@ class GroupData {
     async isMemberExist(jid) {
         const members = await this.members();
         const field = Baileys.isLidUser(jid) ? "lid" : "id";
-        return members.some(member => Baileys.areJidsSameUser(member[field], jid));
+        return members ? members.some(member => Baileys.areJidsSameUser(member[field], jid)) : false;
     }
 
     async isAdmin(jid) {
         const members = await this.members();
         const field = Baileys.isLidUser(jid) ? "lid" : "id";
-        return members.some(member => Baileys.areJidsSameUser(member[field], jid) && !!member.admin);
+        return members ? members.some(member => Baileys.areJidsSameUser(member[field], jid) && !!member.admin) : false;
     }
 
     async isOwner(jid) {
         const members = await this.members();
         const field = Baileys.isLidUser(jid) ? "lid" : "id";
-        return members.some(member => Baileys.areJidsSameUser(member[field], jid) && member.admin === "superadmin");
+        return members ? members.some(member => Baileys.areJidsSameUser(member[field], jid) && member.admin === "superadmin") : false;
     }
 
     async isSenderAdmin() {
