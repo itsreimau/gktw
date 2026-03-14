@@ -94,7 +94,7 @@ class Ctx {
                     }
                     continue;
             }
-            if (Baileys.isPnUser(target)) target = (await this._client.getLidUser(target))?.[0]?.lid;
+            if (Baileys.isPnUser(target)) target = Baileys.jidNormalizedUser(await this._client.signalRepository.lidMapping.getLIDForPN(target));
         }
         return target;
     }

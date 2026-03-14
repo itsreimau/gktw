@@ -72,7 +72,7 @@ class Client {
         const registeredOwner = [];
         for (const ownerId of this.owner) {
             const ownerJid = ownerId + Baileys.S_WHATSAPP_NET;
-            const ownerLid = (await this.core.getLidUser(ownerJid))?.[0]?.lid;
+            const ownerLid = Baileys.jidNormalizedUser(await this.core.signalRepository.lidMapping.getLIDForPN(ownerJid));
             registeredOwner.push(ownerJid);
             if (ownerLid) registeredOwner.push(ownerLid);
         }
