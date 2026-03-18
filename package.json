@@ -15,7 +15,7 @@
     "@cacheable/node-cache": "^2.0.2",
     "@mengkodingan/consolefy": "^1.0.1",
     "@neoxr/helper": "^2.3.9",
-    "baileys": "git+https://codeberg.org/itsreimau/Baileys.git",
+    "baileys": "github:itsreimau/Baileys",
     "didyoumean": "^1.2.2",
     "glob": "^13.0.6",
     "mime-types": "^2.1.35",
