@@ -291,9 +291,10 @@ class Ctx {
                     }
                 }
             }, {});
-            return await this._client.relayMessage(jid, groupStatusMessage.message, {
+            await this._client.relayMessage(jid, groupStatusMessage.message, {
                 messageId: groupStatusMessage.key.id
             });
+            return groupStatusMessage;
         }
 
         if (content?.album && Array.isArray(content.album)) {
