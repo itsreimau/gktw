@@ -341,24 +341,24 @@ class Ctx {
         });
     }
 
-    async deleteMessage(key, jid = this.id) {
+    async deleteMessage(jid, key) {
         return await this.sendMessage(jid, {
             delete: key
         });
     }
 
-    async editMessage(key, newText, jid = this.id) {
+    async editMessage(jid, key, newText) {
         return await this.sendMessage(jid, {
             text: newText,
             edit: key
         });
     }
 
-    async forwardMessage(jid, msg, force = false, options = {}) {
+    async forwardMessage(jid, msg, force = false) {
         return await this.sendMessage(jid, {
             forward: msg,
             force
-        }, options);
+        });
     }
 
     async simulateTyping() {

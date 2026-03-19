@@ -93,5 +93,7 @@ module.exports = {
     statusStickerInteractionMessage: "statusStickerInteractionMessage",
     pollCreationMessageV5: "pollCreationMessageV5",
     newsletterFollowerInviteMessageV2: "newsletterFollowerInviteMessageV2",
-    pollResultSnapshotMessageV3: "pollResultSnapshotMessageV3"
+    pollResultSnapshotMessageV3: "pollResultSnapshotMessageV3",
+    newsletterAdminProfileMessage: "newsletterAdminProfileMessage",
+    newsletterAdminProfileMessageV2: "newsletterAdminProfileMessageV2"
 };

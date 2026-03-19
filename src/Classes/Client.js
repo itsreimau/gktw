@@ -135,7 +135,7 @@ class Client {
             if (event.type === "append") return;
 
             for (const message of event.messages) {
-                if (message.key.fromMe && message.key.id.startsWith("SUKI")) continue;
+                if (message.key.fromMe && message.platform === "baileys") continue;
 
                 if (this.messageIdCache.get(message.key.id)) continue;
                 this.messageIdCache.set(message.key.id, true);

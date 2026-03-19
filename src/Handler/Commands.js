@@ -11,8 +11,8 @@ async function Commands(self, _runMiddlewares) {
 
     const hasHears = Array.from(self.hearsMap.values()).filter(hear => hear.name === m.text || hear.name === m.messageType || new RegExp(hear.name).test(m.text) || (Array.isArray(hear.name) && hear.name.includes(m.text)));
 
-    if (hasHears.length)
-        return hasHears.forEach(hear => hear.code(new Ctx({
+    if (hasHears.length) {
+        const ctx = new Ctx({
             used: {
                 hears: m.text
             },
@@ -20,7 +20,9 @@ async function Commands(self, _runMiddlewares) {
             text: "",
             self,
             client: self.core
-        })));
+        });
+        return hasHears.forEach(hear => hear.code(ctx));
+    }
 
     const {
         command,
