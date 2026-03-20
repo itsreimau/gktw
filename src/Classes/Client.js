@@ -42,7 +42,7 @@ class Client {
         this.middlewares = new Map();
         this.consolefy = new Consolefy();
         this.logger = pino({
-            level: "fatal"
+            level: "silent"
         });
         this.store = Baileys.makeInMemoryStore({});
         this.storePath = path.resolve(this.authDir, "gktw_store.json");
@@ -72,7 +72,7 @@ class Client {
         const registeredOwner = [];
         for (const ownerId of this.owner) {
             const ownerJid = ownerId + Baileys.S_WHATSAPP_NET;
-            const ownerLid = Baileys.jidNormalizedUser(await this.core.signalRepository.lidMapping.getLIDForPN(ownerJid));
+            const ownerLid = (await this.core.findUserId(ownerJid)).lid;
             registeredOwner.push(ownerJid);
             if (ownerLid) registeredOwner.push(ownerLid);
         }
@@ -114,7 +114,20 @@ class Client {
                 lastDisconnect
             } = update;
 
-            if (connection === "close") {
+            if (connection === "connecting" && this.usePairingCode && !this.core.authState.creds.registered) {
+                this.consolefy.setTag("pairing-code");
+
+                if (!this.phoneNumber) {
+                    this.consolefy.error("phoneNumber is required for usePairingCode");
+                    this.consolefy.resetTag();
+                    return;
+                }
+
+                Baileys.delay(1500);
+                const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
+                this.consolefy.info(`Pairing Code: ${code}`);
+                this.consolefy.resetTag();
+            } else if (connection === "close") {
                 const shouldReconnect = lastDisconnect.error.output?.statusCode !== Baileys.DisconnectReason.loggedOut;
                 this.consolefy.error(`Connection closed: ${lastDisconnect.error}, reconnecting: ${shouldReconnect}`);
                 if (shouldReconnect) this.launch();
@@ -293,35 +306,6 @@ class Client {
         });
 
         if (this.useStore) this.store.bind(this.core.ev);
-
-        if (this.usePairingCode && !this.core.authState.creds.registered) {
-            this.consolefy.setTag("pairing-code");
-
-            if (!this.phoneNumber) {
-                this.consolefy.error("phoneNumber is required for usePairingCode");
-                this.consolefy.resetTag();
-                return;
-            }
-
-            this.phoneNumber = this.phoneNumber.replace(/[^0-9]/g, "");
-            if (!this.phoneNumber.length) {
-                this.consolefy.error("Invalid phoneNumber");
-                this.consolefy.resetTag();
-                return;
-            }
-
-            if (!Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
-                this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code)");
-                this.consolefy.resetTag();
-                return;
-            }
-
-            setTimeout(async () => {
-                const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
-                this.consolefy.info(`Pairing Code: ${code}`);
-                this.consolefy.resetTag();
-            }, 3000);
-        }
 
         if (!fs.existsSync(this.databaseDir))
             fs.mkdirSync(this.databaseDir, {

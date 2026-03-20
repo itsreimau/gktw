@@ -94,7 +94,7 @@ class Ctx {
                     }
                     continue;
             }
-            if (Baileys.isPnUser(target)) target = Baileys.jidNormalizedUser(await this._client.signalRepository.lidMapping.getLIDForPN(target));
+            if (Baileys.isPnUser(target)) target = (await this.core.findUserId(target)).lid;
         }
         return target;
     }
@@ -280,23 +280,6 @@ class Ctx {
     }
 
     async sendMessage(jid, content, options = {}) {
-        if (content?.groupStatus) {
-            const groupStatusContent = await Baileys.generateWAMessageContent(content.groupStatus, {
-                upload: this._client.waUploadToServer
-            });
-            const groupStatusMessage = Baileys.generateWAMessageFromContent(jid, {
-                groupStatusMessageV2: {
-                    message: {
-                        ...groupStatusContent
-                    }
-                }
-            }, {});
-            await this._client.relayMessage(jid, groupStatusMessage.message, {
-                messageId: groupStatusMessage.key.id
-            });
-            return groupStatusMessage;
-        }
-
         if (content?.album && Array.isArray(content.album)) {
             const album = [...content.album];
             if (album.every(item => !item.caption) && content.caption) {

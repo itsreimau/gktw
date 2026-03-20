@@ -95,5 +95,10 @@ module.exports = {
     newsletterFollowerInviteMessageV2: "newsletterFollowerInviteMessageV2",
     pollResultSnapshotMessageV3: "pollResultSnapshotMessageV3",
     newsletterAdminProfileMessage: "newsletterAdminProfileMessage",
-    newsletterAdminProfileMessageV2: "newsletterAdminProfileMessageV2"
+    newsletterAdminProfileMessageV2: "newsletterAdminProfileMessageV2",
+    spoilerMessage: "spoilerMessage",
+    pollCreationMessageV6: "pollCreationMessageV6",
+    conditionalRevealMessage: "conditionalRevealMessage",
+    pollAddOptionMessage: "pollAddOptionMessage",
+    eventInviteMessage: "eventInviteMessage"
 };

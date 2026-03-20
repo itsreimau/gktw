@@ -9,7 +9,8 @@ class GroupData {
     }
 
     async metadata() {
-        return this.useCache ? this.groupCache.get(this.jid) || {} : await this.ctx._client.groupMetadata(this.jid).catch(() => ({}));
+        const fetchMetadata = async () => this.ctx._client.groupMetadata(this.jid).catch(() => ({}));
+        return this.useCache ? (this.groupCache.get(this.jid) || await fetchMetadata()) : await fetchMetadata();
     }
 
     async getMetadata(key) {
