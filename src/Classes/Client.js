@@ -128,7 +128,9 @@ class Client {
                 const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
                 this.consolefy.info(`Pairing Code: ${code}`);
                 this.consolefy.resetTag();
-            } else if (connection === "close") {
+            }
+
+             if (connection === "close") {
                 const shouldReconnect = lastDisconnect.error.output?.statusCode !== Baileys.DisconnectReason.loggedOut;
                 this.consolefy.error(`Connection closed: ${lastDisconnect.error}, reconnecting: ${shouldReconnect}`);
                 if (shouldReconnect) this.launch();
