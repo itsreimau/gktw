@@ -7,6 +7,7 @@ const { NodeCache } = require("@cacheable/node-cache");
 const SimplDB = require("simpl.db");
 const fs = require("node:fs");
 const Events = require("../Constant/Events.js");
+const Serialize = require("./Serialize.js");
 const Functions = require("../Helper/Functions.js");
 const Ctx = require("./Ctx.js");
 const Commands = require("../Handler/Commands.js");
@@ -153,33 +154,32 @@ class Client {
                 if (this.messageIdCache.get(message.key.id)) continue;
                 this.messageIdCache.set(message.key.id, true);
 
-                const senderJids = [message.key.participant, message.key.participantAlt, message.key.remoteJid, message.key.remoteJidAlt];
-                const senderJid = message.key.fromMe ? this.core.user.id : senderJids.find(jid => Baileys.isPnUser(jid));
-                const senderLid = message.key.fromMe ? this.core.user.lid : senderJids.find(jid => Baileys.isLidUser(jid));
+                const serialized = new Serialize(message);
+                const sender = serialized.getSender();
 
-                if (!senderJid || !senderLid) continue;
+                if (!sender.jid || !sender.lid) continue;
 
-                if (message.pushName && this.pushNames[senderLid] !== message.pushName) {
-                    this.pushNames[senderLid] = message.pushName;
+                if (message.pushName && this.pushNames[sender.lid] !== message.pushName) {
+                    this.pushNames[sender.lid] = message.pushName;
                     this._savePushnames();
                 }
 
-                const text = Functions.getTextFromMsg(message);
+                const body = serialized.getBody();
                 const self = {
                     ...this,
                     sender: {
-                        jid: senderJid,
-                        lid: senderLid,
+                        jid: sender.jid,
+                        lid: sender.lid,
                         pushName: message.pushName
                     },
                     m: {
                         ...message,
-                        text
+                        body
                     }
                 };
                 const ctx = new Ctx({
                     used: {
-                        upsert: text
+                        upsert: body
                     },
                     args: [],
                     self,
@@ -304,6 +304,27 @@ class Client {
             markOnlineOnConnect: this.alwaysOnline,
             cachedGroupMetadata: async (jid) => this.groupCache.get(jid)
         });
+
+        this.sendMessage = (jid, content, options = {}) => {
+            if (content?.album && Array.isArray(content.album)) {
+                const album = [...content.album];
+                if (album.every(item => !item.caption) && content.caption) {
+                    if (album.length > 0)
+                        album[0] = {
+                            ...album[0],
+                            caption: content.caption
+                        };
+                }
+                delete content.caption;
+                content = {
+                    album
+                };
+            }
+            content = typeof content === "string" ? {
+                text: content
+            } : content;
+            return this.core.sendMessage(jid, content, options);
+        };
 
         if (this.useStore) this.store.bind(this.core.ev);
 

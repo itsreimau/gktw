@@ -1,37 +1,7 @@
 const Baileys = require("baileys");
 
-function getMessageType(message) {
-    return Baileys.getContentType(Baileys.extractMessageContent(message));
-}
-
-function getTextFromMsg(msg) {
-    const extractedMessage = Baileys.extractMessageContent(msg.message);
-    const TEXT_HANDLERS = {
-        conversation: (msg) => msg.conversation || "",
-        extendedTextMessage: (msg) => msg.extendedTextMessage?.text || "",
-        imageMessage: (msg) => msg.imageMessage?.caption || "",
-        videoMessage: (msg) => msg.videoMessage?.caption || "",
-        documentMessageWithCaption: (msg) => msg.documentMessageWithCaption?.caption || "",
-        protocolMessage: (msg) =>
-            getTextFromMsg({
-                message: msg.protocolMessage?.editedMessage || ""
-            }),
-        buttonsMessage: (msg) => msg.buttonsMessage?.contentText || "",
-        interactiveMessage: (msg) => msg.interactiveMessage?.body?.text || "",
-        buttonsResponseMessage: (msg) => msg.buttonsResponseMessage?.selectedButtonId || "",
-        listResponseMessage: (msg) => msg.listResponseMessage?.singleSelectReply?.selectedRowId || "",
-        templateButtonReplyMessage: (msg) => msg.templateButtonReplyMessage?.selectedId || "",
-        interactiveResponseMessage: (msg) => {
-            const interactiveMsg = msg.interactiveResponseMessage;
-            let text = interactiveMsg?.selectedButtonId || "";
-            if (!text && interactiveMsg?.nativeFlowResponseMessage) {
-                const params = JSON.parse(interactiveMsg.nativeFlowResponseMessage.paramsJson || "{}");
-                text = params.id || params.selectedId || params.button_id || "";
-            }
-            return text;
-        }
-    };
-    return TEXT_HANDLERS[getMessageType(extractedMessage)]?.(extractedMessage);
+function getBodyFromMsg(message, mesageType) {
+    return message && (message?.text || message?.caption || message?.name || message?.selectedId || message?.selectedButtonId || message.singleSelectReply?.selectedRowId || (type === "interactiveResponseMessage" && JSON.parse(message.nativeFlowResponseMessage.paramsJson).id) || message?.contentText || message.body?.text || "");
 }
 
 function getId(jid) {
@@ -68,8 +38,7 @@ function checkOwner(jid, ownerList) {
 }
 
 module.exports = {
-    getMessageType,
-    getTextFromMsg,
+    getBodyFromMsg,
     getId,
     getPushName,
     getDb,

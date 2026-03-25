@@ -5,6 +5,7 @@ const Group = require("./Group/Group.js");
 const GroupData = require("./Group/GroupData.js");
 const { parseCommand } = require("../Handler/Commands.js");
 const didYouMean = require("didyoumean");
+const Serialize = require("./Serialize.js");
 const { tmpfiles } = require("@neoxr/helper");
 const MessageCollector = require("./Collector/MessageCollector.js");
 
@@ -221,11 +222,12 @@ class Ctx {
     }
 
     get msg() {
-        const message = Baileys.extractMessageContent(this._msg.message);
+        const serialized = new Serialize(this._msg);
+        const message = serialized.getMessage();
         return {
             ...this._msg,
             message,
-            messageType: Functions.getMessageType(message),
+            messageType: Baileys.getContentType(message),
             download: async () =>
                 await this._downloadMediaMessage({
                     message
@@ -240,22 +242,21 @@ class Ctx {
     }
 
     get quoted() {
-        const context = this._msg.message?.[this.getMessageType()]?.contextInfo || {};
-        if (!context?.quotedMessage) return null;
+        const contextInfo = this._msg.message?.[this.getMessageType()]?.contextInfo || {};
+        if (!contextInfo?.quotedMessage) return null;
 
-        const message = Baileys.extractMessageContent(context.quotedMessage) || {};
-        const chat = context.remoteJid || this.id;
-        const sender = context.participant || chat;
+        const serialized = new Serialize(this._msg);
+        const message = serialized.getQuotedMessage();
+        const chat = contextInfo.remoteJid || this.id;
+        const sender = contextInfo.participant || chat;
 
         return {
-            text: Functions.getTextFromMsg({
-                message
-            }),
+            body: serialized.getQuotedBody(),
             message,
-            messageType: Functions.getMessageType(message),
+            messageType: Baileys.getContentType(message),
             key: {
                 remoteJid: chat,
-                id: context.stanzaId,
+                id: contextInfo.stanzaId,
                 fromMe: Baileys.areJidsSameUser(sender, this.me.id),
                 participant: Baileys.isJidGroup(chat) ? sender : null
             },
@@ -279,44 +280,22 @@ class Ctx {
         await this._client.readMessages([this._msg.key]);
     }
 
-    async sendMessage(jid, content, options = {}) {
-        if (content?.album && Array.isArray(content.album)) {
-            const album = [...content.album];
-            if (album.every(item => !item.caption) && content.caption) {
-                if (album.length > 0)
-                    album[0] = {
-                        ...album[0],
-                        caption: content.caption
-                    };
-            }
-            delete content.caption;
-            content = {
-                album
-            };
-        }
-
-        content = typeof content === "string" ? {
-            text: content
-        } : content;
-        return this._client.sendMessage(jid, content, options);
-    }
-
     async reply(content, options = {}) {
-        return await this.sendMessage(this.id, content, {
+        return await this._self.sendMessage(this.id, content, {
             ...options,
             quoted: this._msg
         });
     }
 
     async replyWithJid(jid, content, options = {}) {
-        return await this.sendMessage(jid, content, {
+        return await this._self.sendMessage(jid, content, {
             ...options,
             quoted: this._msg
         });
     }
 
     async replyReact(emoji, key) {
-        return await this.sendMessage(this.id, {
+        return await this._self.sendMessage(this.id, {
             react: {
                 text: emoji,
                 key: key || this._msg.key
@@ -325,20 +304,20 @@ class Ctx {
     }
 
     async deleteMessage(jid, key) {
-        return await this.sendMessage(jid, {
+        return await this._self.sendMessage(jid, {
             delete: key
         });
     }
 
     async editMessage(jid, key, newText) {
-        return await this.sendMessage(jid, {
+        return await this._self.sendMessage(jid, {
             text: newText,
             edit: key
         });
     }
 
     async forwardMessage(jid, msg, force = false) {
-        return await this.sendMessage(jid, {
+        return await this._self.sendMessage(jid, {
             forward: msg,
             force
         });

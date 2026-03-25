@@ -9,12 +9,12 @@ async function Commands(self, _runMiddlewares) {
     } = self;
     if (!m.message || Baileys.isJidStatusBroadcast(m.key.remoteJid) || Baileys.isJidNewsletter(m.key.remoteJid)) return;
 
-    const hasHears = Array.from(self.hearsMap.values()).filter(hear => hear.name === m.text || hear.name === m.messageType || new RegExp(hear.name).test(m.text) || (Array.isArray(hear.name) && hear.name.includes(m.text)));
+    const hasHears = Array.from(self.hearsMap.values()).filter(hear => hear.name === m.body || hear.name === m.messageType || new RegExp(hear.name).test(m.body) || (Array.isArray(hear.name) && hear.name.includes(m.body)));
 
     if (hasHears.length) {
         const ctx = new Ctx({
             used: {
-                hears: m.text
+                hears: m.body
             },
             args: [],
             text: "",
@@ -30,7 +30,7 @@ async function Commands(self, _runMiddlewares) {
         commandName,
         text,
         selectedPrefix
-    } = parseCommand(prefix, m.text);
+    } = parseCommand(prefix, m.body);
 
     if (!commandName) return;
 
