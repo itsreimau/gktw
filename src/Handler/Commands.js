@@ -55,7 +55,7 @@ async function Commands(self, _runMiddlewares) {
     matchedCommands.forEach(cmd => cmd.code(ctx));
 }
 
-function parseCommand(prefix, text) {
+function parseCommand(prefix, body) {
     let selectedPrefix;
 
     if (Array.isArray(prefix)) {
@@ -65,18 +65,18 @@ function parseCommand(prefix, text) {
                 const newPrefix = [...prefix];
                 const [empty] = newPrefix.splice(emptyIndex, 1);
                 newPrefix.push(empty);
-                selectedPrefix = newPrefix.find(pref => text?.startsWith(pref));
+                selectedPrefix = newPrefix.find(pref => body?.startsWith(pref));
             } else {
-                selectedPrefix = prefix.find(pref => text?.startsWith(pref));
+                selectedPrefix = prefix.find(pref => body?.startsWith(pref));
             }
         } else {
-            selectedPrefix = prefix.find(pref => text?.startsWith(pref));
+            selectedPrefix = prefix.find(pref => body?.startsWith(pref));
         }
     } else if (prefix instanceof RegExp) {
-        const match = text?.match(prefix);
+        const match = body?.match(prefix);
         selectedPrefix = match ? match[0] : null;
     } else if (typeof prefix === "string") {
-        selectedPrefix = text?.startsWith(prefix) ? prefix : null;
+        selectedPrefix = body?.startsWith(prefix) ? prefix : null;
     }
 
     if (!selectedPrefix)
@@ -88,16 +88,16 @@ function parseCommand(prefix, text) {
             selectedPrefix: null
         };
 
-    const command = text?.slice(selectedPrefix.length).trim() || "";
+    const command = body?.slice(selectedPrefix.length).trim() || "";
     let args = command.split(/\s+/) || [];
     let commandName = args?.shift()?.toLowerCase();
-    const textCommand = command.slice(commandName.length).trim() || "";
+    const text = command.slice(commandName.length).trim() || "";
 
     return {
         command,
         args,
         commandName,
-        text: textCommand,
+        text,
         selectedPrefix
     };
 }

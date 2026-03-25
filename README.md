@@ -23,7 +23,7 @@ npm install github:itsreimau/gktw
 Special thanks to:
 
 - [Jastin Linggar Tama](https://github.com/JastinXyz) for original ckptw
-- [Liaaa](https://github.com/itsliaaa) for Baileys modification
+- [INNOVATORS SOFT](https://github.com/innovatorssoft) for Baileys modification
 - [WhiskeySockets](https://github.com/WhiskeySockets) for Baileys maintenance
 - All contributors and users
 

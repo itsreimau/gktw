@@ -1,7 +1,37 @@
 const Baileys = require("baileys");
 
-function getBodyFromMsg(message, mesageType) {
-    return message && (message?.text || message?.caption || message?.name || message?.selectedId || message?.selectedButtonId || message.singleSelectReply?.selectedRowId || (type === "interactiveResponseMessage" && JSON.parse(message.nativeFlowResponseMessage.paramsJson).id) || message?.contentText || message.body?.text || "");
+function getMessageType(message) {
+    return Baileys.getContentType(Baileys.extractMessageContent(message));
+}
+
+function geBodyFromMsg(msg) {
+    const extractedMessage = Baileys.extractMessageContent(msg.message);
+    const BODY_HANDLERS = {
+        conversation: (msg) => msg.conversation || "",
+        extendedTextMessage: (msg) => msg.extendedTextMessage?.text || "",
+        imageMessage: (msg) => msg.imageMessage?.caption || "",
+        videoMessage: (msg) => msg.videoMessage?.caption || "",
+        documentMessageWithCaption: (msg) => msg.documentMessageWithCaption?.caption || "",
+        protocolMessage: (msg) =>
+            geBodyFromMsg({
+                message: msg.protocolMessage?.editedMessage || ""
+            }),
+        buttonsMessage: (msg) => msg.buttonsMessage?.contentText || "",
+        interactiveMessage: (msg) => msg.interactiveMessage?.body?.text || "",
+        buttonsResponseMessage: (msg) => msg.buttonsResponseMessage?.selectedButtonId || "",
+        listResponseMessage: (msg) => msg.listResponseMessage?.singleSelectReply?.selectedRowId || "",
+        templateButtonReplyMessage: (msg) => msg.templateButtonReplyMessage?.selectedId || "",
+        interactiveResponseMessage: (msg) => {
+            const interactiveMsg = msg.interactiveResponseMessage;
+            let body = interactiveMsg?.selectedButtonId || "";
+            if (!body && interactiveMsg?.nativeFlowResponseMessage) {
+                const params = JSON.parse(interactiveMsg.nativeFlowResponseMessage.paramsJson || "{}");
+                body = params.id || params.selectedId || params.button_id || "";
+            }
+            return body;
+        }
+    };
+    return BODY_HANDLERS[getMessageType(extractedMessage)]?.(extractedMessage);
 }
 
 function getId(jid) {
@@ -38,7 +68,8 @@ function checkOwner(jid, ownerList) {
 }
 
 module.exports = {
-    getBodyFromMsg,
+    getMessageType,
+    geBodyFromMsg,
     getId,
     getPushName,
     getDb,

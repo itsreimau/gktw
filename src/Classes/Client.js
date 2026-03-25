@@ -7,7 +7,6 @@ const { NodeCache } = require("@cacheable/node-cache");
 const SimplDB = require("simpl.db");
 const fs = require("node:fs");
 const Events = require("../Constant/Events.js");
-const Serialize = require("./Serialize.js");
 const Functions = require("../Helper/Functions.js");
 const Ctx = require("./Ctx.js");
 const Commands = require("../Handler/Commands.js");
@@ -73,7 +72,7 @@ class Client {
         const registeredOwner = [];
         for (const ownerId of this.owner) {
             const ownerJid = ownerId + Baileys.S_WHATSAPP_NET;
-            const ownerLid = (await this.core.findUserId(ownerJid)).lid;
+            const ownerLid = Baileys.jidNormalizedUser(await this.core.signalRepository.lidMapping.getLIDForPN(ownerJid));
             registeredOwner.push(ownerJid);
             if (ownerLid) registeredOwner.push(ownerLid);
         }
@@ -115,7 +114,7 @@ class Client {
                 lastDisconnect
             } = update;
 
-             if (connection === "close") {
+            if (connection === "close") {
                 const shouldReconnect = lastDisconnect.error.output?.statusCode !== Baileys.DisconnectReason.loggedOut;
                 this.consolefy.error(`Connection closed: ${lastDisconnect.error}, reconnecting: ${shouldReconnect}`);
                 if (shouldReconnect) this.launch();
@@ -141,22 +140,23 @@ class Client {
                 if (this.messageIdCache.get(message.key.id)) continue;
                 this.messageIdCache.set(message.key.id, true);
 
-                const serialized = new Serialize(message);
-                const sender = serialized.getSender();
+                const senderJids = [message.key.participant, message.key.participantAlt, message.key.remoteJid, message.key.remoteJidAlt];
+                const senderJid = message.key.fromMe ? this.core.user.id : senderJids.find(jid => Baileys.isPnUser(jid));
+                const senderLid = message.key.fromMe ? this.core.user.lid : senderJids.find(jid => Baileys.isLidUser(jid));
 
-                if (!sender.jid || !sender.lid) continue;
+                if (!senderJid || !senderLid) continue;
 
-                if (message.pushName && this.pushNames[sender.lid] !== message.pushName) {
-                    this.pushNames[sender.lid] = message.pushName;
+                if (message.pushName && this.pushNames[senderLid] !== message.pushName) {
+                    this.pushNames[senderLid] = message.pushName;
                     this._savePushnames();
                 }
 
-                const body = serialized.getBody();
+                const body = Functions.geBodyFromMsg(message);
                 const self = {
                     ...this,
                     sender: {
-                        jid: sender.jid,
-                        lid: sender.lid,
+                        jid: senderJid,
+                        lid: senderLid,
                         pushName: message.pushName
                     },
                     m: {
@@ -292,20 +292,44 @@ class Client {
             cachedGroupMetadata: async (jid) => this.groupCache.get(jid)
         });
 
-            if (this.usePairingCode && !this.core.authState.creds.registered) {
-                this.consolefy.setTag("pairing-code");
+        if (this.useStore) this.store.bind(this.core.ev);
 
-                if (!this.phoneNumber) {
-                    this.consolefy.error("phoneNumber is required for usePairingCode");
-                    this.consolefy.resetTag();
-                    return;
-                }
+        if (this.usePairingCode && !this.core.authState.creds.registered) {
+            this.consolefy.setTag("pairing-code");
 
-                Baileys.delay(1500);
-                const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
-                this.consolefy.info(`Pairing Code: ${code}`);
+            if (!this.phoneNumber) {
+                this.consolefy.error("phoneNumber is required for usePairingCode");
                 this.consolefy.resetTag();
+                return;
             }
+
+            this.phoneNumber = this.phoneNumber.replace(/[^0-9]/g, "");
+            if (!this.phoneNumber.length) {
+                this.consolefy.error("Invalid phoneNumber");
+                this.consolefy.resetTag();
+                return;
+            }
+
+            if (!Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
+                this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code)");
+                this.consolefy.resetTag();
+                return;
+            }
+
+            Baileys.delay(3000);
+            const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
+            this.consolefy.info(`Pairing Code: ${code}`);
+            this.consolefy.resetTag();
+        }
+
+        if (this.useStore) this.store.bind(this.core.ev);
+
+        if (!fs.existsSync(this.databaseDir))
+            fs.mkdirSync(this.databaseDir, {
+                recursive: true
+            });
+
+        this._onEvents();
 
         this.sendMessage = (jid, content, options = {}) => {
             if (content?.album && Array.isArray(content.album)) {
@@ -327,15 +351,6 @@ class Client {
             } : content;
             return this.core.sendMessage(jid, content, options);
         };
-
-        if (this.useStore) this.store.bind(this.core.ev);
-
-        if (!fs.existsSync(this.databaseDir))
-            fs.mkdirSync(this.databaseDir, {
-                recursive: true
-            });
-
-        this._onEvents();
     }
 }
 

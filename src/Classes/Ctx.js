@@ -5,7 +5,6 @@ const Group = require("./Group/Group.js");
 const GroupData = require("./Group/GroupData.js");
 const { parseCommand } = require("../Handler/Commands.js");
 const didYouMean = require("didyoumean");
-const Serialize = require("./Serialize.js");
 const { tmpfiles } = require("@neoxr/helper");
 const MessageCollector = require("./Collector/MessageCollector.js");
 
@@ -95,7 +94,7 @@ class Ctx {
                     }
                     continue;
             }
-            if (Baileys.isPnUser(target)) target = (await this.core.findUserId(target)).lid;
+            if (Baileys.isPnUser(target)) target = Baileys.jidNormalizedUser(await this._client.signalRepository.lidMapping.getLIDForPN(target));
         }
         return target;
     }
@@ -222,12 +221,11 @@ class Ctx {
     }
 
     get msg() {
-        const serialized = new Serialize(this._msg);
-        const message = serialized.getMessage();
+        const message = Baileys.extractMessageContent(this._msg.message);
         return {
             ...this._msg,
             message,
-            messageType: Baileys.getContentType(message),
+            messageType: Functions.getMessageType(message),
             download: async () =>
                 await this._downloadMediaMessage({
                     message
@@ -243,17 +241,18 @@ class Ctx {
 
     get quoted() {
         const contextInfo = this._msg.message?.[this.getMessageType()]?.contextInfo || {};
-        if (!contextInfo?.quotedMessage) return null;
+        if (!context?.quotedMessage) return null;
 
-        const serialized = new Serialize(this._msg);
-        const message = serialized.getQuotedMessage();
+        const message = Baileys.extractMessageContent(contextInfo.quotedMessage) || {};
         const chat = contextInfo.remoteJid || this.id;
         const sender = contextInfo.participant || chat;
 
         return {
-            body: serialized.getQuotedBody(),
+            body: Functions.geBodyFromMsg({
+                message
+            }),
             message,
-            messageType: Baileys.getContentType(message),
+            messageType: Functions.getMessageType(message),
             key: {
                 remoteJid: chat,
                 id: contextInfo.stanzaId,
