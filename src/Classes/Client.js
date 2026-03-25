@@ -115,21 +115,6 @@ class Client {
                 lastDisconnect
             } = update;
 
-            if (connection === "connecting" && this.usePairingCode && !this.core.authState.creds.registered) {
-                this.consolefy.setTag("pairing-code");
-
-                if (!this.phoneNumber) {
-                    this.consolefy.error("phoneNumber is required for usePairingCode");
-                    this.consolefy.resetTag();
-                    return;
-                }
-
-                Baileys.delay(1500);
-                const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
-                this.consolefy.info(`Pairing Code: ${code}`);
-                this.consolefy.resetTag();
-            }
-
              if (connection === "close") {
                 const shouldReconnect = lastDisconnect.error.output?.statusCode !== Baileys.DisconnectReason.loggedOut;
                 this.consolefy.error(`Connection closed: ${lastDisconnect.error}, reconnecting: ${shouldReconnect}`);
@@ -306,6 +291,21 @@ class Client {
             markOnlineOnConnect: this.alwaysOnline,
             cachedGroupMetadata: async (jid) => this.groupCache.get(jid)
         });
+
+            if (this.usePairingCode && !this.core.authState.creds.registered) {
+                this.consolefy.setTag("pairing-code");
+
+                if (!this.phoneNumber) {
+                    this.consolefy.error("phoneNumber is required for usePairingCode");
+                    this.consolefy.resetTag();
+                    return;
+                }
+
+                Baileys.delay(1500);
+                const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
+                this.consolefy.info(`Pairing Code: ${code}`);
+                this.consolefy.resetTag();
+            }
 
         this.sendMessage = (jid, content, options = {}) => {
             if (content?.album && Array.isArray(content.album)) {
