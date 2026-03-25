@@ -241,7 +241,7 @@ class Ctx {
 
     get quoted() {
         const contextInfo = this._msg.message?.[this.getMessageType()]?.contextInfo || {};
-        if (!context?.quotedMessage) return null;
+        if (!contextInfo?.quotedMessage) return null;
 
         const message = Baileys.extractMessageContent(contextInfo.quotedMessage) || {};
         const chat = contextInfo.remoteJid || this.id;
