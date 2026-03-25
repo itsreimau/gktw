@@ -121,10 +121,8 @@ class Client {
             } else if (connection === "open") {
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
-                if (this.core.authState.creds.registered) {
                     await this._registerOwner();
                     await this._setAllGroupCache();
-                }
             }
         });
 
@@ -316,10 +314,11 @@ class Client {
                 return;
             }
 
-            Baileys.delay(3000);
-            const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
-            this.consolefy.info(`Pairing Code: ${code}`);
-            this.consolefy.resetTag();
+            setTimeout(async () => {
+                const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
+                this.consolefy.info(`Pairing Code: ${code}`);
+                this.consolefy.resetTag();
+            }, 3000);
         }
 
         if (this.useStore) this.store.bind(this.core.ev);
