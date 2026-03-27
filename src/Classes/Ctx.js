@@ -240,12 +240,12 @@ class Ctx {
     }
 
     get quoted() {
-        const contextInfo = this._msg.message?.[this.getMessageType()]?.contextInfo || {};
-        if (!contextInfo?.quotedMessage) return null;
+        const context = this._msg.message?.[this.getMessageType()]?.contextInfo || {};
+        if (!context?.quotedMessage) return null;
 
-        const message = Baileys.extractMessageContent(contextInfo.quotedMessage) || {};
-        const chat = contextInfo.remoteJid || this.id;
-        const sender = contextInfo.participant || chat;
+        const message = Baileys.extractMessageContent(context.quotedMessage) || {};
+        const chat = context.remoteJid || this.id;
+        const sender = context.participant || chat;
 
         return {
             body: Functions.geBodyFromMsg({
@@ -255,7 +255,7 @@ class Ctx {
             messageType: Functions.getMessageType(message),
             key: {
                 remoteJid: chat,
-                id: contextInfo.stanzaId,
+                id: context.stanzaId,
                 fromMe: Baileys.areJidsSameUser(sender, this.me.id),
                 participant: Baileys.isJidGroup(chat) ? sender : null
             },
@@ -277,6 +277,10 @@ class Ctx {
 
     async read() {
         await this._client.readMessages([this._msg.key]);
+    }
+
+    async sendMessage(jid, content, options = {}) {
+        return await this._self.sendMessage(jid, content, options);
     }
 
     async reply(content, options = {}) {

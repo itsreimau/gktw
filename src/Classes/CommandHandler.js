@@ -24,10 +24,10 @@ class CommandHandler {
                 const fileObj = require(file);
                 if (!fileObj.type || fileObj.type === "command") {
                     this._bot.cmd.set(fileObj.name, fileObj);
-                    if (isShowLog) this.consolefy.success(`Loaded Command: ${fileObj.name}`);
+                    if (isShowLog) this.consolefy.success(`Loaded Command - ${fileObj.name}`);
                 } else if (fileObj.type === "hears") {
                     this._bot.hearsMap.set(fileObj.name, fileObj);
-                    if (isShowLog) this.consolefy.success(`Loaded Hears: ${fileObj.name}`);
+                    if (isShowLog) this.consolefy.success(`Loaded Hears - ${fileObj.name}`);
                 }
             } catch (error) {
                 if (isShowLog) this.consolefy.error(`Failed to load ${file}: ${error}`);

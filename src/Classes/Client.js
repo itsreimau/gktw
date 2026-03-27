@@ -121,8 +121,8 @@ class Client {
             } else if (connection === "open") {
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
-                    await this._registerOwner();
-                    await this._setAllGroupCache();
+                await this._registerOwner();
+                await this._setAllGroupCache();
             }
         });
 
@@ -135,7 +135,9 @@ class Client {
             for (const message of event.messages) {
                 if (message.key.fromMe && message.platform === "baileys") continue;
 
-                if (this.messageIdCache.get(message.key.id)) continue;
+                const timestampMs = Date.now();
+                const timestampSec = timestampMs / 1000;
+                if (this.messageIdCache.get(message.key.id) || timestampSec - message.messageTimestamp > 60) continue;
                 this.messageIdCache.set(message.key.id, true);
 
                 const senderJids = [message.key.participant, message.key.participantAlt, message.key.remoteJid, message.key.remoteJidAlt];
@@ -296,7 +298,7 @@ class Client {
             this.consolefy.setTag("pairing-code");
 
             if (!this.phoneNumber) {
-                this.consolefy.error("phoneNumber is required for usePairingCode");
+                this.consolefy.error("phoneNumber options are required if you are using usePairingCode.");
                 this.consolefy.resetTag();
                 return;
             }
@@ -345,6 +347,17 @@ class Client {
                     album
                 };
             }
+            const matchMention = (content?.text || content?.caption || "").match(/@(\d+)/g);
+            if (matchMention) {
+                const mentions = new Set(content.mentions || []);
+                matchMention.forEach(mention => {
+                    const number = mention.replace("@", "");
+                    const jid = Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => number.startsWith(mcc)) ? `${number}@s.whatsapp.net` : `${number}@lid`;
+                    mentions.add(jid);
+                });
+                content.mentions = Array.from(mentions);
+            }
+            if (Baileys.isPnUser(jid) || Baileys.isLidUser(jid)) options.ai = true;
             content = typeof content === "string" ? {
                 text: content
             } : content;

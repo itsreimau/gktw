@@ -7,10 +7,10 @@ async function Commands(self, _runMiddlewares) {
         prefix,
         cmd
     } = self;
+
     if (!m.message || Baileys.isJidStatusBroadcast(m.key.remoteJid) || Baileys.isJidNewsletter(m.key.remoteJid)) return;
 
     const hasHears = Array.from(self.hearsMap.values()).filter(hear => hear.name === m.body || hear.name === m.messageType || new RegExp(hear.name).test(m.body) || (Array.isArray(hear.name) && hear.name.includes(m.body)));
-
     if (hasHears.length) {
         const ctx = new Ctx({
             used: {
@@ -49,7 +49,6 @@ async function Commands(self, _runMiddlewares) {
         self,
         client: self.core
     });
-
     if (!await _runMiddlewares(ctx)) return;
 
     matchedCommands.forEach(cmd => cmd.code(ctx));
