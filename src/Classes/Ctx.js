@@ -160,7 +160,7 @@ class Ctx {
             commandName,
             text,
             selectedPrefix
-        } = parseCommand(this._self.prefix, this._msg.text);
+        } = parseCommand(this._self.prefix, this._msg.body);
 
         if (!commandName) return null;
 

@@ -50,10 +50,6 @@ class Client {
             stdTTL: 30 * 60,
             useClones: false
         });
-        this.messageIdCache = new NodeCache({
-            stdTTL: 30,
-            useClones: false
-        });
         this.pushnamesPath = path.resolve(this.authDir, "pushnames.json");
         this.pushNames = {};
         this.db = new SimplDB({
@@ -121,6 +117,7 @@ class Client {
             } else if (connection === "open") {
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
+                await Baileys.delay(3000);
                 await this._registerOwner();
                 await this._setAllGroupCache();
             }
@@ -134,11 +131,6 @@ class Client {
 
             for (const message of event.messages) {
                 if (message.key.fromMe && message.platform === "baileys") continue;
-
-                const timestampMs = Date.now();
-                const timestampSec = timestampMs / 1000;
-                if (this.messageIdCache.get(message.key.id) || timestampSec - message.messageTimestamp > 60) continue;
-                this.messageIdCache.set(message.key.id, true);
 
                 const senderJids = [message.key.participant, message.key.participantAlt, message.key.remoteJid, message.key.remoteJidAlt];
                 const senderJid = message.key.fromMe ? this.core.user.id : senderJids.find(jid => Baileys.isPnUser(jid));
@@ -316,11 +308,10 @@ class Client {
                 return;
             }
 
-            setTimeout(async () => {
-                const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
-                this.consolefy.info(`Pairing Code: ${code}`);
-                this.consolefy.resetTag();
-            }, 3000);
+            await Baileys.delay(3000);
+            const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
+            this.consolefy.info(`Pairing Code: ${code}`);
+            this.consolefy.resetTag();
         }
 
         if (this.useStore) this.store.bind(this.core.ev);
@@ -347,20 +338,27 @@ class Client {
                     album
                 };
             }
+            content = typeof content === "string" ? {
+                text: content
+            } : content;
             const matchMention = (content?.text || content?.caption || "").match(/@(\d+)/g);
             if (matchMention) {
                 const mentions = new Set(content.mentions || []);
                 matchMention.forEach(mention => {
                     const number = mention.replace("@", "");
-                    const jid = Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => number.startsWith(mcc)) ? `${number}@s.whatsapp.net` : `${number}@lid`;
-                    mentions.add(jid);
+                    const newJid = Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => number.startsWith(mcc)) ? `${number}@s.whatsapp.net` : `${number}@lid`;
+                    let alreadyExists = false;
+                    for (let existingJid of mentions) {
+                        if (Functions.getId(existingJid) === number) {
+                            alreadyExists = true;
+                            break;
+                        }
+                    }
+                    if (!alreadyExists) mentions.add(newJid);
                 });
                 content.mentions = Array.from(mentions);
             }
             if (Baileys.isPnUser(jid) || Baileys.isLidUser(jid)) options.ai = true;
-            content = typeof content === "string" ? {
-                text: content
-            } : content;
             return this.core.sendMessage(jid, content, options);
         };
     }
