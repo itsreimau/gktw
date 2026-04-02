@@ -196,8 +196,16 @@ class Ctx {
         return Baileys.getDevice(id);
     }
 
+    getPn(jid = this._sender.lid) {
+        return Functions.getPn(jid, this._db);
+    }
+
+    getLid(jid = this._sender.jid) {
+        return Functions.getLid(jid, this._db);
+    }
+
     getPushName(jid = this._sender.lid) {
-        return Functions.getPushName(jid, this._self.pushNames);
+        return Functions.getPushName(jid, this._db);
     }
 
     getId(jid = this._sender.jid) {

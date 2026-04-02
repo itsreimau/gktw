@@ -34,13 +34,35 @@ function geBodyFromMsg(msg) {
     return BODY_HANDLERS[getMessageType(extractedMessage)]?.(extractedMessage);
 }
 
-function getId(jid) {
-    return Baileys.jidDecode(jid)?.user || jid;
+function checkOwner(jid, ownerList) {
+    if (!Baileys.isPnUser(jid) && !Baileys.isLidUser(jid)) return false;
+    return ownerList.some(ownerJid => Baileys.areJidsSameUser(ownerJid, jid));
 }
 
-function getPushName(jid, pushNames) {
-    if (!Baileys.isLidUser(jid)) return "Unknown";
-    return pushNames[jid] || "Unknown";
+function getPn(jid, db) {
+    if (Baileys.isPnUser(jid)) return jid;
+    const users = db.getCollection("users");
+    const userDb = getDb(users, jid);
+    return userDb?.pn || null;
+}
+
+function getLid(jid, db) {
+    if (Baileys.isLidUser(jid)) return jid;
+    const users = db.getCollection("users");
+    const userDb = getDb(users, jid);
+    return userDb?.lid || null;
+
+}
+
+function getPushName(jid, db) {
+    if (!Baileys.isPnUser(jid) && !Baileys.isLidUser(jid)) return "Unknown";
+    const users = db.getCollection("users");
+    const userDb = getDb(users, jid);
+    return userDb?.pushName || "Unknown";
+}
+
+function getId(jid) {
+    return Baileys.jidDecode(jid)?.user || jid;
 }
 
 function getDb(collection, jid) {
@@ -50,28 +72,25 @@ function getDb(collection, jid) {
         });
 
     if (collection.name === "users" && Baileys.isLidUser(jid))
-        return collection.getOrCreate(user => user.jid === jid, {
+        return collection.getOrCreate(user => Baileys.areJidsSameUser(user.jid, jid), {
             jid
         });
 
     if (collection.name === "groups" && Baileys.isJidGroup(jid))
-        return collection.getOrCreate(group => group.jid === jid, {
+        return collection.getOrCreate(group => Baileys.areJidsSameUser(group.jid === jid), {
             jid
         });
 
     return null;
 }
 
-function checkOwner(jid, ownerList) {
-    if (!Baileys.isPnUser(jid) && !Baileys.isLidUser(jid)) return false;
-    return ownerList.some(ownerJid => Baileys.areJidsSameUser(ownerJid, jid));
-}
-
 module.exports = {
     getMessageType,
     geBodyFromMsg,
-    getId,
+    checkOwner,
+    getPn,
+    getLid,
     getPushName,
     getDb,
-    checkOwner
+    getId
 };

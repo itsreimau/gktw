@@ -45,13 +45,11 @@ class Client {
             level: "silent"
         });
         this.store = Baileys.makeInMemoryStore({});
-        this.storePath = path.resolve(this.authDir, "gktw_store.json");
+        this.storePath = path.resolve(this.authDir, "store.json");
         this.groupCache = new NodeCache({
             stdTTL: 30 * 60,
             useClones: false
         });
-        this.pushnamesPath = path.resolve(this.authDir, "pushnames.json");
-        this.pushNames = {};
         this.db = new SimplDB({
             collectionsFolder: this.databaseDir,
             tabSize: 2
@@ -86,16 +84,13 @@ class Client {
         }
     }
 
-    _savePushnames() {
-        fs.writeFileSync(this.pushnamesPath, JSON.stringify(this.pushNames));
-    }
-
-    _loadPushNames() {
-        try {
-            this.pushNames = JSON.parse(fs.readFileSync(this.pushnamesPath, "utf8"));
-        } catch {
-            this._savePushnames();
-        }
+    _updateUserDb(jid, lid, pushName) {
+        const users = this.db.getCollection("users");
+        const userDb = Functions.getDb(users, lid);
+        if (!userDb?.pn) userDb.pn = jid;
+        if (!userDb?.lid) userDb.lid = lid;
+        if (userDb?.pushName !== pushName) userDb.pushName = pushName;
+        userDb.save();
     }
 
     async _setGroupCache(id) {
@@ -125,7 +120,6 @@ class Client {
 
         this.core.ev.on("creds.update", this.saveCreds);
 
-        this._loadPushNames();
         this.core.ev.on("messages.upsert", async (event) => {
             if (event.type === "append") return;
 
@@ -136,12 +130,9 @@ class Client {
                 const senderJid = message.key.fromMe ? this.core.user.id : senderJids.find(jid => Baileys.isPnUser(jid));
                 const senderLid = message.key.fromMe ? this.core.user.lid : senderJids.find(jid => Baileys.isLidUser(jid));
 
-                if (!senderJid || !senderLid) continue;
+                if (!senderJid || !senderLid || !message.pushName) continue;
 
-                if (message.pushName && this.pushNames[senderLid] !== message.pushName) {
-                    this.pushNames[senderLid] = message.pushName;
-                    this._savePushnames();
-                }
+                const userDb = this._updateUserDb(senderJid, senderLid, message.pushName);
 
                 const body = Functions.geBodyFromMsg(message);
                 const self = {
@@ -179,7 +170,7 @@ class Client {
             await this._setGroupCache(event.id);
 
             const action = event.action;
-            if (!["add", "leave"].includes(action)) return;
+            if (!["add", "leave", "remove"].includes(action)) return;
             delete event.action;
             for (const participant of event.participants) {
                 delete event.participants;
@@ -237,8 +228,16 @@ class Client {
         return Functions.checkOwner(jid, this.owner);
     }
 
+    getPn(jid = Baileys.PSA_WID) {
+        return Functions.getPn(jid, this.db);
+    }
+
+    getLid(jid = Baileys.PSA_WID) {
+        return Functions.getLid(jid, this.db);
+    }
+
     getPushName(jid = Baileys.PSA_WID) {
-        return Functions.getPushName(jid, this.pushNames);
+        return Functions.getPushName(jid, this.db);
     }
 
     getId(jid = Baileys.PSA_WID) {
@@ -349,7 +348,7 @@ class Client {
                     const newJid = Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => number.startsWith(mcc)) ? `${number}@s.whatsapp.net` : `${number}@lid`;
                     let alreadyExists = false;
                     for (let existingJid of mentions) {
-                        if (Functions.getId(existingJid) === number) {
+                        if (Bailyes.areJidsSameUser(existingJid, number)) {
                             alreadyExists = true;
                             break;
                         }
