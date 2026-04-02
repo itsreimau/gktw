@@ -269,7 +269,7 @@ class Ctx {
             },
             id: chat,
             sender,
-            pushName: Functions.getPushName(sender, this._self.pushNames),
+            pushName: Functions.getPushName(sender, this._db),
             download: async () =>
                 await this._downloadMediaMessage({
                     message

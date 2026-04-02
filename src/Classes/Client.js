@@ -348,7 +348,7 @@ class Client {
                     const newJid = Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => number.startsWith(mcc)) ? `${number}@s.whatsapp.net` : `${number}@lid`;
                     let alreadyExists = false;
                     for (let existingJid of mentions) {
-                        if (Bailyes.areJidsSameUser(existingJid, number)) {
+                        if (Baileys.areJidsSameUser(existingJid, number)) {
                             alreadyExists = true;
                             break;
                         }
