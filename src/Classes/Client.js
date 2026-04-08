@@ -70,8 +70,8 @@ class Client {
             const owner = {
                 id: ownerJid
             };
-            if (ownerLid) ownerObject.lid = owner;
-            registeredOwner.push(ownerObject);
+            if (ownerLid) owner.lid = owner;
+            registeredOwner.push(owner);
         }
         if (this.core.user)
             registeredOwner.push({
