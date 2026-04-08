@@ -32,7 +32,7 @@ class Ctx {
     get sender() {
         return {
             ...this._sender,
-            isOwner: () => Functions.checkOwner(this._sender.jid, this._self.owner)
+            isOwner: () => [this._sender.lid, this._sender.jid].some(jid => Functions.checkOwner(jid, this._self.owner))
         };
     }
     get store() {

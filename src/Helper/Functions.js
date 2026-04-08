@@ -36,7 +36,8 @@ function geBodyFromMsg(msg) {
 
 function checkOwner(jid, ownerList) {
     if (!Baileys.isPnUser(jid) && !Baileys.isLidUser(jid)) return false;
-    return ownerList.some(ownerJid => Baileys.areJidsSameUser(ownerJid, jid));
+    const key = Baileys.isLidUser(jid) ? "lid" : "id";
+    return ownerList.some(ownerJid => Baileys.areJidsSameUser(ownerJid[key], jid));
 }
 
 function getPn(jid, db) {

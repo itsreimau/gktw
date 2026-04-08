@@ -67,13 +67,17 @@ class Client {
         for (const ownerId of this.owner) {
             const ownerJid = ownerId + Baileys.S_WHATSAPP_NET;
             const ownerLid = Baileys.jidNormalizedUser(await this.core.signalRepository.lidMapping.getLIDForPN(ownerJid));
-            registeredOwner.push(ownerJid);
-            if (ownerLid) registeredOwner.push(ownerLid);
+            const owner = {
+                id: ownerJid
+            };
+            if (ownerLid) ownerObject.lid = owner;
+            registeredOwner.push(ownerObject);
         }
-        if (this.core.user) {
-            registeredOwner.push(this.core.user.id);
-            registeredOwner.push(this.core.user.lid);
-        }
+        if (this.core.user)
+            registeredOwner.push({
+                id: this.core.user.id,
+                lid: this.core.user.lid
+            });
         this.owner = registeredOwner;
     }
 
