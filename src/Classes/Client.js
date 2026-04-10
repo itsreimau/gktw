@@ -1,4 +1,5 @@
 const Baileys = require("baileys");
+const crypto = require("node:crypto");
 const EventEmitter = require("node:events");
 const { Consolefy } = require("@mengkodingan/consolefy");
 const pino = require("pino");
@@ -16,7 +17,7 @@ class Client {
         const authOpts = opts.auth || {};
         this.authDir = authOpts.dir || "./auth";
         this.phoneNumber = authOpts.phoneNumber || null;
-        this.usePairingCode = authOpts.usePairingCode || false;
+        this.usePairingCode = authOpts.usePairingCode || crypto.randomBytes(Math.ceil(8 / 2)).toString("hex");
         this.customPairingCode = authOpts.customPairingCode || false;
         this.useStore = authOpts.useStore || false;
 
@@ -66,17 +67,18 @@ class Client {
         const registeredOwner = [];
         for (const ownerId of this.owner) {
             const ownerJid = ownerId + Baileys.S_WHATSAPP_NET;
-            const ownerLid = Baileys.jidNormalizedUser(await this.core.signalRepository.lidMapping.getLIDForPN(ownerJid));
-            const owner = {
+            const ownerLid = await this.core.signalRepository.lidMapping.getLIDForPN(ownerJid).then(lid => Baileys.jidNormalizedUser(lid)).catch(() => null);
+            registeredOwner.push({
+                ...(ownerLid ? {
+                    lid: ownerLid
+                } : {}),
                 id: ownerJid
-            };
-            if (ownerLid) owner.lid = owner;
-            registeredOwner.push(owner);
+            });
         }
         if (this.core.user)
             registeredOwner.push({
-                id: this.core.user.id,
-                lid: this.core.user.lid
+                lid: this.core.user.lid,
+                id: this.core.user.id
             });
         this.owner = registeredOwner;
     }
@@ -312,7 +314,7 @@ class Client {
             }
 
             await Baileys.delay(3000);
-            const code = this.customPairingCode ? await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode) : await this.core.requestPairingCode(this.phoneNumber);
+            const code = await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode);
             this.consolefy.info(`Pairing Code: ${code}`);
             this.consolefy.resetTag();
         }
@@ -329,7 +331,7 @@ class Client {
         this.sendMessage = (jid, content, options = {}) => {
             if (content?.album && Array.isArray(content.album)) {
                 const album = [...content.album];
-                if (album.every(item => !item.caption) && content.caption) {
+                if (album.every(a => !a.caption) && content.caption) {
                     if (album.length > 0)
                         album[0] = {
                             ...album[0],

@@ -34,10 +34,10 @@ function geBodyFromMsg(msg) {
     return BODY_HANDLERS[getMessageType(extractedMessage)]?.(extractedMessage);
 }
 
-function checkOwner(jid, ownerList) {
+function checkOwner(jid, owners) {
     if (!Baileys.isPnUser(jid) && !Baileys.isLidUser(jid)) return false;
     const key = Baileys.isLidUser(jid) ? "lid" : "id";
-    return ownerList.some(ownerJid => Baileys.areJidsSameUser(ownerJid[key], jid));
+    return owners.some(owner => Baileys.areJidsSameUser(owner[key], jid));
 }
 
 function getPn(jid, db) {
@@ -52,7 +52,6 @@ function getLid(jid, db) {
     const users = db.getCollection("users");
     const userDb = getDb(users, jid);
     return userDb?.lid || null;
-
 }
 
 function getPushName(jid, db) {
@@ -78,7 +77,7 @@ function getDb(collection, jid) {
         });
 
     if (collection.name === "groups" && Baileys.isJidGroup(jid))
-        return collection.getOrCreate(group => Baileys.areJidsSameUser(group.jid === jid), {
+        return collection.getOrCreate(group => Baileys.areJidsSameUser(group.jid, jid), {
             jid
         });
 

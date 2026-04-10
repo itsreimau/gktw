@@ -9,9 +9,7 @@ class MessageCollector extends Collector {
 
         this.handleCollect = (ctx) => this.collect(ctx);
         clientReq.self.ev.on(Events.MessagesUpsert, this.handleCollect);
-        this.once("end", () => {
-            clientReq.self.ev.removeListener(Events.MessagesUpsert, this.handleCollect);
-        });
+        this.once("end", () => clientReq.self.ev.removeListener(Events.MessagesUpsert, this.handleCollect));
     }
 
     async _collect(ctx) {
