@@ -23,7 +23,7 @@ class Collector extends EventEmitter {
     async collect(ctx) {
         if (!this.isRun) return;
 
-        const collCtx = await this._collect(ctx);
+        const collCtx = this._collect(ctx);
         if (!collCtx) return;
 
         this.received++;

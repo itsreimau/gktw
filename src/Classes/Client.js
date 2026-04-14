@@ -114,7 +114,12 @@ class Client {
             if (connection === "close") {
                 const shouldReconnect = lastDisconnect.error.output?.statusCode !== Baileys.DisconnectReason.loggedOut;
                 this.consolefy.error(`Connection closed: ${lastDisconnect.error}, reconnecting: ${shouldReconnect}`);
-                if (shouldReconnect) this.launch();
+                if (shouldReconnect) {
+                    await this.launch();
+                    await Baileys.delay(3000);
+                    await this._registerOwner();
+                    await this._setAllGroupCache();
+                }
             } else if (connection === "open") {
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
