@@ -1,5 +1,4 @@
 const Baileys = require("baileys");
-const crypto = require("node:crypto");
 const EventEmitter = require("node:events");
 const { Consolefy } = require("@mengkodingan/consolefy");
 const pino = require("pino");
@@ -17,11 +16,12 @@ class Client {
         const authOpts = opts.auth || {};
         this.authDir = authOpts.dir || "./auth";
         this.phoneNumber = authOpts.phoneNumber || null;
-        this.usePairingCode = authOpts.usePairingCode || crypto.randomBytes(Math.ceil(8 / 2)).toString("hex");
-        this.customPairingCode = authOpts.customPairingCode || false;
+        this.usePairingCode = authOpts.usePairingCode || false;
+        this.customPairingCode = authOpts.customPairingCode || null;
         this.useStore = authOpts.useStore || false;
 
         const connectionOpts = opts.connection || {};
+        this.suppressBaileys = connectionOpts.suppressBaileys || true;
         this.browser = connectionOpts.browser || Baileys.Browsers.macOS("Safari");
         this.WAVersion = connectionOpts.version || null;
         this.alwaysOnline = connectionOpts.alwaysOnline || true;
@@ -63,26 +63,6 @@ class Client {
         if (!this.db.getCollection("groups")) this.db.createCollection("groups");
     }
 
-    async _registerOwner() {
-        const registeredOwner = [];
-        for (const ownerId of this.owner) {
-            const ownerJid = ownerId + Baileys.S_WHATSAPP_NET;
-            const ownerLid = await this.core.signalRepository.lidMapping.getLIDForPN(ownerJid).then(lid => Baileys.jidNormalizedUser(lid)).catch(() => null);
-            registeredOwner.push({
-                ...(ownerLid ? {
-                    lid: ownerLid
-                } : {}),
-                id: ownerJid
-            });
-        }
-        if (this.core.user)
-            registeredOwner.push({
-                lid: this.core.user.lid,
-                id: this.core.user.id
-            });
-        this.owner = registeredOwner;
-    }
-
     async _setAllGroupCache() {
         const allGroups = await this.core.groupFetchAllParticipating();
         for (const [id, metadata] of Object.entries(allGroups)) {
@@ -114,17 +94,11 @@ class Client {
             if (connection === "close") {
                 const shouldReconnect = lastDisconnect.error.output?.statusCode !== Baileys.DisconnectReason.loggedOut;
                 this.consolefy.error(`Connection closed: ${lastDisconnect.error}, reconnecting: ${shouldReconnect}`);
-                if (shouldReconnect) {
-                    await this.launch();
-                    await Baileys.delay(3000);
-                    await this._registerOwner();
-                    await this._setAllGroupCache();
-                }
+                if (shouldReconnect) await this.launch();
             } else if (connection === "open") {
                 this.readyAt = Date.now();
                 this.ev.emit(Events.ClientReady, this.core);
                 await Baileys.delay(3000);
-                await this._registerOwner();
                 await this._setAllGroupCache();
             }
         });
@@ -261,6 +235,8 @@ class Client {
     }
 
     async launch() {
+        if (this.suppressBaileys) require("@itsreimau/suppress-baileys");
+
         const {
             state,
             saveCreds
@@ -312,12 +288,6 @@ class Client {
                 return;
             }
 
-            if (!Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => this.phoneNumber.startsWith(mcc))) {
-                this.consolefy.error("phoneNumber format must be like: 62xxx (starts with country code)");
-                this.consolefy.resetTag();
-                return;
-            }
-
             await Baileys.delay(3000);
             const code = await this.core.requestPairingCode(this.phoneNumber, this.customPairingCode);
             this.consolefy.info(`Pairing Code: ${code}`);
@@ -351,23 +321,6 @@ class Client {
             content = typeof content === "string" ? {
                 text: content
             } : content;
-            const matchMention = (content?.text || content?.caption || "").match(/@(\d+)/g);
-            if (matchMention) {
-                const mentions = new Set(content.mentions || []);
-                matchMention.forEach(mention => {
-                    const number = mention.replace("@", "");
-                    const newJid = Object.keys(Baileys.PHONENUMBER_MCC).some(mcc => number.startsWith(mcc)) ? `${number}@s.whatsapp.net` : `${number}@lid`;
-                    let alreadyExists = false;
-                    for (let existingJid of mentions) {
-                        if (Baileys.areJidsSameUser(existingJid, number)) {
-                            alreadyExists = true;
-                            break;
-                        }
-                    }
-                    if (!alreadyExists) mentions.add(newJid);
-                });
-                content.mentions = Array.from(mentions);
-            }
             if (Baileys.isPnUser(jid) || Baileys.isLidUser(jid)) options.ai = true;
             return this.core.sendMessage(jid, content, options);
         };

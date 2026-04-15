@@ -32,7 +32,7 @@ class Ctx {
     get sender() {
         return {
             ...this._sender,
-            isOwner: () => [this._sender.lid, this._sender.jid].some(jid => Functions.checkOwner(jid, this._self.owner))
+            isOwner: () => Functions.checkOwner(this._sender.jid, this._self.owner)
         };
     }
     get store() {
@@ -94,7 +94,7 @@ class Ctx {
                     }
                     continue;
             }
-            if (Baileys.isPnUser(target)) target = await this.core.signalRepository.lidMapping.getLIDForPN(target).then(t => Baileys.jidNormalizedUser(t)).catch(() => null);
+            if (Baileys.isPnUser(target)) target = (await this.core.findUserId(target)).lid;
         }
         return target;
     }
@@ -188,8 +188,15 @@ class Ctx {
         return this.msg.messageType;
     }
 
-    getMentioned() {
-        return this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
+    async getMentioned(raw = true) {
+        const mentions = this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
+        if (raw) return mentions;
+        const result = [];
+        for (const jid of mentions) {
+            const userId = await this.core.findUserId(jid);
+            result.push(userId);
+        }
+        return result;
     }
 
     getDevice(id = this._msg.key.id) {

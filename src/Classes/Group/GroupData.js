@@ -119,20 +119,20 @@ class GroupData {
 
     async isMemberExist(jid) {
         const members = await this.members();
-        const key = Baileys.isLidUser(jid) ? "lid" : "id";
-        return members ? members.some(member => Baileys.areJidsSameUser(member[key], jid)) : false;
+        const field = Baileys.isLidUser(jid) ? "id" : "phoneNumber";
+        return members ? members.some(member => Baileys.areJidsSameUser(member[field], jid)) : false;
     }
 
     async isAdmin(jid) {
         const members = await this.members();
-        const key = Baileys.isLidUser(jid) ? "lid" : "id";
-        return members ? members.some(member => Baileys.areJidsSameUser(member[key], jid) && !!member.admin) : false;
+        const field = Baileys.isLidUser(jid) ? "id" : "phoneNumber";
+        return members ? members.some(member => Baileys.areJidsSameUser(member[field], jid) && !!member.admin) : false;
     }
 
     async isOwner(jid) {
         const members = await this.members();
-        const key = Baileys.isLidUser(jid) ? "lid" : "id";
-        return members ? members.some(member => Baileys.areJidsSameUser(member[key], jid) && member.admin === "superadmin") : false;
+        const field = Baileys.isLidUser(jid) ? "id" : "phoneNumber";
+        return members ? members.some(member => Baileys.areJidsSameUser(member[field], jid) && member.admin === "superadmin") : false;
     }
 
     async isSenderAdmin() {

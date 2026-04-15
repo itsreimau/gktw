@@ -34,10 +34,9 @@ function geBodyFromMsg(msg) {
     return BODY_HANDLERS[getMessageType(extractedMessage)]?.(extractedMessage);
 }
 
-function checkOwner(jid, owners) {
-    if (!Baileys.isPnUser(jid) && !Baileys.isLidUser(jid)) return false;
-    const key = Baileys.isLidUser(jid) ? "lid" : "id";
-    return owners.some(owner => Baileys.areJidsSameUser(owner[key], jid));
+function checkOwner(jid, owner) {
+    if (!Baileys.isPnUser(jid)) return false;
+    return owner.some(o => Baileys.areJidsSameUser(o + Baileys.S_WHATSAPP_NET, jid));
 }
 
 function getPn(jid, db) {
