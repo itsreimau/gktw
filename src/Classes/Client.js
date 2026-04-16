@@ -15,7 +15,7 @@ class Client {
     constructor(opts) {
         const authOpts = opts.auth || {};
         this.authState = authOpts.state || "multi";
-        this.authDir = authOpts.dir || this.authState === "multi" ? "./auth" : "./auth.json";
+        this.authDir = authOpts.dir || (this.authState === "single" ? "./auth.json" : "./auth");
         this.phoneNumber = authOpts.phoneNumber || null;
         this.usePairingCode = authOpts.usePairingCode || false;
         this.customPairingCode = authOpts.customPairingCode || null;
@@ -231,7 +231,7 @@ class Client {
         const {
             state,
             saveCreds
-        } = await Baileys[this.authState === "multi" ? "useMultiFileAuthState" : "useSingleFileAuthState"](this.authDir);
+        } = await Baileys[this.authState === "single" ? "useSingleFileAuthState" : "useMultiFileAuthState"](this.authDir);
         this.state = state;
         this.saveCreds = saveCreds;
 
@@ -312,7 +312,8 @@ class Client {
             content = typeof content === "string" ? {
                 text: content
             } : content;
-            if (Baileys.isPnUser(jid) || Baileys.isLidUser(jid)) options.ai = true;
+            if (Baileys.isPnUser(jid) || Baileys.isLidUser(jid)) content.ai = true;
+            if (Baileys.isJidGroup(jid) || Baileys.isPnUser(jid) || Baileys.isLidUser(jid)) content.secureMetaServiceLabel = true;
             return this.core.sendMessage(jid, content, options);
         };
     }
