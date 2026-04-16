@@ -14,7 +14,8 @@ const Commands = require("../Handler/Commands.js");
 class Client {
     constructor(opts) {
         const authOpts = opts.auth || {};
-        this.authDir = authOpts.dir || "./auth";
+        this.authState = authOpts.state || "multi";
+        this.authDir = authOpts.dir || this.authState === "multi" ? "./auth" : "./auth.json";
         this.phoneNumber = authOpts.phoneNumber || null;
         this.usePairingCode = authOpts.usePairingCode || false;
         this.customPairingCode = authOpts.customPairingCode || null;
@@ -70,11 +71,9 @@ class Client {
         }
     }
 
-    _updateUserDb(jid, lid, pushName) {
+    _updatePushNameDb(jid, pushName) {
         const users = this.db.getCollection("users");
-        const userDb = Functions.getDb(users, lid);
-        if (!userDb?.pn) userDb.pn = jid;
-        if (!userDb?.lid) userDb.lid = lid;
+        const userDb = Functions.getDb(users, jid);
         if (userDb?.pushName !== pushName) userDb.pushName = pushName;
         userDb.save();
     }
@@ -117,7 +116,7 @@ class Client {
 
                 if (!senderJid || !senderLid || !message.pushName) continue;
 
-                const userDb = this._updateUserDb(senderJid, senderLid, message.pushName);
+                const userDb = this._updatePushNameDb(senderLid, message.pushName);
 
                 const body = Functions.geBodyFromMsg(message);
                 const self = {
@@ -213,14 +212,6 @@ class Client {
         return Functions.checkOwner(jid, this.owner);
     }
 
-    getPn(jid = Baileys.PSA_WID) {
-        return Functions.getPn(jid, this.db);
-    }
-
-    getLid(jid = Baileys.PSA_WID) {
-        return Functions.getLid(jid, this.db);
-    }
-
     getPushName(jid = Baileys.PSA_WID) {
         return Functions.getPushName(jid, this.db);
     }
@@ -240,7 +231,7 @@ class Client {
         const {
             state,
             saveCreds
-        } = await Baileys.useMultiFileAuthState(this.authDir);
+        } = await Baileys[this.authState === "multi" ? "useMultiFileAuthState" : "useSingleFileAuthState"](this.authDir);
         this.state = state;
         this.saveCreds = saveCreds;
 

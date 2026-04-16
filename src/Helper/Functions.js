@@ -39,22 +39,8 @@ function checkOwner(jid, owner) {
     return owner.some(o => Baileys.areJidsSameUser(o + Baileys.S_WHATSAPP_NET, jid));
 }
 
-function getPn(jid, db) {
-    if (Baileys.isPnUser(jid)) return jid;
-    const users = db.getCollection("users");
-    const userDb = getDb(users, jid);
-    return userDb?.pn || null;
-}
-
-function getLid(jid, db) {
-    if (Baileys.isLidUser(jid)) return jid;
-    const users = db.getCollection("users");
-    const userDb = getDb(users, jid);
-    return userDb?.lid || null;
-}
-
 function getPushName(jid, db) {
-    if (!Baileys.isPnUser(jid) && !Baileys.isLidUser(jid)) return "Unknown";
+    if (!Baileys.isLidUser(jid)) return "Unknown";
     const users = db.getCollection("users");
     const userDb = getDb(users, jid);
     return userDb?.pushName || "Unknown";
@@ -87,9 +73,7 @@ module.exports = {
     getMessageType,
     geBodyFromMsg,
     checkOwner,
-    getPn,
-    getLid,
     getPushName,
-    getDb,
-    getId
+    getId,
+    getDb
 };
