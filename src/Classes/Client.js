@@ -5,11 +5,12 @@ const pino = require("pino");
 const path = require("node:path");
 const { NodeCache } = require("@cacheable/node-cache");
 const SimplDB = require("simpl.db");
-const fs = require("node:fs");
-const Events = require("../Constant/Events.js");
 const Functions = require("../Helper/Functions.js");
+const Events = require("../Constant/Events.js");
+const qrcode = require("qrcode-terminal");
 const Ctx = require("./Ctx.js");
 const Commands = require("../Handler/Commands.js");
+const fs = require("node:fs");
 
 class Client {
     constructor(opts) {
@@ -27,6 +28,7 @@ class Client {
         this.WAVersion = connectionOpts.version || null;
         this.alwaysOnline = connectionOpts.alwaysOnline || true;
         this.selfReply = connectionOpts.selfReply || false;
+        this.loggerLevel = connectionOpts.loggerLevel || "silent";
 
         const messagingOpts = opts.messaging || {};
         this.autoRead = messagingOpts.autoRead || false;
@@ -44,7 +46,7 @@ class Client {
         this.middlewares = new Map();
         this.consolefy = new Consolefy();
         this.logger = pino({
-            level: "silent"
+            level: this.loggerLevel
         });
         this.store = Baileys.makeInMemoryStore({});
         this.storePath = path.resolve(this.authDir, "store.json");
@@ -90,6 +92,11 @@ class Client {
                 lastDisconnect
             } = update;
 
+            if (update.qr && !this.usePairingCode)
+                qrcode.generate(update.qr, {
+                    small: true
+                });
+
             if (connection === "close") {
                 const shouldReconnect = lastDisconnect.error.output?.statusCode !== Baileys.DisconnectReason.loggedOut;
                 this.consolefy.error(`Connection closed: ${lastDisconnect.error}, reconnecting: ${shouldReconnect}`);
@@ -108,7 +115,7 @@ class Client {
             if (event.type === "append") return;
 
             for (const message of event.messages) {
-                if (message.key.fromMe && message.platform === "baileys") continue;
+                if (message.key.fromMe && message.key.id.includes("STARFALL")) continue;
 
                 const senderJids = [message.key.participant, message.key.participantAlt, message.key.remoteJid, message.key.remoteJidAlt];
                 const senderJid = message.key.fromMe ? this.core.user.id : senderJids.find(jid => Baileys.isPnUser(jid));
@@ -254,7 +261,6 @@ class Client {
             } : {}),
             browser: this.browser,
             logger: this.logger,
-            printQRInTerminal: !this.usePairingCode,
             emitOwnEvents: this.selfReply,
             auth: this.state,
             markOnlineOnConnect: this.alwaysOnline,
