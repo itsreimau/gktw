@@ -69,7 +69,7 @@ class Ctx {
                     }
                     continue;
                 case "mentioned":
-                    const mentioned = this.getMentioned();
+                    const mentioned = await this.getMentioned();
                     if (mentioned.length > 0) {
                         target = mentioned[0];
                         break;
@@ -188,15 +188,8 @@ class Ctx {
         return this.msg.messageType;
     }
 
-    async getMentioned(raw = true) {
-        const mentions = this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
-        if (raw) return mentions;
-        const result = [];
-        for (const jid of mentions) {
-            const userId = await this.core.findUserId(jid);
-            result.push(userId);
-        }
-        return result;
+    async getMentioned() {
+        return this._msg.message?.[this.getMessageType()]?.contextInfo?.mentionedJid || [];
     }
 
     getDevice(id = this._msg.key.id) {

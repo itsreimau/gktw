@@ -305,18 +305,15 @@ class Client {
 
         this.sendMessage = (jid, content, options = {}) => {
             if (content?.album && Array.isArray(content.album)) {
-                const album = [...content.album];
-                if (album.every(a => !a.caption) && content.caption) {
-                    if (album.length > 0)
-                        album[0] = {
-                            ...album[0],
-                            caption: content.caption
-                        };
+                if (content.album.length === 1) {
+                    content = content.album[0];
+                } else {
+                    const album = [...content.album];
+                    if (album.every(a => !a.caption) && content.caption) album[0].caption = content.caption;
+                    content = {
+                        album
+                    };
                 }
-                delete content.caption;
-                content = {
-                    album
-                };
             }
             content = typeof content === "string" ? {
                 text: content

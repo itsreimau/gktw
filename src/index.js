@@ -11,7 +11,6 @@ module.exports = {
     Consolefy: require("@mengkodingan/consolefy").Consolefy,
     Gktw: {
         analyzeBug: require("safety-safe").analyzeMessage,
-        didYouMean: require("didyoumean"),
-        mime: require("mime-types")
+        didYouMean: require("didyoumean")
     }
 };
