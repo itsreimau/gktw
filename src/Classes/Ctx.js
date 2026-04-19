@@ -5,7 +5,7 @@ const Group = require("./Group/Group.js");
 const GroupData = require("./Group/GroupData.js");
 const { parseCommand } = require("../Handler/Commands.js");
 const didYouMean = require("didyoumean");
-const { tmpfiles } = require("@neoxr/helper");
+const { uguu } = require("@neoxr/helper");
 const MessageCollector = require("./Collector/MessageCollector.js");
 
 class Ctx {
@@ -227,6 +227,15 @@ class Ctx {
         }
     }
 
+    async _uploadMediaMessage(message) {
+        try {
+            const buffer = await this._downloadMediaMessage(message);
+            return Buffer.isBuffer(buffer) ? (await uguu(buffer)).data.url : null;
+        } catch {
+            return null;
+        }
+    }
+
     get msg() {
         const message = Baileys.extractMessageContent(this._msg.message);
         return {
@@ -237,12 +246,10 @@ class Ctx {
                 await this._downloadMediaMessage({
                     message
                 }),
-            upload: async () => {
-                const buffer = await this._downloadMediaMessage({
+            upload: async () =>
+                await this._uploadMediaMessage({
                     message
-                });
-                return Buffer.isBuffer(buffer) ? (await tmpfiles(buffer)).data.url : null;
-            }
+                })
         };
     }
 
@@ -273,12 +280,10 @@ class Ctx {
                 await this._downloadMediaMessage({
                     message
                 }),
-            upload: async () => {
-                const buffer = await this._downloadMediaMessage({
+            upload: async () =>
+                await this._uploadMediaMessage({
                     message
-                });
-                return Buffer.isBuffer(buffer) ? (await tmpfiles(buffer)).data.url : null;
-            }
+                })
         };
     }
 

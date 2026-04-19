@@ -15,8 +15,8 @@ const fs = require("node:fs");
 class Client {
     constructor(opts) {
         const authOpts = opts.auth || {};
-        this.authState = authOpts.state || "multi";
-        this.authDir = authOpts.dir || (this.authState === "single" ? "./auth.json" : "./auth");
+        this.authAdapter = authOpts.adapter || "multi";
+        this.authDir = authOpts.dir || (this.authAdapter === "single" ? "./state.json" : "./state");
         this.phoneNumber = authOpts.phoneNumber || null;
         this.usePairingCode = authOpts.usePairingCode || false;
         this.customPairingCode = authOpts.customPairingCode || null;
@@ -26,7 +26,7 @@ class Client {
         this.suppressBaileys = connectionOpts.suppressBaileys || true;
         this.browser = connectionOpts.browser || Baileys.Browsers.macOS("Safari");
         this.WAVersion = connectionOpts.version || null;
-        this.alwaysOnline = connectionOpts.alwaysOnline || true;
+        this.alwaysOnline = connectionOpts.alwaysOnline || false;
         this.selfReply = connectionOpts.selfReply || false;
         this.loggerLevel = connectionOpts.loggerLevel || "silent";
 
@@ -88,12 +88,13 @@ class Client {
     _onEvents() {
         this.core.ev.on("connection.update", async (update) => {
             const {
+                qr,
                 connection,
                 lastDisconnect
             } = update;
 
-            if (update.qr && !this.usePairingCode)
-                qrcode.generate(update.qr, {
+            if (qr && !this.usePairingCode)
+                qrcode.generate(qr, {
                     small: true
                 });
 
@@ -238,7 +239,7 @@ class Client {
         const {
             state,
             saveCreds
-        } = await Baileys[this.authState === "single" ? "useSingleFileAuthState" : "useMultiFileAuthState"](this.authDir);
+        } = await Baileys[this.authAdapter === "single" ? "useSingleFileAuthState" : "useMultiFileAuthState"](this.authDir);
         this.state = state;
         this.saveCreds = saveCreds;
 
@@ -264,6 +265,8 @@ class Client {
             emitOwnEvents: this.selfReply,
             auth: this.state,
             markOnlineOnConnect: this.alwaysOnline,
+            syncFullHistory: false,
+            generateHighQualityLinkPreview: true,
             cachedGroupMetadata: async (jid) => this.groupCache.get(jid)
         });
 
@@ -319,7 +322,6 @@ class Client {
                 text: content
             } : content;
             if (Baileys.isPnUser(jid) || Baileys.isLidUser(jid)) content.ai = true;
-            if (Baileys.isJidGroup(jid) || Baileys.isPnUser(jid) || Baileys.isLidUser(jid)) content.secureMetaServiceLabel = true;
             return this.core.sendMessage(jid, content, options);
         };
     }
