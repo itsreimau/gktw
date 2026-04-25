@@ -32,7 +32,7 @@ class Ctx {
     get sender() {
         return {
             ...this._sender,
-            isOwner: () => Functions.checkOwner(this._sender.jid, this._self.owner)
+            isOwner: () => Functions.checkOwner(this._sender.jid, this._self.owner, ctx._msg.key.fromMe)
         };
     }
     get store() {
@@ -59,44 +59,47 @@ class Ctx {
         };
     }
     async target(priority = ["quoted", "mentioned", "text"]) {
-        let target = null;
-        for (const source of priority) {
-            switch (source) {
-                case "quoted":
-                    if (this.quoted?.sender) {
-                        target = this.quoted.sender;
-                        break;
-                    }
-                    continue;
-                case "mentioned":
-                    const mentioned = await this.getMentioned();
-                    if (mentioned.length > 0) {
-                        target = mentioned[0];
-                        break;
-                    }
-                    continue;
-                case "text":
-                    if (this.args.length > 0) {
-                        const extractedNumber = this.args[0].replace(/[^\d]/g, "");
-                        if (extractedNumber) {
-                            target = extractedNumber + Baileys.S_WHATSAPP_NET;
-                            break;
-                        }
-                    }
-                    continue;
-                case "text_group":
-                    if (this.args.length > 0) {
-                        const extractedNumber = this.args[0].replace(/[^\d]/g, "");
-                        if (extractedNumber) {
-                            target = `${extractedNumber}@g.us`;
-                            break;
-                        }
-                    }
-                    continue;
+        const strategies = {
+            quoted: () =>
+                this.quoted?.sender && {
+                    jid: this.quoted.sender,
+                    source: "quoted"
+                },
+            mentioned: async () => {
+                const mentioned = await this.getMentioned();
+                return mentioned.length && {
+                    jid: mentioned[0],
+                    source: "mentioned"
+                };
+            },
+            text: () => {
+                const number = this.args[0]?.replace(/[^\d]/g, "");
+                return number && {
+                    jid: number + Baileys.S_WHATSAPP_NET,
+                    source: "text"
+                };
+            },
+            text_group: () => {
+                const number = this.args[0]?.replace(/[^\d]/g, "");
+                return number && {
+                    jid: `${number}@g.us`,
+                    source: "text_group"
+                };
             }
-            if (Baileys.isPnUser(target)) target = (await this.core.findUserId(target)).lid;
+        };
+        for (const type of priority) {
+            const strategy = strategies[type];
+            if (!strategy) continue;
+            const strat = await strategy();
+            if (strat) {
+                if (Baileys.isPnUser(strat.jid)) strat.jid = (await this.core.findUserId(strat.jid)).lid;
+                return strat;
+            }
         }
-        return target;
+        return {
+            jid: null,
+            source: null
+        };
     }
 
     get me() {

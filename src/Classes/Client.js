@@ -216,8 +216,8 @@ class Client {
         });
     }
 
-    checkOwner(jid = Baileys.PSA_WID) {
-        return Functions.checkOwner(jid, this.owner);
+    checkOwner(jid = Baileys.PSA_WID, fromMe = false) {
+        return Functions.checkOwner(jid, this.owner, fromMe);
     }
 
     getPushName(jid = Baileys.PSA_WID) {
@@ -306,7 +306,14 @@ class Client {
         this.sendMessage = (jid, content, options = {}) => {
             if (content?.album && Array.isArray(content.album)) {
                 if (content.album.length === 1) {
-                    content = content.album[0];
+                    const {
+                        album,
+                        ...rest
+                    } = content;
+                    content = {
+                        ...content.album[0],
+                        ...rest
+                    };
                 } else {
                     const album = [...content.album];
                     if (album.every(a => !a.caption) && content.caption) album[0].caption = content.caption;

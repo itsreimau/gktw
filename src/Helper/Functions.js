@@ -34,9 +34,9 @@ function geBodyFromMsg(msg) {
     return BODY_HANDLERS[getMessageType(extractedMessage)]?.(extractedMessage);
 }
 
-function checkOwner(jid, owner) {
+function checkOwner(jid, owner, fromMe) {
     if (!Baileys.isPnUser(jid)) return false;
-    return owner.some(o => Baileys.areJidsSameUser(o + Baileys.S_WHATSAPP_NET, jid));
+    return fromMe ? fromMe : owner.some(o => Baileys.areJidsSameUser(o + Baileys.S_WHATSAPP_NET, jid));
 }
 
 function getPushName(jid, db) {

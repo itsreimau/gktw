@@ -12,7 +12,7 @@ class MessageCollector extends Collector {
         this.once("end", () => clientReq.self.ev.removeListener(Events.MessagesUpsert, this.handleCollect));
     }
 
-    async _collect(ctx) {
+    _collect(ctx) {
         const msgJids = [ctx.msg.key.remoteJid, ctx.msg.key.remoteJidAlt];
         for (const jid of this.jids) {
             for (const msgJid of msgJids) {
