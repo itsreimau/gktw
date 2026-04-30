@@ -54,6 +54,10 @@ class Client {
             stdTTL: 30 * 60,
             useClones: false
         });
+        this.messageIdCache = new NodeCache({
+            stdTTL: 10,
+            useClones: false
+        });
         this.db = new SimplDB({
             collectionsFolder: this.databaseDir,
             tabSize: 2
@@ -71,6 +75,12 @@ class Client {
         for (const [id, metadata] of Object.entries(allGroups)) {
             this.groupCache.set(id, metadata);
         }
+    }
+
+    _shouldIgnore(messageId, body) {
+        if (this.messageIdCache.get(messageId)) return true;
+        this.messageIdCache.set(messageId, true);
+        return false;
     }
 
     _updatePushNameDb(jid, pushName) {
@@ -117,6 +127,7 @@ class Client {
 
             for (const message of event.messages) {
                 if (message.key.fromMe && message.key.id.includes("STARFALL")) continue;
+                if (this._shouldIgnore(message.key.id)) continue;
 
                 const senderJids = [message.key.participant, message.key.participantAlt, message.key.remoteJid, message.key.remoteJidAlt];
                 const senderJid = message.key.fromMe ? this.core.user.id : senderJids.find(jid => Baileys.isPnUser(jid));
@@ -124,7 +135,7 @@ class Client {
 
                 if (!senderJid || !senderLid || !message.pushName) continue;
 
-                const userDb = this._updatePushNameDb(senderLid, message.pushName);
+                this._updatePushNameDb(senderLid, message.pushName);
 
                 const body = Functions.geBodyFromMsg(message);
                 const self = {
