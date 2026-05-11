@@ -98,9 +98,9 @@ class Client {
     _onEvents() {
         this.core.ev.on("connection.update", async (update) => {
             const {
-                qr,
                 connection,
-                lastDisconnect
+                lastDisconnect,
+                qr
             } = update;
 
             if (qr && !this.usePairingCode)
@@ -123,7 +123,7 @@ class Client {
         this.core.ev.on("creds.update", this.saveCreds);
 
         this.core.ev.on("messages.upsert", async (event) => {
-            if (event.type === "append") return;
+            if (event.type !== "notify") return;
 
             for (const message of event.messages) {
                 if (message.key.fromMe && message.key.id.includes("STARFALL")) continue;
@@ -278,6 +278,9 @@ class Client {
             markOnlineOnConnect: this.alwaysOnline,
             syncFullHistory: false,
             generateHighQualityLinkPreview: true,
+            ...(this.useStore ? {
+                getMessage: async (key) => (await this.store.loadMessage(key.remoteJid, key.id))?.message
+            } : {}),
             cachedGroupMetadata: async (jid) => this.groupCache.get(jid)
         });
 

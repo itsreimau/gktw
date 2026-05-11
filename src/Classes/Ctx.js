@@ -234,6 +234,8 @@ class Ctx {
 
     get msg() {
         const message = Baileys.extractMessageContent(this._msg.message);
+        const id = this.id;
+        const key = this._msg.message.key;
         return {
             ...this._msg,
             message,
@@ -245,7 +247,9 @@ class Ctx {
             upload: async () =>
                 await this._uploadMediaMessage({
                     message
-                })
+                }),
+            delete: async () => await this.deleteMessage(id, key),
+            edit: async (text) => await this.editMessage(id, key, text)
         };
     }
 
@@ -256,6 +260,12 @@ class Ctx {
         const message = Baileys.extractMessageContent(context.quotedMessage) || {};
         const chat = context.remoteJid || this.id;
         const sender = context.participant || chat;
+        const key = {
+            remoteJid: chat,
+            id: context.stanzaId,
+            fromMe: Baileys.areJidsSameUser(sender, this.me.id),
+            participant: Baileys.isJidGroup(chat) ? sender : null
+        };
 
         return {
             body: Functions.geBodyFromMsg({
@@ -263,12 +273,7 @@ class Ctx {
             }),
             message,
             messageType: Functions.getMessageType(message),
-            key: {
-                remoteJid: chat,
-                id: context.stanzaId,
-                fromMe: Baileys.areJidsSameUser(sender, this.me.id),
-                participant: Baileys.isJidGroup(chat) ? sender : null
-            },
+            key,
             id: chat,
             sender,
             pushName: Functions.getPushName(sender, this._db),
@@ -279,7 +284,9 @@ class Ctx {
             upload: async () =>
                 await this._uploadMediaMessage({
                     message
-                })
+                }),
+            delete: async () => await this.deleteMessage(chat, key),
+            edit: async (text) => await this.editMessage(chat, key, text)
         };
     }
 
@@ -324,13 +331,6 @@ class Ctx {
         return await this._self.sendMessage(jid, {
             text: newText,
             edit: key
-        });
-    }
-
-    async forwardMessage(jid, msg, force = false) {
-        return await this._self.sendMessage(jid, {
-            forward: msg,
-            force
         });
     }
 

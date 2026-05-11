@@ -21,15 +21,7 @@ function geBodyFromMsg(msg) {
         buttonsResponseMessage: (msg) => msg.buttonsResponseMessage?.selectedButtonId || "",
         listResponseMessage: (msg) => msg.listResponseMessage?.singleSelectReply?.selectedRowId || "",
         templateButtonReplyMessage: (msg) => msg.templateButtonReplyMessage?.selectedId || "",
-        interactiveResponseMessage: (msg) => {
-            const interactiveMsg = msg.interactiveResponseMessage;
-            let body = interactiveMsg?.selectedButtonId || "";
-            if (!body && interactiveMsg?.nativeFlowResponseMessage) {
-                const params = JSON.parse(interactiveMsg.nativeFlowResponseMessage.paramsJson || "{}");
-                body = params.id || params.selectedId || params.button_id || "";
-            }
-            return body;
-        }
+        interactiveResponseMessage: (msg) => msg.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson ? JSON.parse(msg.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson)?.id || "" : "",
     };
     return BODY_HANDLERS[getMessageType(extractedMessage)]?.(extractedMessage);
 }
