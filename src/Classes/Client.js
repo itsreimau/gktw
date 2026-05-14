@@ -48,7 +48,7 @@ class Client {
         this.logger = pino({
             level: this.loggerLevel
         });
-        this.store = Baileys.makeInMemoryStore({});
+        this.store = null;
         this.storePath = path.resolve(this.authDir, "store.json");
         this.groupCache = new NodeCache({
             stdTTL: 30 * 60,
@@ -254,19 +254,6 @@ class Client {
         this.state = state;
         this.saveCreds = saveCreds;
 
-        if (this.useStore) {
-            this.store.readFromFile(this.storePath);
-            setInterval(() => this.store.writeToFile(this.storePath), 10000);
-
-            this.store.cleanupMessages = (cutoff) => {
-                for (const jid of Object.keys(this.store.messages)) {
-                    this.store.messages[jid] = this.store.messages[jid].filter(message => message.messageTimestamp * 1000 > cutoff);
-                }
-            };
-
-            setInterval(() => this.store.cleanupMessages(Date.now() - (7 * 24 * 60 * 60 * 1000)), 24 * 60 * 60 * 1000);
-        }
-
         this.core = Baileys.default({
             ...(this.WAVersion ? {
                 version: this.WAVersion
@@ -283,8 +270,6 @@ class Client {
             } : {}),
             cachedGroupMetadata: async (jid) => this.groupCache.get(jid)
         });
-
-        if (this.useStore) this.store.bind(this.core.ev);
 
         if (this.usePairingCode && !this.core.authState.creds.registered) {
             this.consolefy.setTag("pairing-code");
@@ -308,7 +293,24 @@ class Client {
             this.consolefy.resetTag();
         }
 
-        if (this.useStore) this.store.bind(this.core.ev);
+        if (this.useStore) {
+            this.store = Baileys.makeInMemoryStore({
+                logger: this.logger,
+                socket: this.core
+            });
+            this.store.bind(this.core.ev);
+
+            if (fs.existsSync(this.storePath)) this.store.readFromFile(this.storePath);
+            setInterval(() => this.store.writeToFile(this.storePath), 10000);
+
+            this.store.cleanupMessages = (cutoff) => {
+                for (const jid of Object.keys(this.store.messages)) {
+                    this.store.messages[jid] = this.store.messages[jid].filter(message => message.messageTimestamp * 1000 > cutoff);
+                }
+            };
+
+            setInterval(() => this.store.cleanupMessages(Date.now() - (7 * 24 * 60 * 60 * 1000)), 24 * 60 * 60 * 1000);
+        }
 
         if (!fs.existsSync(this.databaseDir))
             fs.mkdirSync(this.databaseDir, {
