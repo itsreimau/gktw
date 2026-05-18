@@ -1,6 +1,6 @@
 {
   "name": "@itsreimau/gktw",
-  "version": "0.9.3",
+  "version": "1.0.0",
   "description": "Useless Baileys Wrapper",
   "main": "src/index.js",
   "directories": {
@@ -9,7 +9,7 @@
   "keywords": [
     "baileys-wrapper"
   ],
-  "author": "Reimau von Lilitz",
+  "author": "ItsReimau",
   "license": "MIT",
   "dependencies": {
     "@cacheable/node-cache": "^3.0.1",

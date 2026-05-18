@@ -29,6 +29,7 @@ class Client {
         this.alwaysOnline = connectionOpts.alwaysOnline || false;
         this.selfReply = connectionOpts.selfReply || false;
         this.loggerLevel = connectionOpts.loggerLevel || "silent";
+        this.defaultProfilePictureUrl = connectionOpts.defaultProfilePictureUrl || "https://i.pinimg.com/736x/70/dd/61/70dd612c65034b88ebf474a52ccc70c4.jpg";
 
         const messagingOpts = opts.messaging || {};
         this.autoRead = messagingOpts.autoRead || false;
@@ -225,6 +226,14 @@ class Client {
             name: query,
             code: callback
         });
+    }
+
+    async profilePictureUrl(jid = Baileys.PSA_WID) {
+        try {
+            return await this.core.profilePictureUrl(jid, "image") || this.defaultProfilePictureUrl;
+        } catch {
+            return this.defaultProfilePictureUrl;
+        }
     }
 
     checkOwner(jid = Baileys.PSA_WID, fromMe = false) {

@@ -141,6 +141,10 @@ class Ctx {
         return await this._client.fetchStatus(jid);
     }
 
+    async profilePictureUrl(jid = this._sender.jid) {
+        return await this._self.profilePictureUrl(jid);
+    }
+
     get groups() {
         return new Group(this);
     }
